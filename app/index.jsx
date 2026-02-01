@@ -13,11 +13,11 @@ export default function Index() {
     );
   }
 
-  if (!user) return <Redirect href="/auth/login" />;
+  if (!user) return <Redirect href="/admin" />;
 
 //   if (user.role === "admin") return <Redirect href="/admin" />;
 
 //   if (user.role === "doctor") return <Redirect href="/doctor" />;
 
-  return <Redirect href="/auth" />;
+  return <Redirect href="/admin" />;
 }

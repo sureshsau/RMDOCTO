@@ -1,4 +1,3 @@
-
 import axios from "axios";
 import { getToken } from "../utils/secureStorage";
 
@@ -6,18 +5,22 @@ const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
   timeout: 15000,
   headers: {
-    "Content-Type": "application/json"
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 // -----------------------------
-// Request Interceptor
-// Attach JWT to every request
+// REQUEST INTERCEPTOR
+// ONLY SHOW API URL
 // -----------------------------
 api.interceptors.request.use(
   async (config) => {
     const token = await getToken();
 
+    const fullUrl = `${config.baseURL}${config.url}`;
+
+
+    console.log("➡️ API URL:", fullUrl);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -29,14 +32,18 @@ api.interceptors.request.use(
 );
 
 // -----------------------------
-// Response Interceptor
-// Handle auth errors globally
+// RESPONSE INTERCEPTOR
+// NO TOASTS HERE
 // -----------------------------
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (error.response?.status === 401) {
-    }
+  (error) => {
+    // just log for debugging
+    console.log(
+      "❌ API ERROR:",
+      error.message,
+      error.config?.url
+    );
     return Promise.reject(error);
   }
 );
