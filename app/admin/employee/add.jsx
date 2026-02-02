@@ -1,5 +1,5 @@
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
     KeyboardAvoidingView,
     Platform,
@@ -10,21 +10,74 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+
+import { useRBAC } from "../../../context/RABACContext";
+import { useUser } from "../../../context/UserContext";
+
+/* ================= CONSTANTS ================= */
+
+const DASHBOARDS = [
+  { key: "admin", label: "Admin Dashboard" },
+  { key: "doctor", label: "Doctor Dashboard" },
+  { key: "marketing_agent", label: "Marketing Dashboard" },
+  { key: "agent", label: "Agent Dashboard" },
+  { key: "receptionist", label: "Reception Dashboard" },
+];
+
+/* ================= MAIN ================= */
 
 export default function AddEmployee() {
   const router = useRouter();
+  const { fetchRoles } = useRBAC();
+  const { createUser, loading } = useUser();
 
+  const [roles, setRoles] = useState([]);
   const [role, setRole] = useState(null);
   const [showPermission, setShowPermission] = useState(false);
 
-  const [permissions, setPermissions] = useState({
-    viewPatients: false,
-    editPatients: false,
-    prescribeMedicine: false,
-    viewReports: false,
-    manageStaff: false,
+  const [dashboard, setDashboard] = useState(null);
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "", // ✅ ADDED
   });
+
+  const [permissions, setPermissions] = useState({});
+
+  /* ================= LOAD ROLES ================= */
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetchRoles();
+      if (!res.success) {
+        Toast.show({
+          type: "error",
+          text1: "Failed to load roles",
+          text2: res.error,
+        });
+        return;
+      }
+      setRoles(res.data);
+    })();
+  }, []);
+
+  /* ================= ROLE SELECT ================= */
+
+  const selectRole = (r) => {
+    setRole(r);
+    setShowPermission(true);
+
+    const map = {};
+    r.permissions.forEach((p) => (map[p] = true));
+    setPermissions(map);
+
+    if (!dashboard) {
+      setDashboard(r.key);
+    }
+  };
 
   const togglePermission = (key) => {
     setPermissions((prev) => ({
@@ -33,9 +86,61 @@ export default function AddEmployee() {
     }));
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
+  /* ================= SAVE ================= */
 
+  const handleSave = async () => {
+    if (
+      !form.name ||
+      !form.phone ||
+      !form.password || // ✅ VALIDATION
+      !role ||
+      !dashboard
+    ) {
+      Toast.show({
+        type: "error",
+        text1: "Validation Error",
+        text2: "Name, phone, password, role and dashboard are required",
+      });
+      return;
+    }
+
+    const payload = {
+      name: form.name,
+      email: form.email || undefined,
+      phone: form.phone,
+      password: form.password, // ✅ SEND PASSWORD
+      roles: [role.key],
+      permissions: Object.keys(permissions).filter(
+        (p) => permissions[p]
+      ),
+      dashboard,
+      isActive: true,
+    };
+
+    const res = await createUser(payload);
+
+    if (!res.success) {
+      Toast.show({
+        type: "error",
+        text1: "Create Failed",
+        text2: res.error,
+      });
+      return;
+    }
+
+    Toast.show({
+      type: "success",
+      text1: "Employee Added",
+      text2: "User created successfully",
+    });
+
+    router.back();
+  };
+
+  /* ================= UI ================= */
+
+  return (
+    <View style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -44,81 +149,106 @@ export default function AddEmployee() {
           {/* BASIC INFO */}
           <Section title="Basic Information" />
 
-          <Input label="Full Name" placeholder="Enter employee name" />
-          <Input label="Email Address" placeholder="example@email.com" />
-          <Input label="Phone Number" placeholder="+91 XXXXX XXXXX" />
+          <Input
+            label="Full Name"
+            value={form.name}
+            onChangeText={(v) =>
+              setForm((p) => ({ ...p, name: v }))
+            }
+          />
 
+          <Input
+            label="Email Address"
+            value={form.email}
+            onChangeText={(v) =>
+              setForm((p) => ({ ...p, email: v }))
+            }
+          />
+
+          <Input
+            label="Phone Number"
+            value={form.phone}
+            onChangeText={(v) =>
+              setForm((p) => ({ ...p, phone: v }))
+            }
+          />
+
+          {/* PASSWORD */}
+          <Input
+            label="Password"
+            value={form.password}
+            onChangeText={(v) =>
+              setForm((p) => ({ ...p, password: v }))
+            }
+            secureTextEntry
+            placeholder="Enter temporary password"
+          />
 
           {/* ROLE */}
-          <Section title="Role & Department" />
+          <Section title="Role & Permissions" />
 
           <View style={styles.roleWrap}>
-            {["Doctor", "Nurse", "Reception", "Admin"].map((r) => (
+            {roles.map((r) => (
               <RoleChip
-                key={r}
-                label={r}
-                selected={role === r}
-                onPress={() => {
-                  setRole(r);
-                  setShowPermission(true);
-                }}
+                key={r._id}
+                label={r.name}
+                selected={role?.key === r.key}
+                onPress={() => selectRole(r)}
               />
             ))}
           </View>
 
-          {/* PERMISSIONS DROPDOWN */}
-          {showPermission && (
+          {showPermission && role && (
             <View style={styles.permissionBox}>
               <Text style={styles.permissionTitle}>
-                {role} Permissions
+                {role.name} Permissions
               </Text>
 
-              <PermissionItem
-                label="View Patients"
-                value={permissions.viewPatients}
-                onToggle={() => togglePermission("viewPatients")}
-              />
-              <PermissionItem
-                label="Edit Patients"
-                value={permissions.editPatients}
-                onToggle={() => togglePermission("editPatients")}
-              />
-              <PermissionItem
-                label="Prescribe Medicine"
-                value={permissions.prescribeMedicine}
-                onToggle={() => togglePermission("prescribeMedicine")}
-              />
-              <PermissionItem
-                label="View Reports"
-                value={permissions.viewReports}
-                onToggle={() => togglePermission("viewReports")}
-              />
-
-              {role === "Admin" && (
+              {role.permissions.map((p) => (
                 <PermissionItem
-                  label="Manage Staff"
-                  value={permissions.manageStaff}
-                  onToggle={() => togglePermission("manageStaff")}
+                  key={p}
+                  label={p}
+                  value={permissions[p]}
+                  onToggle={() => togglePermission(p)}
                 />
-              )}
+              ))}
             </View>
           )}
 
-         
+          {/* DASHBOARD */}
+          <Section title="Dashboard Access" />
+
+          <View style={styles.roleWrap}>
+            {DASHBOARDS.map((d) => (
+              <RoleChip
+                key={d.key}
+                label={d.label}
+                selected={dashboard === d.key}
+                onPress={() => setDashboard(d.key)}
+              />
+            ))}
+          </View>
+
+          <Text style={styles.dashboardNote}>
+            This decides which dashboard UI the user can access
+          </Text>
 
           {/* SAVE */}
           <TouchableOpacity
             style={styles.saveBtn}
-            onPress={() => alert("Employee Added Successfully")}
+            onPress={handleSave}
+            disabled={loading}
           >
-            <Text style={styles.saveText}>Save Employee</Text>
+            <Text style={styles.saveText}>
+              {loading ? "Saving..." : "Save Employee"}
+            </Text>
             <Text style={styles.saveSub}>
               Added to RMDoctor system
             </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -190,27 +320,9 @@ function PermissionItem({ label, value, onToggle }) {
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#eef0fa",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    backgroundColor: "#fff",
-    borderBottomWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "800",
-    marginLeft: 12,
-  },
-  content: {
-    padding: 24,
-    paddingBottom: 80,
-  },
+  container: { flex: 1, backgroundColor: "#eef0fa" },
+  content: { padding: 24, paddingBottom: 80 },
+
   section: {
     flexDirection: "row",
     alignItems: "center",
@@ -229,14 +341,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textTransform: "uppercase",
   },
-  inputWrap: {
-    marginBottom: 16,
-  },
-  label: {
-    fontWeight: "600",
-    marginBottom: 6,
-    color: "#334155",
-  },
+
+  inputWrap: { marginBottom: 16 },
+  label: { fontWeight: "600", marginBottom: 6, color: "#334155" },
   input: {
     backgroundColor: "#fff",
     borderWidth: 1,
@@ -244,11 +351,9 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     padding: 14,
   },
-  roleWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
+
+  roleWrap: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+
   roleChip: {
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -257,34 +362,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#d5d7f0",
   },
-  roleChipActive: {
-    backgroundColor: "#6b6dbf",
-  },
-  roleText: {
-    fontWeight: "600",
-    color: "#6b6dbf",
-  },
+  roleChipActive: { backgroundColor: "#6b6dbf" },
+  roleText: { fontWeight: "600", color: "#6b6dbf" },
+
   permissionBox: {
     backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
-    marginBottom: 16,
     borderWidth: 1,
     borderColor: "#e2e8f0",
+    marginBottom: 12,
   },
-  permissionTitle: {
-    fontWeight: "800",
-    marginBottom: 10,
-  },
+  permissionTitle: { fontWeight: "800", marginBottom: 10 },
+
   permissionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 10,
   },
-  permissionLabel: {
-    fontWeight: "600",
-    color: "#334155",
-  },
+  permissionLabel: { fontWeight: "600", color: "#334155" },
+
   switch: {
     width: 42,
     height: 22,
@@ -292,15 +389,21 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 3,
   },
-  switchActive: {
-    backgroundColor: "#6b6dbf",
-  },
+  switchActive: { backgroundColor: "#6b6dbf" },
   knob: {
     width: 16,
     height: 16,
     backgroundColor: "#fff",
     borderRadius: 10,
   },
+
+  dashboardNote: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 6,
+    marginBottom: 16,
+  },
+
   saveBtn: {
     backgroundColor: "#6b6dbf",
     padding: 16,
@@ -308,11 +411,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
   },
-  saveText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: 16,
-  },
+  saveText: { color: "#fff", fontWeight: "800", fontSize: 16 },
   saveSub: {
     color: "#e0e7ff",
     fontSize: 12,

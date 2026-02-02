@@ -9,6 +9,10 @@ export const RBACProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ✅ cached data
+  const [roles, setRoles] = useState(null);
+  const [permissions, setPermissions] = useState(null);
+
   // ---------------- ERROR HANDLER ----------------
   const handleError = (err, fallback) => {
     const message =
@@ -22,24 +26,34 @@ export const RBACProvider = ({ children }) => {
   };
 
   // ---------------- FETCH PERMISSIONS ----------------
-  const fetchPermissions = async () => {
+  const fetchPermissions = async (force = false) => {
     try {
+      // ✅ return cached data
+      if (permissions && !force) {
+        return {
+          success: true,
+          data: permissions,
+          cached: true,
+        };
+      }
+
       setLoading(true);
       setError(null);
 
       const res = await api.get("/permission");
+      const data = res.data.permissions || {};
+
+      setPermissions(data);
 
       return {
         success: true,
-        data: res.data.permissions || {},
+        data,
+        cached: false,
       };
     } catch (err) {
       return {
         success: false,
-        error: handleError(
-          err,
-          "Failed to load permissions"
-        ),
+        error: handleError(err, "Failed to load permissions"),
       };
     } finally {
       setLoading(false);
@@ -47,24 +61,34 @@ export const RBACProvider = ({ children }) => {
   };
 
   // ---------------- FETCH ROLES ----------------
-  const fetchRoles = async () => {
+  const fetchRoles = async (force = false) => {
     try {
+      // ✅ return cached data
+      if (roles && !force) {
+        return {
+          success: true,
+          data: roles,
+          cached: true,
+        };
+      }
+
       setLoading(true);
       setError(null);
 
       const res = await api.get("/roles");
+      const data = res.data.data || [];
+
+      setRoles(data);
 
       return {
         success: true,
-        data: res.data.data || [],
+        data,
+        cached: false,
       };
     } catch (err) {
       return {
         success: false,
-        error: handleError(
-          err,
-          "Failed to load roles"
-        ),
+        error: handleError(err, "Failed to load roles"),
       };
     } finally {
       setLoading(false);
@@ -83,6 +107,11 @@ export const RBACProvider = ({ children }) => {
         permissions,
       });
 
+      // ✅ update cache instead of refetch
+      setRoles((prev) =>
+        prev ? [...prev, res.data.data] : [res.data.data]
+      );
+
       return {
         success: true,
         data: res.data.data,
@@ -90,10 +119,7 @@ export const RBACProvider = ({ children }) => {
     } catch (err) {
       return {
         success: false,
-        error: handleError(
-          err,
-          "Role creation failed"
-        ),
+        error: handleError(err, "Role creation failed"),
       };
     } finally {
       setLoading(false);
@@ -105,6 +131,9 @@ export const RBACProvider = ({ children }) => {
       value={{
         loading,
         error,
+
+        roles,
+        permissions,
 
         fetchRoles,
         fetchPermissions,
@@ -119,9 +148,7 @@ export const RBACProvider = ({ children }) => {
 export const useRBAC = () => {
   const ctx = useContext(RBACContext);
   if (!ctx) {
-    throw new Error(
-      "useRBAC must be used inside RBACProvider"
-    );
+    throw new Error("useRBAC must be used inside RBACProvider");
   }
   return ctx;
 };

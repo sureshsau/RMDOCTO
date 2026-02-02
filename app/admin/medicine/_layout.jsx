@@ -1,11 +1,49 @@
-import { Stack } from 'expo-router'
+import { Stack } from "expo-router";
 
-const _layout = () => {
+export default function MedicineLayout() {
   return (
-    <Stack>
-        
-    </Stack>
-  )
-}
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: "#6b6dbf",
+        },
+        headerTintColor: "#ffffff",
+        headerTitleStyle: {
+          fontWeight: "700",
+        },
+      }}
+    >
+      {/* INDEX */}
+      <Stack.Screen
+        name="index"
+        options={{
+          title: "Medicines",
+        }}
+      />
 
-export default _layout
+      {/* MEDICINE LIST */}
+      <Stack.Screen
+        name="medicine-list"
+        options={{
+          title: "Medicine List",
+        }}
+      />
+
+      {/* MEDICINE DETAILS */}
+      <Stack.Screen
+        name="details"
+        options={{
+          title: "Medicine Details",
+        }}
+      />
+
+      {/* UPLOAD MEDICINE */}
+      <Stack.Screen
+        name="upload"
+        options={{
+          title: "Add Medicine",
+        }}
+      />
+    </Stack>
+  );
+}

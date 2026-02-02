@@ -1,13 +1,48 @@
-import { Stack } from 'expo-router'
+import { Stack } from "expo-router";
 
-const _layout = () => {
+export default function _layout() {
   return (
-    <Stack>
-        <Stack.Screen name='(tabs)' options={{headerShown:false}}/>
-        <Stack.Screen name='roles' options={{headerShown:false}}/>
-        <Stack.Screen name='medicine' options={{headerShown:false}}/>
-    </Stack>
-  )
-}
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: "#6b6dbf",
+        },
+        headerTintColor: "#ffffff", // back arrow + title color
+        headerTitleStyle: {
+          fontWeight: "700",
+        },
+      }}
+    >
+      {/* TABS (NO HEADER) */}
+      <Stack.Screen
+        name="(tabs)"
+        options={{ headerShown: false }}
+      />
 
-export default _layout
+      {/* ROLES */}
+      <Stack.Screen
+        name="roles"
+        options={{
+          title: "Roles",
+          headerShown: false,
+        }}
+      />
+
+      {/* MEDICINE */}
+      <Stack.Screen
+        name="medicine"
+        options={{
+          title: "Medicines",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="employee"
+        options={{
+          headerShown: false,
+        }}
+      />
+
+    </Stack>
+  );
+}

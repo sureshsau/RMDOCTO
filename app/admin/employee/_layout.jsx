@@ -15,19 +15,11 @@ export default function MedicineLayout() {
     >
       {/* INDEX */}
       <Stack.Screen
-        name="index"
+        name="add"
         options={{
-          title: "All Roles",
+          title: "Add User",
         }}
       />
-      <Stack.Screen
-        name="create"
-        options={{
-          title: "Create Role",
-        }}
-      />
-
-      
     </Stack>
   );
 }

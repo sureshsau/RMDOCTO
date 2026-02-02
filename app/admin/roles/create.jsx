@@ -269,12 +269,12 @@ function PermissionItem({ label, value, onToggle }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#eef0fa" },
-  content: { padding: 24 },
+  content: { paddingHorizontal: 10 },
 
   section: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 28,
+    marginTop:0,
     marginBottom: 16,
   },
   sectionBar: {

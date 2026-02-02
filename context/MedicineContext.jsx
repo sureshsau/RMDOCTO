@@ -27,8 +27,8 @@ export const MedicineProvider = ({ children }) => {
       setLoading(true);
       setError(null);
 
-      const res = await api.post("/medicine", payload);
-
+      const res = await api.post("/medicines", payload);
+        console.log(payload);
       return {
         success: true,
         data: res.data,
@@ -47,26 +47,78 @@ export const MedicineProvider = ({ children }) => {
   };
 
   // ---------------- GET MEDICINES ----------------
-  const getMedicines = async (params = {}) => {
+ const getMedicines = async ({
+  page = 1,
+  limit = 10,
+  search = "",
+  dosageForm = "",
+} = {}) => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    // 🔥 Build query string manually
+    const query = new URLSearchParams({
+      page,
+      limit,
+      ...(search && { search }),
+      ...(dosageForm && { dosageForm }),
+    }).toString();
+
+    const res = await api.get(`/medicines?${query}`);
+
+    return {
+      success: true,
+      data: res.data.data || [],
+      pagination: res.data.pagination,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: handleError(err, "Failed to load medicines"),
+    };
+  } finally {
+    setLoading(false);
+  }
+};
+const getMedicineById = async (id) => {
+  try {
+    setLoading(true);
+    setError(null);
+
+    const res = await api.get(`/medicines/${id}`);
+
+    return {
+      success: true,
+      data: res.data.data,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: handleError(
+        err,
+        "Failed to load medicine details"
+      ),
+    };
+  } finally {
+    setLoading(false);
+  }
+};
+
+const deleteMedicine = async (medicineId) => {
     try {
       setLoading(true);
       setError(null);
 
-      const res = await api.get("/medicine", {
-        params,
-      });
+      await api.delete(`/medicines/${medicineId}`);
 
       return {
         success: true,
-        data: res.data.data || [],
       };
     } catch (err) {
       return {
         success: false,
-        error: handleError(
-          err,
-          "Failed to load medicines"
-        ),
+        error: handleError(err, "Failed to delete medicine"),
       };
     } finally {
       setLoading(false);
@@ -78,9 +130,10 @@ export const MedicineProvider = ({ children }) => {
       value={{
         loading,
         error,
-
+        deleteMedicine,
         addMedicine,
         getMedicines,
+        getMedicineById
       }}
     >
       {children}

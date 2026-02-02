@@ -27,7 +27,7 @@ export default function AdminLayout() {
         },
       }}
     >
-      {/* ================= DASHBOARD ================= */}
+      {/* ================= HOME ================= */}
       <Tabs.Screen
         name="index"
         options={{
@@ -38,46 +38,24 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* ================= EMPLOYEES ================= */}
+      {/* ================= USERS / EMPLOYEES ================= */}
       <Tabs.Screen
-        name="employees"
+        name="users"
         options={{
-          title: "Employees",
+          title: "Users",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="people-outline" size={size} color={color} />
           ),
         }}
       />
 
-      {/* ================= ATTENDANCE ================= */}
+      {/* ================= PROFILE ================= */}
       <Tabs.Screen
-        name="attendance"
+        name="profile"
         options={{
-          title: "Attendance",
+          title: "Profile",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="calendar-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* ================= TASKS ================= */}
-      <Tabs.Screen
-        name="assign-task"
-        options={{
-          title: "Tasks",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="clipboard-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* ================= SETTINGS ================= */}
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Settings",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="settings-outline" size={size} color={color} />
+            <Ionicons name="person-circle-outline" size={size} color={color} />
           ),
         }}
       />
@@ -89,6 +67,9 @@ export default function AdminLayout() {
       <Tabs.Screen name="create-payroll" options={{ href: null }} />
       <Tabs.Screen name="reports-analysis" options={{ href: null }} />
       <Tabs.Screen name="wallet" options={{ href: null }} />
+      <Tabs.Screen name="attendance" options={{ href: null }} />
+      <Tabs.Screen name="assign-task" options={{ href: null }} />
+      <Tabs.Screen name="settings" options={{ href: null }} />
     </Tabs>
   );
 }

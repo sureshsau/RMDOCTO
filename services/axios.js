@@ -3,42 +3,37 @@ import { getToken } from "../utils/secureStorage";
 
 const api = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL,
-  timeout: 15000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  timeout: 20000,
 });
 
-// -----------------------------
-// REQUEST INTERCEPTOR
-// ONLY SHOW API URL
-// -----------------------------
+/* ================= REQUEST ================= */
+
 api.interceptors.request.use(
   async (config) => {
     const token = await getToken();
-
-    const fullUrl = `${config.baseURL}${config.url}`;
-
-
-    console.log("➡️ API URL:", fullUrl);
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // 🔥 CRITICAL FIX
+    if (config.data instanceof FormData) {
+      config.headers["Content-Type"] = "multipart/form-data";
+    } else {
+      config.headers["Content-Type"] = "application/json";
+    }
+
+    console.log("➡️ API URL:", config.baseURL + config.url);
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// -----------------------------
-// RESPONSE INTERCEPTOR
-// NO TOASTS HERE
-// -----------------------------
+/* ================= RESPONSE ================= */
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // just log for debugging
     console.log(
       "❌ API ERROR:",
       error.message,
