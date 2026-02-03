@@ -1,112 +1,140 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { Alert, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Toast from "react-native-toast-message";
-import { useMedicine } from "../../../../context/MedicineContext";
+import {
+  Image,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useAuth } from "../../../../context/AuthContext";
+import { useMedicineCart } from "../../../../context/MedicineCartContext";
 
-export default function MedicineCard({ medicine, onDeleted }) {
-  const { deleteMedicine } = useMedicine();
+export default function MedicineCard({ medicine }) {
+  const item = medicine;
+  const { user } = useAuth();
+  const { items, addMedicine, updateQuantity } =
+    useMedicineCart();
 
-  const {
-    _id,
-    name,
-    brandName,
-    dosageForm,
-    price,
-    mrp,
-    specialPrice,
-    image,
-  } = medicine;
+  /* ================= ROLE LOGIC ================= */
 
-  const handleDelete = () => {
-    Alert.alert(
-      "Delete Medicine",
-      "This action cannot be undone",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            const res = await deleteMedicine(_id);
+  const isAgent =
+    user?.roles?.some((r) =>
+      r.toLowerCase().includes("agent")
+    ) ?? false;
 
-            if (!res.success) {
-              Toast.show({
-                type: "error",
-                text1: "Delete Failed",
-                text2: res.error,
-              });
-              return;
-            }
+  const price = isAgent
+    ? item.specialPrice ?? item.price ?? 0
+    : item.price ?? 0;
 
-            Toast.show({
-              type: "success",
-              text1: "Medicine Deleted",
-              text2: "Medicine removed successfully",
-            });
+  const mrp = item.mrp ?? 0;
 
-            onDeleted?.(_id); // 🔥 remove from UI
-          },
-        },
-      ]
-    );
+  const discount =
+    mrp > price && mrp > 0
+      ? Math.round(((mrp - price) / mrp) * 100)
+      : 0;
+
+  const image =
+    item.image || "https://via.placeholder.com/300";
+
+  const cartItem = items.find(
+    (i) => i._id === item._id
+  );
+
+  const goToDetails = () => {
+    router.push({
+      pathname: "/agent/(tabs)/medicine/details",
+      params: { id: item._id },
+    });
   };
 
   return (
+    <View style={styles.card}>
+      {/* CLICKABLE AREA */}
+      <Pressable onPress={goToDetails}>
+        {/* IMAGE */}
+        <View style={styles.imageWrap}>
+          <Image source={{ uri: image }} style={styles.image} />
 
-    <Pressable
-  onPress={() =>
-    router.push({
-      pathname: "/admin/medicine/details",
-      params: {
-        id: _id, // full object
-      },
-    })
-  }
->
-        <View style={styles.card}>
-      {/* DELETE */}
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={handleDelete}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="trash-outline" size={16} color="#dc2626" />
-      </TouchableOpacity>
+          {discount > 0 && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountText}>
+                {discount}% OFF
+              </Text>
+            </View>
+          )}
+        </View>
 
-      {/* IMAGE */}
-      {image ? (
-        <Image source={{ uri: image }} style={styles.image} />
+        {/* NAME */}
+        <Text numberOfLines={2} style={styles.name}>
+          {item.name}
+        </Text>
+      </Pressable>
+
+      {/* PRICE */}
+      <View style={styles.priceRow}>
+        <Text style={styles.price}>₹{price}</Text>
+        {mrp > price && (
+          <Text style={styles.mrp}>₹{mrp}</Text>
+        )}
+      </View>
+
+      {/* ACTION */}
+      {!cartItem ? (
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => addMedicine(item)}
+        >
+          <Text style={styles.addText}>ADD</Text>
+        </TouchableOpacity>
       ) : (
-        <View style={styles.iconFallback}>
-          <Ionicons name="medkit-outline" size={28} color="#94a3b8" />
+        <View style={styles.qtyWrapper}>
+          {/* MINUS */}
+          <TouchableOpacity
+            onPress={() =>
+              updateQuantity(
+                item._id,
+                cartItem.quantity - 1
+              )
+            }
+          >
+            <Text style={styles.qtyText}>−</Text>
+          </TouchableOpacity>
+
+          {/* COUNT */}
+          <Text style={styles.qtyValue}>
+            {cartItem.quantity}
+          </Text>
+
+          {/* PLUS */}
+          <TouchableOpacity
+            onPress={() =>
+              updateQuantity(
+                item._id,
+                cartItem.quantity + 1
+              )
+            }
+          >
+            <Text style={styles.qtyText}>+</Text>
+          </TouchableOpacity>
+
+          {/* DELETE */}
+          <TouchableOpacity
+            onPress={() =>
+              updateQuantity(item._id, 0)
+            }
+            style={styles.deleteBtn}
+          >
+            <Ionicons
+              name="trash-outline"
+              size={18}
+              color="#fff"
+            />
+          </TouchableOpacity>
         </View>
       )}
-
-      {/* INFO */}
-      <View style={styles.info}>
-        <Text style={styles.name} numberOfLines={1}>
-          {name}
-        </Text>
-
-        <Text style={styles.brand} numberOfLines={1}>
-          {brandName} • {dosageForm}
-        </Text>
-
-        <View style={styles.priceRow}>
-          <Text style={styles.price}>₹{price}</Text>
-          <Text style={styles.mrp}>₹{mrp}</Text>
-        </View>
-
-        <View style={styles.agentBadge}>
-          <Text style={styles.agentText}>
-            Agent ₹{specialPrice}
-          </Text>
-        </View>
-      </View>
     </View>
-    </Pressable>
-
   );
 }
 
@@ -114,73 +142,63 @@ export default function MedicineCard({ medicine, onDeleted }) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#fff",
+    width: "48%",
+    backgroundColor: "#ffffff",
     borderRadius: 18,
-    padding: 14,
-    marginBottom: 14,
-    flexDirection: "row",
-    gap: 12,
-
+    padding: 12,
+    marginBottom: 18,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
     elevation: 3,
   },
 
-  deleteBtn: {
-    position: "absolute",
-    top: 10,
-    right: 10,
-    zIndex: 10,
-    backgroundColor: "#fee2e2",
-    padding: 6,
-    borderRadius: 999,
+  imageWrap: {
+    position: "relative",
+    marginBottom: 10,
   },
 
   image: {
-    width: 64,
-    height: 64,
-    borderRadius: 14,
-  },
-
-  iconFallback: {
-    width: 64,
-    height: 64,
+    width: "100%",
+    height: 130,
     borderRadius: 14,
     backgroundColor: "#f1f5f9",
-    justifyContent: "center",
-    alignItems: "center",
   },
 
-  info: {
-    flex: 1,
-    paddingRight: 28,
+  discountBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+    backgroundColor: "#dc2626",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+
+  discountText: {
+    color: "#ffffff",
+    fontSize: 11,
+    fontWeight: "800",
   },
 
   name: {
-    fontWeight: "800",
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: "700",
     color: "#0f172a",
-  },
-
-  brand: {
-    fontSize: 12,
-    color: "#64748b",
-    marginTop: 2,
+    lineHeight: 18,
   },
 
   priceRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    marginTop: 8,
+    gap: 6,
+    marginTop: 4,
   },
 
   price: {
-    fontWeight: "800",
     fontSize: 16,
-    color: "#16a34a",
+    fontWeight: "800",
+    color: "#1e40af",
   },
 
   mrp: {
@@ -189,18 +207,42 @@ const styles = StyleSheet.create({
     textDecorationLine: "line-through",
   },
 
-  agentBadge: {
-    alignSelf: "flex-start",
-    backgroundColor: "#eef2ff",
-    borderRadius: 999,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginTop: 8,
+  addBtn: {
+    backgroundColor: "#14b8a6",
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 12,
   },
 
-  agentText: {
-    fontSize: 12,
+  addText: {
+    color: "#ffffff",
+    textAlign: "center",
     fontWeight: "700",
-    color: "#4f46e5",
+  },
+
+  qtyWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FF7F11",
+    borderRadius: 14,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    height: 44,
+    justifyContent: "space-between",
+  },
+
+  qtyText: {
+    color: "#ffffff",
+    fontSize: 20,
+    fontWeight: "800",
+  },
+
+  qtyValue: {
+    color: "#ffffff",
+    fontWeight: "800",
+  },
+
+  deleteBtn: {
+    paddingLeft: 10,
   },
 });

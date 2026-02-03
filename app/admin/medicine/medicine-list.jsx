@@ -1,17 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-
-import MedicineCard from "../../../components/shared/medicine/medicine-list/MedicineCard";
+import MedicineCard from "../../../components/admin/medicine/medicine-list/MedicineCard.jsx";
 import { useMedicine } from "../../../context/MedicineContext";
 
 /* ================= CONSTANTS ================= */

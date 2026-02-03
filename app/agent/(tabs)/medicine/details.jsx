@@ -1,19 +1,18 @@
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Dimensions,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
+    ActivityIndicator,
+    Dimensions,
+    Image,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
+import { useMedicine } from "../../../../context/MedicineContext";
 
-import { useMedicine } from "../../../context/MedicineContext";
 
 const { width } = Dimensions.get("window");
 
@@ -84,7 +83,7 @@ export default function MedicineDetails() {
     medicine.stock.totalQuantity <= medicine.stock.minAlertQuantity;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -228,7 +227,7 @@ export default function MedicineDetails() {
           />
         </Section>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

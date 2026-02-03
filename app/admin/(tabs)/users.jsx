@@ -2,13 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -210,7 +210,7 @@ function EmployeeCard({ user }) {
       activeOpacity={0.85}
       onPress={() =>
         router.push({
-          pathname: "/(tabs)/employee-details",
+          pathname: "/admin/employee/profile/abc",
           params: { id: user._id },
         })
       }

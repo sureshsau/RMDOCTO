@@ -1,14 +1,14 @@
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 
@@ -345,6 +345,7 @@ const styles = StyleSheet.create({
   inputWrap: { marginBottom: 16 },
   label: { fontWeight: "600", marginBottom: 6, color: "#334155" },
   input: {
+    color:"#343a44",
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#e2e8f0",
