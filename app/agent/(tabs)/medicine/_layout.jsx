@@ -2,10 +2,10 @@ import { Ionicons } from "@expo/vector-icons";
 import { Stack, router } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { useMedicineCart } from "../../../../context/MedicineCartContext";
@@ -154,7 +154,9 @@ export default function MedicineLayout() {
 
           // 🛒 Cart visible on ALL pages
           headerRight: () => <CartButton />,
+          
         }}
+        initialRouteName="index"
       >
         {/* ================= INDEX ================= */}
         <Stack.Screen
