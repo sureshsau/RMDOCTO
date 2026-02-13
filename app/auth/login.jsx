@@ -4,6 +4,7 @@ import { useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -49,10 +50,21 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
-      const res = await api.post("/auth/login", {
-        phone: cleanPhone, // ✅ web-compatible
-        password,
-      });
+     const res = await api.post(
+  "/auth/login",
+  {
+    phone: cleanPhone,
+    password,
+  },
+  {
+    headers: {
+      "User-Agent":
+        Platform.OS === "android"
+          ? "Android Mobile Expo"
+          : "iPhone Mobile Expo",
+    },
+  }
+);
 
       const { token, user } = res.data || {};
 
@@ -77,8 +89,8 @@ export default function LoginScreen() {
 
       if (role === "admin") router.replace("/admin");
       else if (role === "doctor") router.replace("/doctor");
-      else if (role === "marketing_agent") router.replace("/marketingAgent");
-      else router.replace("/(tabs)");
+      else if (role === "marketing_agent") router.replace("/marketing_agent/(tabs)/index");
+      else router.replace("/");
     } catch (err) {
       Toast.show({
         type: "error",

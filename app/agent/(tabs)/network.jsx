@@ -1,22 +1,21 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Modal,
+    Pressable,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import api from "../../../services/axios.js";
+import api from "../../../services/axios";
 
 /* ===== COLORS ===== */
 const PRIMARY = "#0d9488";
 const PRIMARY_LIGHT = "#ccfbf1";
-const SECTION_BG = "#f0fdfa";
 const BG = "#f8fafc";
 const CARD = "#ffffff";
 const BORDER = "#e2e8f0";
@@ -25,46 +24,42 @@ const MUTED = "#64748b";
 
 /* ================= HELPERS ================= */
 
-const buildLevels = (roots) => {
+/** 🔑 THIS FIXES LEVEL-3+ */
+const buildLevels = (nodes = []) => {
   const levels = [];
-  const walk = (nodes, depth = 0) => {
+
+  const dfs = (list, depth = 0) => {
+    if (!Array.isArray(list) || list.length === 0) return;
+
     if (!levels[depth]) levels[depth] = [];
-    nodes.forEach((n) => {
-      levels[depth].push(n);
-      if (n.children?.length) walk(n.children, depth + 1);
+
+    list.forEach((node) => {
+      levels[depth].push(node);
+      if (Array.isArray(node.children) && node.children.length > 0) {
+        dfs(node.children, depth + 1);
+      }
     });
   };
-  walk(roots);
+
+  dfs(nodes);
   return levels;
 };
 
-const countTotal = (nodes = []) =>
-  nodes.reduce(
-    (s, n) => s + 1 + countTotal(n.children || []),
-    0
-  );
-
-const countDirect = (roots = []) =>
-  roots.reduce((s, r) => s + (r.children?.length || 0), 0);
-
-const maxLevel = (levels = []) =>
-  Math.max(...levels.map((_, i) => i), 0);
-
 /* ================= MAIN ================= */
 
-export default function MarketingNetwork() {
+export default function AgentNetwork() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [roots, setRoots] = useState([]);
+  const [data, setData] = useState(null);
   const [selected, setSelected] = useState(null);
 
   const fetchNetwork = async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
-      const res = await api.get("/marketing-agent/network");
-      console.log(res.data.data.tree)
-      setRoots(res?.data?.data?.tree || []);
-    } catch {
+
+      const res = await api.get("/agent/network");
+      setData(res?.data?.data?.data || null);
+    } catch (e) {
       Toast.show({
         type: "error",
         text1: "Failed to load network",
@@ -92,6 +87,10 @@ export default function MarketingNetwork() {
     );
   }
 
+  if (!data) return null;
+
+  const { marketingAgent, parentAgent, self, downlineTree } = data;
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -104,35 +103,51 @@ export default function MarketingNetwork() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADER */}
-        <Text style={styles.title}>Network</Text>
+        {/* ===== HEADER ===== */}
+        <Text style={styles.title}>My Network</Text>
         <Text style={styles.subtitle}>
-          Your agent hierarchy overview
+          Agents referred by you
         </Text>
 
-        {/* OVERVIEW */}
-        <View style={styles.overviewCard}>
-          <OverviewItem label="Direct Agents" value={countDirect(roots)} />
-          <Divider />
-          <OverviewItem label="Total Agents" value={countTotal(roots)} />
-          <Divider />
-          <OverviewItem label="Levels" value={`L${maxLevel(buildLevels(roots))}`} />
+        {/* ===== TOP HIERARCHY ===== */}
+        <View style={styles.topCard}>
+          <HierarchyNode label="Marketing Agent" agent={marketingAgent} />
+          <HierarchyNode label="Parent Agent" agent={parentAgent} />
+          <HierarchyNode label="You" agent={self} highlight />
         </View>
 
-        {/* ROOT SECTIONS */}
-        {roots.map((root, index) => (
-          <RootSection
-            key={root.id}
-            root={root}
-            index={index}
-            onPress={setSelected}
-          />
-        ))}
+        {/* ===== DOWNLINE ===== */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Your Downline</Text>
+
+          {Array.isArray(downlineTree) && downlineTree.length === 0 && (
+            <Text style={styles.emptyText}>
+              No agents under you yet
+            </Text>
+          )}
+
+          {buildLevels(downlineTree).map((level, index) => (
+            <ScrollView
+              key={index}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.levelRow}
+            >
+              {level.map((agent) => (
+                <AgentCard
+                  key={agent.id}
+                  agent={agent}
+                  onPress={setSelected}
+                />
+              ))}
+            </ScrollView>
+          ))}
+        </View>
 
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* MODAL */}
+      {/* ===== MODAL ===== */}
       <Modal transparent visible={!!selected} animationType="fade">
         <Pressable
           style={styles.modalOverlay}
@@ -140,6 +155,7 @@ export default function MarketingNetwork() {
         >
           <View style={styles.modal}>
             <Text style={styles.modalTitle}>Agent Details</Text>
+
             <InfoRow label="Name" value={selected?.name} />
             <InfoRow label="Phone" value={selected?.phone} />
             <InfoRow label="Level" value={`L${selected?.level}`} />
@@ -157,74 +173,41 @@ export default function MarketingNetwork() {
   );
 }
 
-/* ================= ROOT SECTION ================= */
+/* ================= UI COMPONENTS ================= */
 
-const RootSection = ({ root, index, onPress }) => {
-  const levels = buildLevels([root]);
+const HierarchyNode = ({ label, agent, highlight }) => {
+  if (!agent) return null;
 
   return (
-    <View style={styles.section}>
-      {/* ROOT HEADER */}
-      <View style={styles.rootHeader}>
-        <Text style={styles.rootTitle}>
-          Root Agent {index + 1}
-        </Text>
-      </View>
-
-      {/* TREE */}
-      <View style={styles.treeBox}>
-        {levels.map((row, i) => (
-          <View key={i} style={styles.levelRow}>
-            {row.map((node) => (
-              <AgentNode
-                key={node.id}
-                node={node}
-                highlight={i === 0}
-                onPress={onPress}
-              />
-            ))}
-          </View>
-        ))}
-      </View>
+    <View style={[styles.hNode, highlight && styles.hHighlight]}>
+      <Text style={styles.hLabel}>{label}</Text>
+      <Text style={styles.hName}>{agent.name}</Text>
+      <Text style={styles.hPhone}>📞 {agent.phone}</Text>
     </View>
   );
 };
 
-/* ================= UI COMPONENTS ================= */
-
-const AgentNode = ({ node, highlight, onPress }) => (
+const AgentCard = ({ agent, onPress }) => (
   <TouchableOpacity
-    style={[
-      styles.node,
-      highlight && styles.nodePrimary,
-    ]}
-    onPress={() => onPress(node)}
+    style={styles.agentCard}
+    onPress={() => onPress(agent)}
     activeOpacity={0.85}
   >
     <View style={styles.avatar}>
       <Text style={styles.avatarText}>
-        {node.name?.[0]}
+        {agent.name?.[0]}
       </Text>
     </View>
 
-    <Text numberOfLines={1} style={styles.nodeName}>
-      {node.name}
+    <Text numberOfLines={1} style={styles.agentName}>
+      {agent.name}
     </Text>
 
     <View style={styles.badge}>
-      <Text style={styles.badgeText}>L{node.level}</Text>
+      <Text style={styles.badgeText}>L{agent.level}</Text>
     </View>
   </TouchableOpacity>
 );
-
-const OverviewItem = ({ label, value }) => (
-  <View style={styles.overviewItem}>
-    <Text style={styles.overviewValue}>{value}</Text>
-    <Text style={styles.overviewLabel}>{label}</Text>
-  </View>
-);
-
-const Divider = () => <View style={styles.divider} />;
 
 const InfoRow = ({ label, value }) => (
   <View style={styles.infoRow}>
@@ -236,7 +219,11 @@ const InfoRow = ({ label, value }) => (
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG, padding: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: BG,
+    padding: 16,
+  },
 
   loader: {
     flex: 1,
@@ -244,83 +231,89 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  title: { fontSize: 22, fontWeight: "900" },
-  subtitle: { fontSize: 13, color: MUTED, marginBottom: 16 },
+  title: {
+    fontSize: 22,
+    fontWeight: "900",
+  },
 
-  /* OVERVIEW */
-  overviewCard: {
-    flexDirection: "row",
-    backgroundColor: PRIMARY_LIGHT,
-    borderRadius: 18,
-    paddingVertical: 16,
+  subtitle: {
+    fontSize: 13,
+    color: MUTED,
+    marginBottom: 16,
+  },
+
+  /* TOP */
+  topCard: {
+    backgroundColor: CARD,
+    borderRadius: 20,
+    padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: PRIMARY,
+    borderColor: BORDER,
   },
-  overviewItem: { flex: 1, alignItems: "center" },
-  overviewValue: {
-    fontSize: 18,
-    fontWeight: "900",
-    color: PRIMARY,
+
+  hNode: {
+    paddingVertical: 10,
   },
-  overviewLabel: {
-    fontSize: 12,
+
+  hHighlight: {
+    backgroundColor: PRIMARY_LIGHT,
+    borderRadius: 12,
+    padding: 12,
+  },
+
+  hLabel: {
+    fontSize: 11,
+    color: MUTED,
+  },
+
+  hName: {
+    fontSize: 14,
+    fontWeight: "800",
     color: TEXT,
-    marginTop: 2,
   },
-  divider: {
-    width: 1,
-    height: 36,
-    backgroundColor: PRIMARY,
-    opacity: 0.3,
+
+  hPhone: {
+    fontSize: 12,
+    color: MUTED,
   },
 
   /* SECTION */
   section: {
-    backgroundColor: SECTION_BG,
-    borderRadius: 22,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#99f6e4",
-  },
-
-  rootHeader: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  rootTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: PRIMARY,
-  },
-
-  treeBox: {
     backgroundColor: CARD,
-    borderRadius: 18,
-    paddingVertical: 18,
-  },
-
-  levelRow: {
-    flexDirection: "row",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    marginBottom: 22,
-  },
-
-  node: {
-    width: 84,
-    paddingVertical: 10,
-    backgroundColor: "#f1f5f9",
-    borderRadius: 14,
-    alignItems: "center",
-    marginHorizontal: 10,
+    borderRadius: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: BORDER,
   },
-  nodePrimary: {
-    backgroundColor: PRIMARY_LIGHT,
-    borderColor: PRIMARY,
+
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: "800",
+    marginBottom: 12,
+  },
+
+  emptyText: {
+    textAlign: "center",
+    color: MUTED,
+    marginVertical: 20,
+  },
+
+  levelRow: {
+    alignItems: "center",
+    paddingHorizontal: 8,
+    marginBottom: 18,
+  },
+
+  agentCard: {
+    width: 88,
+    backgroundColor: "#f1f5f9",
+    borderRadius: 14,
+    alignItems: "center",
+    paddingVertical: 10,
+    marginHorizontal: 10,
+    borderWidth: 1,
+    borderColor: BORDER,
   },
 
   avatar: {
@@ -332,13 +325,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 6,
   },
+
   avatarText: {
     color: "#fff",
     fontWeight: "900",
     fontSize: 15,
   },
 
-  nodeName: {
+  agentName: {
     fontSize: 12,
     fontWeight: "700",
     color: TEXT,
@@ -350,6 +344,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 999,
   },
+
   badgeText: {
     fontSize: 10,
     fontWeight: "800",
@@ -363,17 +358,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
   modal: {
     backgroundColor: CARD,
     width: "80%",
     borderRadius: 16,
     padding: 20,
   },
+
   modalTitle: {
     fontSize: 16,
     fontWeight: "800",
     marginBottom: 12,
   },
+
   closeBtn: {
     marginTop: 16,
     backgroundColor: PRIMARY,
@@ -381,13 +379,23 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
   },
-  closeText: { color: "#fff", fontWeight: "800" },
+
+  closeText: {
+    color: "#fff",
+    fontWeight: "800",
+  },
 
   infoRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 6,
   },
-  infoLabel: { color: MUTED },
-  infoValue: { fontWeight: "700" },
+
+  infoLabel: {
+    color: MUTED,
+  },
+
+  infoValue: {
+    fontWeight: "700",
+  },
 });

@@ -39,12 +39,12 @@ export default function Index() {
             onPress={() => router.push("/agent/wallet")}
           />
 
-          <ActionCard
+          {/* <ActionCard
             title="My Orders"
             subtitle="Track & manage orders"
             emoji="📦"
-            onPress={() => router.push("/agent/orders")}
-          />
+            onPress={() => router.push("/agent/(tabs)/medicine/")}
+          /> */}
 
           <ActionCard
             title="Register Agent"
@@ -57,7 +57,7 @@ export default function Index() {
             title="Medicine Orders"
             subtitle="Customer medicine orders"
             emoji="💊"
-            onPress={() => router.push("/agent/(tabs)/medicine/history")}
+            onPress={() => router.push("/agent/medicine/history")}
           />
         </View>
       </ScrollView>

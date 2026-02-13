@@ -7,11 +7,11 @@ import {
   View
 } from "react-native";
 import Toast from "react-native-toast-message";
+import AddressSelector from '../../../components/shared/medicine/checkout/AddressSelector';
+import UserInfo from '../../../components/shared/medicine/checkout/UserInfo';
+import { useAuth } from "../../../context/AuthContext";
+import { useMedicineCart } from "../../../context/MedicineCartContext";
 
-import AddressSelector from "../../../../components/shared/medicine/checkout/AddressSelector";
-import UserInfo from "../../../../components/shared/medicine/checkout/UserInfo";
-import { useAuth } from "../../../../context/AuthContext";
-import { useMedicineCart } from "../../../../context/MedicineCartContext";
 
 export default function Cart() {
   const {

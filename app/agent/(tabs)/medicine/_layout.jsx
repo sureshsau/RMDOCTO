@@ -83,7 +83,7 @@ function CartButton() {
 
   return (
     <TouchableOpacity
-      onPress={() => router.push("/agent/(tabs)/medicine/checkOut")}
+      onPress={() => router.push("/agent/medicine/checkOut")}
       style={{
         marginRight: 12,
         paddingRight: 2,   // ✅ extra space so badge doesn’t clip
@@ -178,6 +178,13 @@ export default function MedicineLayout() {
           name="checkOut"
           options={{
             title: "Medicine Details",
+            headerRight:()=>null
+          }}
+        />
+        <Stack.Screen
+          name="history"
+          options={{
+            title: "previous orders",
             headerRight:()=>null
           }}
         />

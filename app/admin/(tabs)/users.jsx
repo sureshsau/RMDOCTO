@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Modal,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -16,6 +17,27 @@ import Toast from "react-native-toast-message";
 import { useRBAC } from "../../../context/RABACContext";
 import { useUser } from "../../../context/UserContext";
 
+/* =============== ACTIONS CONFIG =============== */
+// Edit these arrays to change available actions per role
+const ACTIONS_MAP = {
+  admin: [
+    { id: "give-role", label: "Give Role", route: "/admin/employee/roles" },
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/attendance" },
+    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+  ],
+  marketing_agent: [
+    { id: "view-network", label: "View Network", route: "/marketing_agent/network" },
+    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+  ],
+  agent: [
+    { id: "orders", label: "View Orders", route: "/agent/orders" },
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/attendance" },
+  ],
+  default: [
+    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+  ],
+};
+
 /* ================= MAIN ================= */
 
 export default function Employees() {
@@ -27,6 +49,32 @@ export default function Employees() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
+  const [actionsModalVisible, setActionsModalVisible] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  const openActions = (user) => {
+    setSelectedUser(user);
+    setActionsModalVisible(true);
+  };
+
+  const closeActions = () => {
+    setSelectedUser(null);
+    setActionsModalVisible(false);
+  };
+
+  const handleAction = (action) => {
+    if (!selectedUser) return;
+    const roleKey = (selectedUser.roles?.[0] || "").toString();
+    // If action has a route, navigate with id param; otherwise show a toast
+    if (action.route) {
+      // Append user id where suitable - navigate to route with params
+      router.push({ pathname: action.route, params: { id: selectedUser._id } });
+    } else {
+      Toast.show({ type: "info", text1: action.label, text2: "Action not implemented" });
+    }
+
+    closeActions();
+  };
 
   /* ================= LOAD ================= */
 
@@ -175,9 +223,36 @@ export default function Employees() {
         )}
 
         {filteredEmployees.map((emp) => (
-          <EmployeeCard key={emp._id} user={emp} />
+          <EmployeeCard key={emp._id} user={emp} onOpenActions={openActions} />
         ))}
       </ScrollView>
+
+      {/* Actions Modal */}
+      <Modal visible={actionsModalVisible} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={closeActions}>
+          <View style={styles.actionsOverlay}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.actionsBox}>
+                <Text style={styles.sectionText}>Actions</Text>
+                {(() => {
+                  const roleRaw = selectedUser?.roles?.[0] || "";
+                  const norm = roleRaw.toString().toLowerCase().replace(/\s+/g, "_");
+                  const actions = ACTIONS_MAP[norm] || ACTIONS_MAP[roleRaw] || ACTIONS_MAP.default;
+                  return actions.map((act) => (
+                    <TouchableOpacity key={act.id} style={styles.actionItem} onPress={() => handleAction(act)}>
+                      <Text style={styles.actionText}>{act.label}</Text>
+                    </TouchableOpacity>
+                  ));
+                })()}
+
+                <TouchableOpacity style={[styles.actionItem, styles.actionCancel]} onPress={closeActions}>
+                  <Text style={[styles.actionText, { color: '#6b6dbf' }]}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -201,32 +276,38 @@ function Stat({ label, value }) {
   );
 }
 
-function EmployeeCard({ user }) {
+function EmployeeCard({ user, onOpenActions }) {
   const role = user.roles?.[0] || "Staff";
   const status = user.isActive ? "Active" : "Inactive";
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.85}
-      onPress={() =>
-        router.push({
-          pathname: "/admin/employee/profile/abc",
-          params: { id: user._id },
-        })
-      }
-      style={styles.card}
-    >
-      {/* AVATAR (ICON FALLBACK, SAME SIZE) */}
-      <View style={styles.avatar}>
-        <Ionicons name="person" size={22} color="#6b6dbf" />
-      </View>
+    <View style={styles.card}>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        onPress={() =>
+          router.push({
+            pathname: "/admin/employee/profile/abc",
+            params: { id: user._id },
+          })
+        }
+        style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
+      >
+        {/* AVATAR (ICON FALLBACK, SAME SIZE) */}
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={22} color="#6b6dbf" />
+        </View>
 
-      <View style={{ flex: 1 }}>
-        <Text style={styles.name}>{user.name}</Text>
-        <Text style={styles.meta}>
-          {role} • {user.dashboard}
-        </Text>
-      </View>
+        <View style={{ flex: 1 }}>
+          <Text style={styles.name}>{user.name}</Text>
+          <Text style={styles.meta}>
+            {role} • {user.dashboard}
+          </Text>
+        </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.optionBtn} onPress={() => onOpenActions && onOpenActions(user)}>
+        <Ionicons name="ellipsis-vertical" size={18} color="#6b6dbf" />
+      </TouchableOpacity>
 
       <View
         style={[
@@ -251,7 +332,7 @@ function EmployeeCard({ user }) {
           {status}
         </Text>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -366,4 +447,25 @@ const styles = StyleSheet.create({
 
   emptyState: { alignItems: "center", marginTop: 80 },
   emptyText: { marginTop: 16, color: "#64748b", fontWeight: "600" },
+  optionBtn: { padding: 8, marginRight: 8, borderRadius: 8, backgroundColor: '#fff' },
+
+  actionsOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionsBox: {
+    width: '85%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+  },
+  actionItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  actionText: { fontSize: 16 },
+  actionCancel: { borderBottomWidth: 0, marginTop: 8 },
 });

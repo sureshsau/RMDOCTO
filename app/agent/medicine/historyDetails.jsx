@@ -1,6 +1,6 @@
 
 import Toast from "react-native-toast-message";
-import api from "../../../../services/axios";
+import api from "../../../services/axios";
 
 /* ================= MAIN ================= */
 
@@ -9,14 +9,14 @@ import api from "../../../../services/axios";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Linking,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 

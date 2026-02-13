@@ -8,25 +8,42 @@
     "scheme": "rmdocto",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
     "ios": {
       "supportsTablet": true
     },
+
     "android": {
+      "package": "com.sureshsau2004.RMDOCTO",
       "usesCleartextTraffic": true,
+
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyDX_n9riz8mS2Wo5-K2ZRfip7N_scxDuTU"
+        }
+      },
+
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/icon.png",
         "backgroundImage": "./assets/images/icon.png",
         "monochromeImage": "./assets/images/icon.png"
       },
+
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
-      "package": "com.sureshsau2004.RMDOCTO"
+      "predictiveBackGestureEnabled": false
     },
+
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       "expo-router",
       [
@@ -43,11 +60,14 @@
       ],
       "expo-secure-store"
     ],
+
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
     },
+
     "extra": {
+      "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyDX_n9riz8mS2Wo5-K2ZRfip7N_scxDuTU",
       "router": {},
       "eas": {
         "projectId": "874533e7-0782-4bf7-b072-4b2c2530ac27"

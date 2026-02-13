@@ -11,7 +11,7 @@ import {
   View
 } from "react-native";
 import Toast from "react-native-toast-message";
-import api from "../../../../services/axios";
+import api from "../../../services/axios";
 
 /* ================= MAIN ================= */
 
@@ -70,7 +70,7 @@ export default function MedicineHistory() {
         activeOpacity={0.85}
         onPress={() =>
           router.push({
-            pathname: "/agent/(tabs)/medicine/historyDetails",
+            pathname: "/agent/medicine/historyDetails",
             params: { orderId: item.orderId },
           })
         }
