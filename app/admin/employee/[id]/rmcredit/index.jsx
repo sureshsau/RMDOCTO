@@ -6,6 +6,7 @@ import {
     Modal,
     RefreshControl,
     ScrollView,
+    StyleSheet,
     Text,
     TextInput,
     TouchableOpacity,
@@ -376,3 +377,178 @@ function FormModal({ visible, title, onClose, onSubmit, loading, children }) {
     </Modal>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#eef0fa",
+  },
+
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* ================= CARD ================= */
+
+  card: {
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  name: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+
+  meta: {
+    fontSize: 13,
+    color: "#64748b",
+    marginTop: 4,
+  },
+
+  /* ================= WALLET ================= */
+
+  walletCard: {
+    backgroundColor: "#6b6dbf",
+    padding: 25,
+    borderRadius: 25,
+    marginBottom: 20,
+  },
+
+  walletLabel: {
+    color: "#fff",
+    fontSize: 14,
+    opacity: 0.8,
+  },
+
+  walletValue: {
+    color: "#fff",
+    fontSize: 30,
+    fontWeight: "800",
+    marginTop: 6,
+  },
+
+  walletRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 10,
+  },
+
+  walletSub: {
+    color: "#fff",
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  /* ================= ACTION BUTTONS ================= */
+
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+
+  actionBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 10,
+  },
+
+  /* ================= TRANSACTIONS ================= */
+
+  sectionTitle: {
+    fontWeight: "700",
+    fontSize: 14,
+    marginBottom: 10,
+    color: "#334155",
+  },
+
+  txCard: {
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+
+  txType: {
+    fontWeight: "700",
+    fontSize: 13,
+    color: "#0f172a",
+  },
+
+  txDesc: {
+    fontSize: 12,
+    color: "#64748b",
+    marginTop: 2,
+  },
+
+  txAmount: {
+    fontWeight: "700",
+    fontSize: 14,
+  },
+
+  /* ================= MODAL ================= */
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  modalBox: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 15,
+    elevation: 5,
+  },
+
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    marginBottom: 15,
+    color: "#0f172a",
+  },
+
+  input: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    marginBottom: 12,
+    fontSize: 14,
+    color: "#0f172a",
+  },
+
+  submitBtn: {
+    backgroundColor: "#6b6dbf",
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 4,
+  },
+});

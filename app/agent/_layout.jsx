@@ -1,10 +1,13 @@
 import { Stack } from "expo-router";
 import { MedicineCartProvider } from "../../context/MedicineCartContext";
+import { RMCreditProvider } from "../../context/RMCreditContext";
 
 export default function MedicineLayout() {
   return (
-    <MedicineCartProvider>
-    <Stack
+    <RMCreditProvider>
+      <MedicineCartProvider>
+     
+         <Stack
       screenOptions={{
         headerStyle: {
           backgroundColor: "#6b6dbf",
@@ -47,7 +50,9 @@ export default function MedicineLayout() {
         }}
       />
     </Stack>
+
     </MedicineCartProvider>
+    </RMCreditProvider>
 
   );
 }

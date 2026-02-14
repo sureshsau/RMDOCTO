@@ -36,7 +36,7 @@ export default function Index() {
             title="Wallet"
             subtitle="Transactions & balance"
             emoji="💰"
-            onPress={() => router.push("/agent/wallet")}
+            onPress={() => router.push("/agent/rmcredit")}
           />
 
           {/* <ActionCard
