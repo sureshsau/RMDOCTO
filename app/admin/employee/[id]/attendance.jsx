@@ -1,18 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../../../services/axios";
 
@@ -38,7 +37,18 @@ export default function EditEmployee() {
 
   /* ================= STATE ================= */
 
-  const [faceImage, setFaceImage] = useState(faceUri || null);
+  const resolveFace = (v) => {
+    if (!v) return null;
+    if (typeof v === "string") return v;
+    if (typeof v === "object") return v.url || v.faceUri || null;
+    return null;
+  };
+
+  const [faceImage, setFaceImage] = useState(resolveFace(faceUri) || null);
+
+  useEffect(() => {
+    setFaceImage(resolveFace(faceUri));
+  }, [faceUri]);
 
   const [shiftStartTime, setShiftStartTime] = useState("09:00");
   const [shiftEndTime, setShiftEndTime] = useState("17:00");
@@ -164,6 +174,7 @@ export default function EditEmployee() {
 
       router.back();
     } catch (err) {
+      console.log(err);
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -182,14 +193,7 @@ export default function EditEmployee() {
   /* ================= UI ================= */
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Attendance Setup</Text>
-      </View>
+    <View style={styles.safeArea}>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* USER CARD */}
@@ -214,7 +218,10 @@ export default function EditEmployee() {
         <Card center>
           <TouchableOpacity
             onPress={() =>
-              router.push(`/admin/employee/${id}/face-capture`)
+              router.push({
+                pathname: `/admin/employee/${id}/face-capture`,
+                params: { returnTo: 'attendance' },
+              })
             }
             style={styles.faceScanner}
           >
@@ -345,7 +352,7 @@ export default function EditEmployee() {
           </View>
         </View>
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 

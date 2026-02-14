@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
+  Image,
   Modal,
   RefreshControl,
   ScrollView,
@@ -9,6 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,16 +24,17 @@ import { useUser } from "../../../context/UserContext";
 const ACTIONS_MAP = {
   admin: [
     { id: "give-role", label: "Give Role", route: "/admin/employee/roles" },
-    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/attendance" },
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
   ],
   marketing_agent: [
     { id: "view-network", label: "View Network", route: "/marketing_agent/network" },
     { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
   ],
   agent: [
     { id: "orders", label: "View Orders", route: "/agent/orders" },
-    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/attendance" },
+    { id: "rmcredit", label: "RM Credit", route: "/admin/employee/[id]/rmcredit" },
   ],
   default: [
     { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
@@ -67,8 +70,37 @@ export default function Employees() {
     const roleKey = (selectedUser.roles?.[0] || "").toString();
     // If action has a route, navigate with id param; otherwise show a toast
     if (action.route) {
-      // Append user id where suitable - navigate to route with params
-      router.push({ pathname: action.route, params: { id: selectedUser._id } });
+      // replace :id placeholder if present
+      const route = action.route.includes(":id")
+        ? action.route.replace(":id", selectedUser._id)
+        : action.route;
+      // If navigating to attendance, pass selected user data as params
+      if (
+        action.id === 'set-attendance' ||
+        route.includes('/attendance') ||
+        action.id === 'rmcredit' ||
+        route.includes('/rmcredit')
+      ) {
+        const faceUri =
+          selectedUser?.faceImage?.url ||
+          (typeof selectedUser?.faceImage === 'string' ? selectedUser.faceImage : null) ||
+          selectedUser?.faceUri ||
+          '';
+
+        router.push({
+          pathname: route,
+          params: {
+            id: selectedUser._id,
+            name: selectedUser.name,
+            phone: selectedUser.phone,
+            email: selectedUser.email,
+            role: selectedUser.roles?.[0] || '',
+            faceUri,
+          },
+        });
+      } else {
+        router.push({ pathname: route });
+      }
     } else {
       Toast.show({ type: "info", text1: action.label, text2: "Action not implemented" });
     }
@@ -266,7 +298,6 @@ function Section({ title }) {
     </View>
   );
 }
-
 function Stat({ label, value }) {
   return (
     <View style={styles.statItem}>
@@ -292,16 +323,19 @@ function EmployeeCard({ user, onOpenActions }) {
         }
         style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}
       >
-        {/* AVATAR (ICON FALLBACK, SAME SIZE) */}
-        <View style={styles.avatar}>
-          <Ionicons name="person" size={22} color="#6b6dbf" />
-        </View>
+        {/* AVATAR (IMAGE FALLBACK -> ICON) */}
+        { (user.faceImage?.url || typeof user.faceImage === 'string' || user.faceUri) ? (
+          <Image source={{ uri: user.faceImage?.url || (typeof user.faceImage === 'string' ? user.faceImage : user.faceUri) }} style={styles.avatarImage} />
+        ) : (
+          <View style={styles.avatar}>
+            <Ionicons name="person" size={22} color="#6b6dbf" />
+          </View>
+        )}
 
         <View style={{ flex: 1 }}>
           <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.meta}>
-            {role} • {user.dashboard}
-          </Text>
+          <Text style={styles.meta}>{role} • {user.dashboard}</Text>
+          <Text style={styles.meta}>{user.phone}{user.email ? ` • ${user.email}` : ''}</Text>
         </View>
       </TouchableOpacity>
 
@@ -435,6 +469,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  avatarImage: { width: 48, height: 48, borderRadius: 24, marginRight: 16 },
   name: { fontWeight: "600", color: "#0f172a" },
   meta: { fontSize: 12, color: "#64748b", marginTop: 2 },
 
