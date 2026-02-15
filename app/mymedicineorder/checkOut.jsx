@@ -9,13 +9,13 @@ import {
 } from "react-native";
 import RazorpayCheckout from "react-native-razorpay";
 import Toast from "react-native-toast-message";
-import api from "../../../services/axios";
+import api from "../../services/axios.js";
 
-import AddressSelector from "../../../components/shared/medicine/checkout/AddressSelector";
-import UserInfo from "../../../components/shared/medicine/checkout/UserInfo";
-import { useAuth } from "../../../context/AuthContext";
-import { useMedicineCart } from "../../../context/MedicineCartContext";
-import { useRMCredit } from "../../../context/RMCreditContext";
+import AddressSelector from "../../components/shared/medicine/checkout/AddressSelector.jsx";
+import UserInfo from "../../components/shared/medicine/checkout/UserInfo";
+import { useAuth } from "../../context/AuthContext";
+import { useMedicineCart } from "../../context/MedicineCartContext";
+import { useRMCredit } from "../../context/RMCreditContext";
 
 export default function Cart() {
   const {

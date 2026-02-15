@@ -86,11 +86,12 @@ export default function LoginScreen() {
         user.role ||
         user.roles?.[0] ||
         "user";
+      router.replace('/');
 
-      if (role === "admin") router.replace("/admin");
-      else if (role === "doctor") router.replace("/doctor");
-      else if (role === "marketing_agent") router.replace("/marketing_agent/(tabs)/index");
-      else router.replace("/");
+      // if (role === "admin") router.replace("/admin");
+      // else if (role === "doctor") router.replace("/doctor");
+      // else if (role === "marketing_agent") router.replace("/marketing_agent/(tabs)/index");
+      // else router.replace("/");
     } catch (err) {
       Toast.show({
         type: "error",

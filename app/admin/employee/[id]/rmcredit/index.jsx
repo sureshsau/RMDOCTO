@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useLocalSearchParams } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
@@ -10,18 +11,15 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../../../../services/axios.js";
 
 export default function RMCreditAdmin() {
-  const { id, name, phone, role } = useLocalSearchParams();
-
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [btnLoading, setBtnLoading] = useState(false);
+  const { id, name = "Agent", phone = "-", role = "-" } =
+    useLocalSearchParams();
 
   const [wallet, setWallet] = useState({
     balance: 0,
@@ -32,14 +30,18 @@ export default function RMCreditAdmin() {
 
   const [transactions, setTransactions] = useState([]);
 
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [btnLoading, setBtnLoading] = useState(false);
+
   const [addModal, setAddModal] = useState(false);
   const [revokeModal, setRevokeModal] = useState(false);
   const [verifyModal, setVerifyModal] = useState(false);
 
   const [amount, setAmount] = useState("");
+  const [description, setDescription] = useState("");
   const [expiryDate, setExpiryDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [description, setDescription] = useState("");
   const [otp, setOtp] = useState("");
 
   useEffect(() => {
@@ -52,16 +54,17 @@ export default function RMCreditAdmin() {
 
       const res = await api.get(`/rmcredit/admin/${id}`);
 
-      setWallet(res.data?.data?.wallet || {
-        balance: 0,
-        totalCredit: 0,
-        usedCredit: 0,
-        expiryDate: null,
-      });
+      setWallet(
+        res.data?.data?.wallet || {
+          balance: 0,
+          totalCredit: 0,
+          usedCredit: 0,
+          expiryDate: null,
+        }
+      );
 
       setTransactions(res.data?.data?.transactions || []);
     } catch (err) {
-      // ❌ No toast here if wallet not found
       setWallet({
         balance: 0,
         totalCredit: 0,
@@ -80,6 +83,8 @@ export default function RMCreditAdmin() {
     fetchData(true);
   }, []);
 
+  /* ================= ADD CREDIT ================= */
+
   const handleAddCredit = async () => {
     try {
       setBtnLoading(true);
@@ -93,25 +98,24 @@ export default function RMCreditAdmin() {
 
       Toast.show({
         type: "success",
-        text1: "Credit Added",
-        text2: "Credit successfully added to agent",
+        text1: "Credit Added Successfully",
       });
 
       setAddModal(false);
       setAmount("");
       setDescription("");
-
       fetchData();
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: "Add Credit Failed",
-        text2: err?.response?.data?.message || "Something went wrong",
+        text1: err?.response?.data?.message || "Failed",
       });
     } finally {
       setBtnLoading(false);
     }
   };
+
+  /* ================= REQUEST REVOKE ================= */
 
   const handleRequestRevoke = async () => {
     try {
@@ -124,8 +128,7 @@ export default function RMCreditAdmin() {
 
       Toast.show({
         type: "success",
-        text1: "OTP Sent",
-        text2: "OTP sent to agent successfully",
+        text1: "OTP Sent Successfully",
       });
 
       setRevokeModal(false);
@@ -133,13 +136,14 @@ export default function RMCreditAdmin() {
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: "Revoke Failed",
-        text2: err?.response?.data?.message || "Request failed",
+        text1: err?.response?.data?.message || "Failed",
       });
     } finally {
       setBtnLoading(false);
     }
   };
+
+  /* ================= VERIFY OTP ================= */
 
   const handleVerifyRevoke = async () => {
     try {
@@ -152,20 +156,17 @@ export default function RMCreditAdmin() {
 
       Toast.show({
         type: "success",
-        text1: "Credit Revoked",
-        text2: "Credit revoked successfully",
+        text1: "Credit Revoked Successfully",
       });
 
       setVerifyModal(false);
       setOtp("");
       setAmount("");
-
       fetchData();
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: "OTP Verification Failed",
-        text2: err?.response?.data?.message || "Invalid OTP",
+        text1: err?.response?.data?.message || "Invalid OTP",
       });
     } finally {
       setBtnLoading(false);
@@ -181,332 +182,330 @@ export default function RMCreditAdmin() {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
+
       <ScrollView
-        contentContainerStyle={{ padding: 20 }}
+        contentContainerStyle={styles.scroll}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Agent Info */}
-        <View style={styles.card}>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.meta}>{role}</Text>
-          <Text style={styles.meta}>{phone}</Text>
-        </View>
-
-        {/* Wallet */}
-        <View style={styles.walletCard}>
-          <Text style={styles.walletLabel}>Balance</Text>
-          <Text style={styles.walletValue}>₹ {wallet.balance}</Text>
-
-          <View style={styles.walletRow}>
-            <Text style={styles.walletSub}>
-              Total: ₹ {wallet.totalCredit}
-            </Text>
-            <Text style={styles.walletSub}>
-              Used: ₹ {wallet.usedCredit}
-            </Text>
+        {/* AGENT INFO */}
+        <View style={styles.adminCard}>
+          <Ionicons name="person-circle" size={60} color="#6b6dbf" />
+          <View style={{ marginLeft: 15 }}>
+            <Text style={styles.adminName}>{name}</Text>
+            <Text style={styles.adminMeta}>{role}</Text>
+            <Text style={styles.adminMeta}>{phone}</Text>
           </View>
-
-          <Text style={styles.walletSub}>
-            Expiry: {wallet.expiryDate ? wallet.expiryDate.slice(0, 10) : "-"}
-          </Text>
         </View>
 
-        {/* Buttons */}
-        <View style={styles.row}>
-          <ActionButton
-            label="Add Credit"
-            color="#16a34a"
-            onPress={() => setAddModal(true)}
-          />
-          <ActionButton
-            label="Revoke"
-            color="#dc2626"
-            onPress={() => setRevokeModal(true)}
-          />
+        {/* BALANCE CARD */}
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceLabel}>Current Balance</Text>
+          <Text style={styles.balanceValue}>₹ {wallet.balance}</Text>
+
+          <View style={styles.balanceRow}>
+            <WalletStat label="Total" value={`₹ ${wallet.totalCredit}`} />
+            <WalletStat label="Used" value={`₹ ${wallet.usedCredit}`} />
+            <WalletStat
+              label="Expiry"
+              value={wallet.expiryDate?.slice(0, 10) || "-"}
+            />
+          </View>
         </View>
 
-        {/* Transactions */}
-        <Text style={styles.sectionTitle}>Recent Transactions</Text>
+        {/* ACTIONS */}
+        <Section title="Wallet Actions" />
+
+        <ActionButton
+          icon="add-circle-outline"
+          label="Add Credit"
+          onPress={() => setAddModal(true)}
+        />
+
+        <ActionButton
+          icon="remove-circle-outline"
+          label="Revoke Credit"
+          onPress={() => setRevokeModal(true)}
+        />
+
+        {/* TRANSACTIONS */}
+        <Section title="Recent Transactions" />
 
         {transactions.length === 0 && (
           <Text style={{ color: "#64748b" }}>No transactions found</Text>
         )}
 
         {transactions.map((tx) => (
-          <View key={tx._id} style={styles.txCard}>
-            <View>
-              <Text style={styles.txType}>{tx.type.toUpperCase()}</Text>
-              <Text style={styles.txDesc}>{tx.description}</Text>
-            </View>
-            <Text
-              style={[
-                styles.txAmount,
-                { color: tx.type === "credit" ? "#16a34a" : "#dc2626" },
-              ]}
-            >
-              ₹ {tx.amount}
-            </Text>
-          </View>
+          <TransactionItem
+            key={tx._id}
+            title={tx.type.toUpperCase()}
+            subtitle={tx.description}
+            amount={`₹ ${tx.amount}`}
+            positive={tx.type === "credit"}
+          />
         ))}
       </ScrollView>
 
-      {/* ADD MODAL */}
-      <FormModal
-        visible={addModal}
-        title="Add Credit"
-        onClose={() => setAddModal(false)}
-        onSubmit={handleAddCredit}
-        loading={btnLoading}
-      >
-        <TextInput
-          placeholder="Amount"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-          keyboardType="numeric"
-        />
+      {/* ADD CREDIT MODAL */}
+      <Modal visible={addModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Add Credit</Text>
 
-        <TouchableOpacity
-          style={styles.input}
-          onPress={() => setShowDatePicker(true)}
-        >
-          <Text>
-            {expiryDate
-              ? expiryDate.toISOString().slice(0, 10)
-              : "Select Expiry Date"}
-          </Text>
-        </TouchableOpacity>
+            <TextInput
+              placeholder="Amount"
+              value={amount}
+              onChangeText={setAmount}
+              style={styles.input}
+              keyboardType="numeric"
+            />
 
-        {showDatePicker && (
-          <DateTimePicker
-            value={expiryDate}
-            mode="date"
-            display="default"
-            onChange={(event, selectedDate) => {
-              setShowDatePicker(false);
-              if (selectedDate) setExpiryDate(selectedDate);
-            }}
-          />
-        )}
+            <TouchableOpacity
+              style={styles.dateContainer}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Text>{expiryDate.toISOString().slice(0, 10)}</Text>
+              <Ionicons name="calendar-outline" size={20} />
+            </TouchableOpacity>
 
-        <TextInput
-          placeholder="Description"
-          value={description}
-          onChangeText={setDescription}
-          style={styles.input}
-        />
-      </FormModal>
+            {showDatePicker && (
+              <DateTimePicker
+                value={expiryDate}
+                mode="date"
+                display="default"
+                onChange={(e, date) => {
+                  setShowDatePicker(false);
+                  if (date) setExpiryDate(date);
+                }}
+              />
+            )}
+
+            <TextInput
+              placeholder="Description"
+              value={description}
+              onChangeText={setDescription}
+              style={styles.input}
+            />
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleAddCredit}
+              disabled={btnLoading}
+            >
+              {btnLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: "#fff" }}>Submit</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setAddModal(false)}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* REVOKE MODAL */}
-      <FormModal
-        visible={revokeModal}
-        title="Revoke Credit"
-        onClose={() => setRevokeModal(false)}
-        onSubmit={handleRequestRevoke}
-        loading={btnLoading}
-      >
-        <TextInput
-          placeholder="Amount"
-          value={amount}
-          onChangeText={setAmount}
-          style={styles.input}
-          keyboardType="numeric"
-        />
-      </FormModal>
+      <Modal visible={revokeModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Revoke Credit</Text>
+
+            <TextInput
+              placeholder="Amount"
+              value={amount}
+              onChangeText={setAmount}
+              style={styles.input}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleRequestRevoke}
+              disabled={btnLoading}
+            >
+              {btnLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: "#fff" }}>Submit</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setRevokeModal(false)}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* VERIFY OTP MODAL */}
-      <FormModal
-        visible={verifyModal}
-        title="Verify OTP"
-        onClose={() => setVerifyModal(false)}
-        onSubmit={handleVerifyRevoke}
-        loading={btnLoading}
-      >
-        <TextInput
-          placeholder="Enter OTP"
-          value={otp}
-          onChangeText={setOtp}
-          style={styles.input}
-          keyboardType="numeric"
-        />
-      </FormModal>
-    </SafeAreaView>
+      <Modal visible={verifyModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Verify OTP</Text>
+
+            <TextInput
+              placeholder="Enter OTP"
+              value={otp}
+              onChangeText={setOtp}
+              style={styles.input}
+              keyboardType="numeric"
+            />
+
+            <TouchableOpacity
+              style={styles.submitBtn}
+              onPress={handleVerifyRevoke}
+              disabled={btnLoading}
+            >
+              {btnLoading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: "#fff" }}>Submit</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => setVerifyModal(false)}>
+              <Text style={styles.closeText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
-function ActionButton({ label, color, onPress }) {
+/* ================= COMPONENTS ================= */
+
+function Section({ title }) {
   return (
-    <TouchableOpacity
-      style={[styles.actionBtn, { backgroundColor: color }]}
-      onPress={onPress}
-    >
-      <Text style={{ color: "#fff", fontWeight: "600" }}>{label}</Text>
+    <View style={{ marginBottom: 15 }}>
+      <Text style={styles.sectionText}>{title}</Text>
+    </View>
+  );
+}
+
+function WalletStat({ label, value }) {
+  return (
+    <View style={{ alignItems: "center" }}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+function ActionButton({ icon, label, onPress }) {
+  return (
+    <TouchableOpacity style={styles.actionButton} onPress={onPress}>
+      <View style={styles.actionIcon}>
+        <Ionicons name={icon} size={22} color="#6b6dbf" />
+      </View>
+      <Text style={styles.actionText}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-function FormModal({ visible, title, onClose, onSubmit, loading, children }) {
+function TransactionItem({ title, subtitle, amount, positive }) {
   return (
-    <Modal visible={visible} transparent animationType="fade">
-      <View style={styles.modalOverlay}>
-        <View style={styles.modalBox}>
-          <Text style={styles.modalTitle}>{title}</Text>
-
-          {children}
-
-          <TouchableOpacity
-            style={styles.submitBtn}
-            onPress={onSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={{ color: "#fff" }}>Submit</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={onClose}>
-            <Text style={{ textAlign: "center", marginTop: 10 }}>Close</Text>
-          </TouchableOpacity>
-        </View>
+    <View style={styles.txCard}>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.txTitle}>{title}</Text>
+        <Text style={styles.txSubtitle}>{subtitle}</Text>
       </View>
-    </Modal>
+      <Text
+        style={[
+          styles.txAmount,
+          { color: positive ? "#16a34a" : "#dc2626" },
+        ]}
+      >
+        {amount}
+      </Text>
+    </View>
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#eef0fa",
-  },
+  container: { flex: 1, backgroundColor: "#eef0fa" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
 
-  center: {
-    flex: 1,
-    justifyContent: "center",
+  header: {
+    flexDirection: "row",
     alignItems: "center",
+    padding: 20,
+    backgroundColor: "#fff",
   },
+  headerTitle: { fontSize: 20, fontWeight: "800", marginLeft: 15 },
 
-  /* ================= CARD ================= */
+  scroll: { padding: 20, paddingBottom: 100 },
 
-  card: {
+  adminCard: {
     backgroundColor: "#fff",
     padding: 20,
     borderRadius: 20,
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
   },
+  adminName: { fontSize: 16, fontWeight: "700" },
+  adminMeta: { fontSize: 13, color: "#64748b", marginTop: 4 },
 
-  name: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0f172a",
-  },
-
-  meta: {
-    fontSize: 13,
-    color: "#64748b",
-    marginTop: 4,
-  },
-
-  /* ================= WALLET ================= */
-
-  walletCard: {
+  balanceCard: {
     backgroundColor: "#6b6dbf",
+    borderRadius: 24,
     padding: 25,
-    borderRadius: 25,
-    marginBottom: 20,
+    marginBottom: 30,
   },
-
-  walletLabel: {
-    color: "#fff",
-    fontSize: 14,
-    opacity: 0.8,
-  },
-
-  walletValue: {
+  balanceLabel: { color: "#ffffffaa", fontSize: 12 },
+  balanceValue: {
     color: "#fff",
     fontSize: 30,
     fontWeight: "800",
-    marginTop: 6,
+    marginTop: 8,
   },
-
-  walletRow: {
+  balanceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 20,
   },
+  statValue: { color: "#fff", fontWeight: "700" },
+  statLabel: { color: "#ffffffaa", fontSize: 12, marginTop: 4 },
 
-  walletSub: {
-    color: "#fff",
-    fontSize: 13,
-    marginTop: 4,
-  },
+  sectionText: { fontSize: 14, fontWeight: "800", color: "#475569" },
 
-  /* ================= ACTION BUTTONS ================= */
-
-  row: {
+  actionButton: {
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 18,
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 14,
     alignItems: "center",
+    marginBottom: 15,
+  },
+  actionIcon: {
+    width: 45,
+    height: 45,
+    borderRadius: 50,
+    backgroundColor: "#e6e7f5",
     justifyContent: "center",
-    marginRight: 10,
+    alignItems: "center",
+    marginRight: 15,
   },
-
-  /* ================= TRANSACTIONS ================= */
-
-  sectionTitle: {
-    fontWeight: "700",
-    fontSize: 14,
-    marginBottom: 10,
-    color: "#334155",
-  },
+  actionText: { fontWeight: "600", fontSize: 14 },
 
   txCard: {
     backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 10,
+    padding: 16,
+    borderRadius: 18,
+    marginBottom: 12,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
   },
-
-  txType: {
-    fontWeight: "700",
-    fontSize: 13,
-    color: "#0f172a",
-  },
-
-  txDesc: {
-    fontSize: 12,
-    color: "#64748b",
-    marginTop: 2,
-  },
-
-  txAmount: {
-    fontWeight: "700",
-    fontSize: 14,
-  },
-
-  /* ================= MODAL ================= */
+  txTitle: { fontWeight: "600", fontSize: 14 },
+  txSubtitle: { fontSize: 12, color: "#64748b", marginTop: 2 },
+  txAmount: { fontWeight: "800", fontSize: 14 },
 
   modalOverlay: {
     flex: 1,
@@ -514,41 +513,39 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   modalBox: {
     width: "85%",
     backgroundColor: "#fff",
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 15,
-    elevation: 5,
   },
-
-  modalTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 15,
-    color: "#0f172a",
-  },
+  modalTitle: { fontSize: 16, fontWeight: "700", marginBottom: 15 },
 
   input: {
     backgroundColor: "#f1f5f9",
     borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    padding: 12,
     marginBottom: 12,
-    fontSize: 14,
-    color: "#0f172a",
   },
-
+  dateContainer: {
+    backgroundColor: "#f1f5f9",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   submitBtn: {
     backgroundColor: "#6b6dbf",
-    paddingVertical: 14,
+    padding: 14,
     borderRadius: 14,
     alignItems: "center",
-    justifyContent: "center",
-    marginTop: 4,
+    marginTop: 5,
+  },
+  closeText: {
+    textAlign: "center",
+    marginTop: 12,
+    color: "#64748b",
   },
 });

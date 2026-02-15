@@ -18,7 +18,8 @@ export default function Index() {
    if (user.dashboard === "admin" || user.dashboard === "subadmin" ) return <Redirect href="/admin" />;
    if (user.dashboard === "agent") return <Redirect href="/agent" />;
   if (user.dashboard === "marketing_agent") return <Redirect href="/marketing_agent" />;
-//   if (user.role === "doctor") return <Redirect href="/doctor" />;
+  if(user.dashboard === "receptionist") return <Redirect href="/receptionist" />;
+  if (user.dashboard === "doctor") return <Redirect href="/doctor" />;
 
   return <Redirect href="/auth/login" />;
 }

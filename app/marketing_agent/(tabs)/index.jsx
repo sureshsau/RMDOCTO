@@ -29,6 +29,16 @@ export default function MarketingAgentHome() {
           <Text style={styles.cardTitle}>My Network</Text>
           <Text style={styles.cardSub}>View your agent hierarchy</Text>
         </Pressable>
+        <Pressable
+          style={({ pressed }) => [
+            styles.card,
+            pressed && styles.pressed,
+          ]}
+          onPress={() => router.push("/rmcoin")}
+        >
+          <Text style={styles.cardTitle}>wallet</Text>
+          <Text style={styles.cardSub}>View your agent hierarchy</Text>
+        </Pressable>
 
         <Pressable
           style={({ pressed }) => [

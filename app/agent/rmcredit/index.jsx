@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
     ActivityIndicator,
     RefreshControl,
@@ -22,10 +22,21 @@ export default function AgentRMCreditDashboard() {
     setRefreshing(false);
   }, []);
 
+  /* ===== OTP VISIBILITY RULE ===== */
+  const showOtp = useMemo(() => {
+    if (!wallet?.revokeOtp) return false;
+    if (!wallet?.revokeOtpExpiresAt) return false;
+
+    const isExpired =
+      new Date(wallet.revokeOtpExpiresAt) < new Date();
+
+    return !isExpired;
+  }, [wallet]);
+
   if (loading) {
     return (
       <SafeAreaView style={styles.center}>
-        <ActivityIndicator size="large" color="#4f46e5" />
+        <ActivityIndicator size="large" color="#14b8a6" />
       </SafeAreaView>
     );
   }
@@ -35,7 +46,11 @@ export default function AgentRMCreditDashboard() {
       <ScrollView
         contentContainerStyle={{ padding: 20 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#14b8a6"]}
+          />
         }
       >
         {/* ===== BALANCE CARD ===== */}
@@ -43,6 +58,7 @@ export default function AgentRMCreditDashboard() {
           <Text style={styles.balanceLabel}>
             Available Balance
           </Text>
+
           <Text style={styles.balanceAmount}>
             ₹ {wallet.balance}
           </Text>
@@ -76,7 +92,7 @@ export default function AgentRMCreditDashboard() {
         </View>
 
         {/* ===== OTP SECTION ===== */}
-        {wallet.revokeOtp && (
+        {showOtp && (
           <View style={styles.otpCard}>
             <Text style={styles.otpTitle}>
               Revoke Request Pending
@@ -92,11 +108,9 @@ export default function AgentRMCreditDashboard() {
 
             <Text style={styles.otpExpiry}>
               Expires At:{" "}
-              {wallet.revokeOtpExpiresAt
-                ? new Date(
-                    wallet.revokeOtpExpiresAt
-                  ).toLocaleString()
-                : "-"}
+              {new Date(
+                wallet.revokeOtpExpiresAt
+              ).toLocaleString()}
             </Text>
           </View>
         )}
@@ -132,8 +146,8 @@ export default function AgentRMCreditDashboard() {
               sign: "-",
             },
           }[type] || {
-            bg: "#e0e7ff",
-            color: "#4f46e5",
+            bg: "#e0f2fe",
+            color: "#14b8a6",
             sign: "",
           };
 
@@ -177,23 +191,36 @@ export default function AgentRMCreditDashboard() {
   );
 }
 
+/* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f1f5f9" },
-  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+    backgroundColor: "#eefdfb",
+  },
 
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  /* ===== BALANCE CARD ===== */
   balanceCard: {
-    backgroundColor: "#1e293b",
+    backgroundColor: "#14b8a6",
     padding: 25,
-    borderRadius: 22,
+    borderRadius: 24,
     marginBottom: 20,
   },
 
-  balanceLabel: { color: "#94a3b8", fontSize: 13 },
+  balanceLabel: {
+    color: "#ccfbf1",
+    fontSize: 13,
+  },
 
   balanceAmount: {
     color: "#ffffff",
-    fontSize: 30,
+    fontSize: 32,
     fontWeight: "800",
     marginVertical: 8,
   },
@@ -201,44 +228,50 @@ const styles = StyleSheet.create({
   balanceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 10,
   },
 
-  balanceSubLabel: { color: "#94a3b8", fontSize: 12 },
+  balanceSubLabel: {
+    color: "#ccfbf1",
+    fontSize: 12,
+  },
 
   balanceSubValue: {
     color: "#ffffff",
-    fontSize: 14,
-    fontWeight: "600",
+    fontSize: 15,
+    fontWeight: "700",
   },
 
   expiryText: {
-    color: "#cbd5e1",
+    color: "#e6fffa",
     marginTop: 10,
     fontSize: 12,
   },
 
-  /* OTP SECTION */
+  /* ===== OTP CARD ===== */
   otpCard: {
-    backgroundColor: "#fff7ed",
+    backgroundColor: "#ffffff",
     padding: 18,
-    borderRadius: 18,
+    borderRadius: 20,
     marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "#14b8a6",
   },
 
   otpTitle: {
     fontWeight: "700",
-    color: "#ea580c",
+    color: "#14b8a6",
     marginBottom: 8,
   },
 
   otpAmount: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#9a3412",
+    color: "#0f766e",
   },
 
   otpCode: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "800",
     color: "#dc2626",
     marginVertical: 6,
@@ -246,19 +279,20 @@ const styles = StyleSheet.create({
 
   otpExpiry: {
     fontSize: 12,
-    color: "#7c2d12",
+    color: "#64748b",
   },
 
+  /* ===== TRANSACTIONS ===== */
   sectionTitle: {
-    fontWeight: "700",
+    fontWeight: "800",
     marginBottom: 10,
-    color: "#1f2937",
+    color: "#0f172a",
   },
 
   txCard: {
     backgroundColor: "#ffffff",
     padding: 14,
-    borderRadius: 14,
+    borderRadius: 16,
     marginBottom: 10,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -278,7 +312,13 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
 
-  txDesc: { fontSize: 12, color: "#6b7280" },
+  txDesc: {
+    fontSize: 12,
+    color: "#6b7280",
+  },
 
-  txAmount: { fontWeight: "800", fontSize: 15 },
+  txAmount: {
+    fontWeight: "800",
+    fontSize: 15,
+  },
 });

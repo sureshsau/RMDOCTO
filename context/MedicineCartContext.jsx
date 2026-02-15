@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
+import RazorpayCheckout from "react-native-razorpay";
 import api from "../services/axios";
 
 const MedicineCartContext = createContext(null);
@@ -51,7 +52,7 @@ export const MedicineCartProvider = ({ children }) => {
 
   /* ================= PLACE ORDER ================= */
 
-  const placeOrder = async ({ isAgent }) => {
+  const placeOrder = async ({ isAgent, paymentMode }) => {
     if (!deliveryAddress) {
       setError("Please select delivery address");
       return { success: false };
@@ -66,39 +67,121 @@ export const MedicineCartProvider = ({ children }) => {
           medicineId: i._id,
           quantity: i.quantity,
         })),
-
         deliveryAddress: {
-          fullName: deliveryAddress.fullName,
-          phone: deliveryAddress.phone,
-          addressLine1: deliveryAddress.addressLine1,
-          addressLine2: deliveryAddress.addressLine2 || "",
-          city: deliveryAddress.city,
-          state: deliveryAddress.state,
-          pincode: deliveryAddress.pincode,
+          ...deliveryAddress,
           location: {
             type: "Point",
             coordinates: deliveryAddress.location.coordinates,
           },
         },
-
-        paymentMode: "COD",
+        paymentMode,
         allowSpecialPrice: !!isAgent,
       };
-      console.log(payload);
-      const res = await api.post("/medicine/order", payload);
+
+      /* ===== COD & RM CREDIT ===== */
+
+      if (paymentMode === "COD" || paymentMode === "RM_CREDIT") {
+        const res = await api.post("/medicine/order", payload);
+        clearCart();
+        return { success: true, data: res.data };
+      }
+
+      /* ===== ONLINE PAYMENT ===== */
+
+      const orderRes = await api.post("/medicine/order", payload);
+
+      const orderId =
+        orderRes?.data?.data?._id ||
+        orderRes?.data?._id;
+
+      if (!orderId) throw new Error("Order ID missing");
+
+      const razorRes = await api.post(
+        "/medicine/order/payments/razorpay/create",
+        { orderId }
+      );
+
+      const { razorpayOrderId, amount, currency, key, user } =
+        razorRes.data.data;
+
+     const options = {
+  description: "Medicine Order Payment",
+  currency,
+  key,
+  amount,
+  name: "RM Doctor",
+  order_id: razorpayOrderId,
+
+  prefill: {
+    name: user?.name || "",
+    contact: user?.phone || "",
+  },
+
+  theme: { color: "#14b8a6" },
+
+  method: {
+    card: true,
+    netbanking: true,
+    wallet: true,
+    upi: true,
+    paylater: true,
+  },
+
+  config: {
+    display: {
+      blocks: {
+        upi: {
+          name: "UPI",
+          instruments: [
+            { method: "upi" }
+          ]
+        },
+        card: {
+          name: "Cards",
+          instruments: [
+            { method: "card" }
+          ]
+        },
+        netbanking: {
+          name: "Netbanking",
+          instruments: [
+            { method: "netbanking" }
+          ]
+        }
+      },
+      sequence: ["block.upi", "block.card", "block.netbanking"],
+      preferences: {
+        show_default_blocks: true
+      }
+    }
+  }
+};
+
+
+      const payment = await RazorpayCheckout.open(options);
+
+      await api.post(
+        "/medicine/order/payments/razorpay/verify",
+        {
+          orderId,
+          razorpay_order_id: payment.razorpay_order_id,
+          razorpay_payment_id: payment.razorpay_payment_id,
+          razorpay_signature: payment.razorpay_signature,
+        }
+      );
 
       clearCart();
-      return { success: true, data: res.data };
+      return { success: true };
 
     } catch (err) {
+      console.log(err);
       const msg =
         err?.response?.data?.message ||
-        err?.message ||
-        "Failed to place order";
+        err?.description ||
+        "Payment failed";
 
       setError(msg);
       return { success: false, error: msg };
-
     } finally {
       setLoading(false);
     }
@@ -127,13 +210,10 @@ export const MedicineCartProvider = ({ children }) => {
         items,
         totalItems,
         totalPrice,
-
         deliveryAddress,
         setDeliveryAddress,
-
         loading,
         error,
-
         addMedicine,
         updateQuantity,
         removeMedicine,
@@ -148,10 +228,7 @@ export const MedicineCartProvider = ({ children }) => {
 
 export const useMedicineCart = () => {
   const ctx = useContext(MedicineCartContext);
-  if (!ctx) {
-    throw new Error(
-      "useMedicineCart must be used inside MedicineCartProvider"
-    );
-  }
+  if (!ctx)
+    throw new Error("Must use inside provider");
   return ctx;
 };

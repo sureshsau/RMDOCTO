@@ -95,7 +95,7 @@ export default function AdminDashboard() {
               icon="wallet"
               label="Wallet Balance"
               value="₹1,20,500"
-              onPress={() => router.push("/(tabs)/wallet")}
+              onPress={() => router.push("/admin/rmcoin")}
             />
           </View>
         </View>

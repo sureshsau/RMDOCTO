@@ -1,11 +1,10 @@
 import { Stack } from "expo-router";
-import { MedicineCartProvider } from "../../context/MedicineCartContext";
 import { RMCreditProvider } from "../../context/RMCreditContext";
 
 export default function MedicineLayout() {
   return (
     <RMCreditProvider>
-      <MedicineCartProvider>
+
      
          <Stack
       screenOptions={{
@@ -51,7 +50,7 @@ export default function MedicineLayout() {
       />
     </Stack>
 
-    </MedicineCartProvider>
+
     </RMCreditProvider>
 
   );
