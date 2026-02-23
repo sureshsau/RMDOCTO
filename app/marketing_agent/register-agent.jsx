@@ -1,5 +1,6 @@
+import { Ionicons } from "@expo/vector-icons";
 import * as Location from "expo-location";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -12,15 +13,14 @@ import {
 import Toast from "react-native-toast-message";
 import api from "../../services/axios.js";
 
-/* ================= COLORS ================= */
+/* ================= BRAND ================= */
 
 const PRIMARY = "#14b8a6";
-const PAGE_BG = "#ecfeff";
+const PAGE_BG = "#f0fdfa";
 const CARD_BG = "#ffffff";
 const INPUT_BG = "#f8fafc";
 
-const GOOGLE_KEY =
-  process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
+const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
 
 /* ================= MAIN ================= */
 
@@ -28,7 +28,6 @@ export default function RegisterAgent() {
   const [form, setForm] = useState({
     agentName: "",
     phone: "",
-    password: "",
     address: "",
     city: "",
     state: "",
@@ -38,67 +37,66 @@ export default function RegisterAgent() {
   });
 
   const [loading, setLoading] = useState(false);
-  const [locLoading, setLocLoading] = useState(false);
+  const [locLoading, setLocLoading] = useState(true);
 
   const update = (k, v) =>
     setForm((p) => ({ ...p, [k]: v }));
 
-  /* ================= GOOGLE ADDRESS ================= */
+  /* ================= AUTO LOCATION ================= */
 
-  const fetchGoogleAddress = async (
-    lat,
-    lng
-  ) => {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`
-    );
+  useEffect(() => {
+    fetchLocation();
+  }, []);
 
-    const data = await res.json();
+  const fetchGoogleAddress = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`
+      );
 
-    if (!data.results?.length)
+      const data = await res.json();
+
+      if (!data.results?.length) return {};
+
+      const result = data.results[0];
+      const components = result.address_components;
+
+      const get = (type) =>
+        components.find((c) =>
+          c.types.includes(type)
+        )?.long_name || "";
+
+      return {
+        fullAddress: result.formatted_address,
+        city:
+          get("locality") ||
+          get("administrative_area_level_2"),
+        state: get("administrative_area_level_1"),
+        pincode: get("postal_code"),
+      };
+    } catch {
       return {};
-
-    const result = data.results[0];
-    const components =
-      result.address_components;
-
-    const get = (type) =>
-      components.find((c) =>
-        c.types.includes(type)
-      )?.long_name || "";
-
-    return {
-      fullAddress: result.formatted_address,
-      city:
-        get("locality") ||
-        get("administrative_area_level_2"),
-      state: get(
-        "administrative_area_level_1"
-      ),
-      pincode: get("postal_code"),
-    };
+    }
   };
-
-  /* ================= LOCATION ================= */
 
   const fetchLocation = async () => {
     try {
-      setLocLoading(true);
-
       const { status } =
         await Location.requestForegroundPermissionsAsync();
+
       if (status !== "granted") {
         Toast.show({
           type: "error",
           text1: "Permission Denied",
+          text2: "Location access is required to register agent.",
         });
+        setLocLoading(false);
         return;
       }
 
       const loc =
         await Location.getCurrentPositionAsync({
-          accuracy:
-            Location.Accuracy.High,
+          accuracy: Location.Accuracy.High,
         });
 
       const { latitude, longitude } =
@@ -115,24 +113,22 @@ export default function RegisterAgent() {
         latitude: latitude.toString(),
         longitude: longitude.toString(),
         address:
-          address.fullAddress ||
-          p.address,
-        city: address.city || p.city,
-        state: address.state || p.state,
-        pincode:
-          address.pincode || p.pincode,
+          address.fullAddress || "",
+        city: address.city || "",
+        state: address.state || "",
+        pincode: address.pincode || "",
       }));
 
       Toast.show({
         type: "success",
         text1: "Location Detected",
-        text2: "Address auto-filled",
+        text2: "Address auto-filled successfully.",
       });
     } catch {
       Toast.show({
         type: "error",
         text1: "Location Error",
-        text2: "Unable to fetch address",
+        text2: "Unable to fetch current location.",
       });
     } finally {
       setLocLoading(false);
@@ -144,7 +140,6 @@ export default function RegisterAgent() {
   const isFormValid =
     form.agentName &&
     form.phone &&
-    form.password &&
     form.latitude &&
     form.longitude;
 
@@ -157,7 +152,6 @@ export default function RegisterAgent() {
       const payload = {
         agentName: form.agentName.trim(),
         phone: form.phone.trim(),
-        password: form.password,
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
         address: form.address || null,
@@ -174,12 +168,12 @@ export default function RegisterAgent() {
       Toast.show({
         type: "success",
         text1: "Agent Registered",
+        text2: "Agent added to your network successfully.",
       });
 
       setForm({
         agentName: "",
         phone: "",
-        password: "",
         address: "",
         city: "",
         state: "",
@@ -187,44 +181,49 @@ export default function RegisterAgent() {
         latitude: "",
         longitude: "",
       });
+
+      fetchLocation();
     } catch (err) {
       Toast.show({
         type: "error",
         text1: "Registration Failed",
         text2:
           err?.response?.data?.message ||
-          "Something went wrong",
+          "Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);
     }
   };
 
+  /* ================= UI ================= */
+
   return (
     <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* HEADER */}
-        <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>
-            Register Agent
+        <View style={styles.header}>
+          <Text style={styles.title}>
+            Register New Agent
           </Text>
-          <Text style={styles.pageSub}>
-            Add a new agent to your network
+          <Text style={styles.subtitle}>
+            Expand your marketing network
           </Text>
         </View>
 
-        {/* BASIC */}
-        <Section title="Basic Information">
+        {/* BASIC INFO */}
+        <Card title="Basic Information">
           <Input
+            icon="person-outline"
             label="Agent Name *"
             value={form.agentName}
             onChange={(v) =>
               update("agentName", v)
             }
           />
+
           <Input
+            icon="call-outline"
             label="Phone Number *"
             keyboardType="phone-pad"
             value={form.phone}
@@ -232,84 +231,70 @@ export default function RegisterAgent() {
               update("phone", v)
             }
           />
-          <Input
-            label="Password *"
-            secureTextEntry
-            value={form.password}
-            onChange={(v) =>
-              update("password", v)
-            }
-          />
-        </Section>
+        </Card>
 
         {/* LOCATION */}
-        <Section title="Location">
-          <TouchableOpacity
-            style={styles.locBtn}
-            onPress={fetchLocation}
-            disabled={locLoading}
-          >
-            {locLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
+        <Card title="Location Details">
+          {locLoading ? (
+            <View style={styles.locLoader}>
+              <ActivityIndicator
+                size="small"
+                color={PRIMARY}
+              />
               <Text style={styles.locText}>
-                📍 Fetch Location from Google
+                Detecting your location...
               </Text>
-            )}
-          </TouchableOpacity>
+            </View>
+          ) : (
+            <>
+              <Input
+                icon="location-outline"
+                label="Full Address"
+                value={form.address}
+                onChange={(v) =>
+                  update("address", v)
+                }
+              />
 
-          {form.latitude && (
-            <Text style={styles.locMeta}>
-              {form.latitude},{" "}
-              {form.longitude}
-            </Text>
+              <Row>
+                <Input
+                  icon="business-outline"
+                  label="City"
+                  value={form.city}
+                  onChange={(v) =>
+                    update("city", v)
+                  }
+                />
+                <Input
+                  icon="map-outline"
+                  label="State"
+                  value={form.state}
+                  onChange={(v) =>
+                    update("state", v)
+                  }
+                />
+              </Row>
+
+              <Input
+                icon="pin-outline"
+                label="Pincode"
+                keyboardType="numeric"
+                value={form.pincode}
+                onChange={(v) =>
+                  update("pincode", v)
+                }
+              />
+            </>
           )}
-        </Section>
+        </Card>
 
-        {/* ADDRESS */}
-        <Section title="Address (Editable)">
-          <Input
-            label="Full Address"
-            value={form.address}
-            onChange={(v) =>
-              update("address", v)
-            }
-          />
-          <TwoCol>
-            <Input
-              label="City"
-              value={form.city}
-              onChange={(v) =>
-                update("city", v)
-              }
-            />
-            <Input
-              label="State"
-              value={form.state}
-              onChange={(v) =>
-                update("state", v)
-              }
-            />
-          </TwoCol>
-          <Input
-            label="Pincode"
-            keyboardType="numeric"
-            value={form.pincode}
-            onChange={(v) =>
-              update("pincode", v)
-            }
-          />
-        </Section>
-
-        {/* CTA */}
+        {/* SUBMIT */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={[
               styles.submitBtn,
               (!isFormValid ||
-                loading) && {
-                opacity: 0.5,
-              },
+                loading) && { opacity: 0.5 },
             ]}
             onPress={handleSubmit}
             disabled={!isFormValid || loading}
@@ -317,16 +302,19 @@ export default function RegisterAgent() {
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitText}>
-                Register Agent
-              </Text>
+              <>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={18}
+                  color="#fff"
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.submitText}>
+                  Register Agent
+                </Text>
+              </>
             )}
           </TouchableOpacity>
-
-          <Text style={styles.footerNote}>
-            Agent will remain inactive until
-            approved
-          </Text>
         </View>
 
         <View style={{ height: 40 }} />
@@ -335,19 +323,19 @@ export default function RegisterAgent() {
   );
 }
 
-/* ================= UI ================= */
+/* ================= COMPONENTS ================= */
 
-const Section = ({ title, children }) => (
-  <View style={styles.section}>
-    <Text style={styles.sectionTitle}>
+const Card = ({ title, children }) => (
+  <View style={styles.card}>
+    <Text style={styles.cardTitle}>
       {title}
     </Text>
     {children}
   </View>
 );
 
-const TwoCol = ({ children }) => (
-  <View style={styles.twoCol}>
+const Row = ({ children }) => (
+  <View style={styles.row}>
     {children}
   </View>
 );
@@ -357,19 +345,26 @@ const Input = ({
   value,
   onChange,
   keyboardType,
-  secureTextEntry,
+  icon,
 }) => (
   <View style={styles.inputWrap}>
-    <Text style={styles.inputLabel}>
+    <Text style={styles.label}>
       {label}
     </Text>
-    <TextInput
-      style={styles.input}
-      value={value}
-      keyboardType={keyboardType}
-      secureTextEntry={secureTextEntry}
-      onChangeText={onChange}
-    />
+    <View style={styles.inputRow}>
+      <Ionicons
+        name={icon}
+        size={18}
+        color={PRIMARY}
+        style={{ marginRight: 8 }}
+      />
+      <TextInput
+        style={styles.input}
+        value={value}
+        keyboardType={keyboardType}
+        onChangeText={onChange}
+      />
+    </View>
   </View>
 );
 
@@ -381,102 +376,95 @@ const styles = StyleSheet.create({
     backgroundColor: PAGE_BG,
   },
 
-  pageHeader: {
-    paddingHorizontal: 20,
-    paddingTop: 32,
-    paddingBottom: 10,
+  header: {
+    padding: 24,
   },
 
-  pageTitle: {
+  title: {
     fontSize: 24,
     fontWeight: "900",
     color: "#0f172a",
   },
 
-  pageSub: {
+  subtitle: {
     fontSize: 13,
-    color: "#475569",
     marginTop: 6,
+    color: "#475569",
   },
 
-  section: {
+  card: {
     backgroundColor: CARD_BG,
-    marginHorizontal: 16,
-    marginBottom: 18,
-    padding: 18,
+    marginHorizontal: 18,
+    marginBottom: 20,
+    padding: 20,
     borderRadius: 22,
     elevation: 6,
   },
 
-  sectionTitle: {
+  cardTitle: {
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 16,
+    color: PRIMARY,
   },
 
   inputWrap: {
     marginBottom: 16,
+    flex: 1,
   },
 
-  inputLabel: {
+  label: {
     fontSize: 12,
-    color: "#475569",
     marginBottom: 6,
     fontWeight: "600",
+    color: "#475569",
   },
 
-  input: {
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: INPUT_BG,
-    padding: 14,
+    paddingHorizontal: 12,
     borderRadius: 14,
   },
 
-  twoCol: {
+  input: {
+    flex: 1,
+    paddingVertical: 14,
+  },
+
+  row: {
     flexDirection: "row",
     gap: 12,
   },
 
-  locBtn: {
-    backgroundColor: PRIMARY,
-    paddingVertical: 16,
-    borderRadius: 18,
+  locLoader: {
     alignItems: "center",
+    paddingVertical: 20,
   },
 
   locText: {
-    color: "#fff",
-    fontWeight: "900",
-    fontSize: 15,
-  },
-
-  locMeta: {
-    marginTop: 10,
-    fontSize: 12,
-    textAlign: "center",
-    color: "#334155",
+    marginTop: 8,
+    fontSize: 13,
+    color: "#475569",
   },
 
   footer: {
-    marginHorizontal: 16,
+    marginHorizontal: 18,
   },
 
   submitBtn: {
-    backgroundColor: PRIMARY,
-    paddingVertical: 17,
-    borderRadius: 20,
+    flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
+    backgroundColor: PRIMARY,
+    paddingVertical: 18,
+    borderRadius: 20,
   },
 
   submitText: {
     color: "#fff",
     fontWeight: "900",
     fontSize: 16,
-  },
-
-  footerNote: {
-    fontSize: 11,
-    textAlign: "center",
-    color: "#475569",
-    marginTop: 10,
   },
 });

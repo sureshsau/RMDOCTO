@@ -8,8 +8,8 @@ import {
   View,
 } from "react-native";
 
-import { useMedicineCart } from "../../../../context/MedicineCartContext";
-import { useMedicine } from "../../../../context/MedicineContext";
+import { useMedicineCart } from "../../context/MedicineCartContext";
+import { useMedicine } from "../../context/MedicineContext";
 
 /* ================= SEARCH HEADER (INDEX ONLY) ================= */
 
@@ -83,7 +83,7 @@ function CartButton() {
 
   return (
     <TouchableOpacity
-      onPress={() => router.push("/agent/medicine/checkOut")}
+      onPress={() => router.push("/medicine-store/checkOut")}
       style={{
         marginRight: 12,
         paddingRight: 2,   // ✅ extra space so badge doesn’t clip
@@ -150,8 +150,8 @@ export default function MedicineLayout() {
           },
           headerTintColor: "#ffffff",
           headerTitleAlign: "center",
-          headerShadowVisible: false,
-
+          
+          headerShown:true,
           // 🛒 Cart visible on ALL pages
           headerRight: () => <CartButton />,
           

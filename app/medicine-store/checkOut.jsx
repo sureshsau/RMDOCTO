@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -11,22 +11,23 @@ import RazorpayCheckout from "react-native-razorpay";
 import Toast from "react-native-toast-message";
 import api from "../../services/axios.js";
 
-import AddressSelector from "../../components/shared/medicine/checkout/AddressSelector.jsx";
+import AddressSelector from "../../components/shared/medicine/checkout/AddressSelector";
 import UserInfo from "../../components/shared/medicine/checkout/UserInfo";
 import { useAuth } from "../../context/AuthContext";
 import { useMedicineCart } from "../../context/MedicineCartContext";
-import { useRMCredit } from "../../context/RMCreditContext";
+import { useRMCredit } from "../../context/RMCreditContext.jsx";
 
 export default function Cart() {
+
   const {
     items,
-    totalPrice,
     updateQuantity,
     removeMedicine,
     deliveryAddress,
     placeOrder,
     loading,
     error,
+    calculatePricing
   } = useMedicineCart();
 
   const { wallet } = useRMCredit();
@@ -37,18 +38,26 @@ export default function Cart() {
   const [processingPayment, setProcessingPayment] = useState(false);
 
   const isAgent =
-    user?.roles?.some((r) =>
+    user?.roles?.some(r =>
       r.toLowerCase().includes("agent")
     ) ?? false;
 
+  /* ================= GST PRICING ================= */
+
+  const { subtotal, gstTotal, payableAmount } = useMemo(
+    () => calculatePricing(isAgent),
+    [items, isAgent]
+  );
+
   const insufficientCredit =
     paymentMode === "RM_CREDIT" &&
-    (wallet?.balance || 0) < totalPrice;
+    (wallet?.balance || 0) < payableAmount;
 
   /* ===================== HANDLE ORDER ===================== */
 
   const handlePlaceOrder = async () => {
-    if (processingPayment) return;
+
+    if (processingPayment || loading) return;
 
     if (!deliveryAddress) {
       Toast.show({
@@ -58,9 +67,10 @@ export default function Cart() {
       return;
     }
 
-    /* ========= COD OR RM CREDIT ========= */
+    /* ========= COD / RM CREDIT ========= */
 
     if (paymentMode === "COD" || paymentMode === "RM_CREDIT") {
+
       const res = await placeOrder({
         isAgent,
         paymentMode,
@@ -81,15 +91,16 @@ export default function Cart() {
       return;
     }
 
-    /* ========= ONLINE PAYMENT ========= */
+    /* ========= ONLINE ========= */
 
     try {
+
       setProcessingPayment(true);
 
       let orderId = pendingOnlineOrderId;
 
-      // ✅ Create order ONLY if not already created
       if (!orderId) {
+
         const res = await placeOrder({
           isAgent,
           paymentMode: "ONLINE",
@@ -112,7 +123,6 @@ export default function Cart() {
         setPendingOnlineOrderId(orderId);
       }
 
-      // ✅ Always reuse same orderId
       const razorRes = await api.post(
         "/medicine/order/payments/razorpay/create",
         { orderId }
@@ -141,16 +151,14 @@ export default function Cart() {
 
       RazorpayCheckout.open(options)
         .then(async (data) => {
+
           await api.post(
             "/medicine/order/payments/razorpay/verify",
             {
               orderId,
-              razorpay_order_id:
-                data.razorpay_order_id,
-              razorpay_payment_id:
-                data.razorpay_payment_id,
-              razorpay_signature:
-                data.razorpay_signature,
+              razorpay_order_id: data.razorpay_order_id,
+              razorpay_payment_id: data.razorpay_payment_id,
+              razorpay_signature: data.razorpay_signature,
             }
           );
 
@@ -161,10 +169,10 @@ export default function Cart() {
             type: "success",
             text1: "Payment Successful",
           });
+
         })
         .catch(() => {
-          // ❌ Do NOT clear orderId here
-          // User can retry same order
+
           setProcessingPayment(false);
 
           Toast.show({
@@ -172,8 +180,11 @@ export default function Cart() {
             text1: "Payment Cancelled",
             text2: "You can retry payment",
           });
+
         });
+
     } catch (err) {
+
       setProcessingPayment(false);
 
       Toast.show({
@@ -187,191 +198,162 @@ export default function Cart() {
 
   return (
     <View style={styles.container}>
+
       <ScrollView contentContainerStyle={{ paddingBottom: 200 }}>
+
         <Text style={styles.header}>Cart</Text>
 
-        {items.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyIcon}>🛒</Text>
-            <Text style={styles.emptyTitle}>
-              Your cart is empty
-            </Text>
-          </View>
-        )}
-
         {items.length > 0 && (
+
           <View style={styles.section}>
+
             <Text style={styles.sectionTitle}>Items</Text>
 
-            {items.map((item) => {
+            {items.map(item => {
+
               const price = isAgent
                 ? item.specialPrice ?? item.price ?? 0
                 : item.price ?? 0;
 
               return (
                 <View key={item._id} style={styles.itemRow}>
-                  <Image
-                    source={{
-                      uri:
-                        item.image ||
-                        "https://via.placeholder.com/150",
-                    }}
-                    style={styles.itemImage}
-                  />
+
+                  <Image source={{ uri: item.image }} style={styles.itemImage} />
 
                   <View style={{ flex: 1, marginLeft: 12 }}>
-                    <Text style={styles.itemName}>
-                      {item.name}
-                    </Text>
-                    <Text style={styles.itemPrice}>
-                      ₹{price}
-                    </Text>
+                    <Text style={styles.itemName}>{item.name}</Text>
+                    <Text style={styles.itemPrice}>₹{price}</Text>
 
-                    <TouchableOpacity
-                      onPress={() =>
-                        removeMedicine(item._id)
-                      }
-                    >
-                      <Text style={styles.removeText}>
-                        Remove
-                      </Text>
+                    <TouchableOpacity onPress={() => removeMedicine(item._id)}>
+                      <Text style={styles.removeText}>Remove</Text>
                     </TouchableOpacity>
                   </View>
 
                   <View style={styles.stepper}>
                     <TouchableOpacity
-                      onPress={() =>
-                        updateQuantity(
-                          item._id,
-                          item.quantity - 1
-                        )
-                      }
+                      onPress={() => updateQuantity(item._id, item.quantity - 1)}
                       style={styles.stepBtn}
                     >
                       <Text style={styles.stepText}>−</Text>
                     </TouchableOpacity>
 
-                    <Text style={styles.stepQty}>
-                      {item.quantity}
-                    </Text>
+                    <Text style={styles.stepQty}>{item.quantity}</Text>
 
                     <TouchableOpacity
-                      onPress={() =>
-                        updateQuantity(
-                          item._id,
-                          item.quantity + 1
-                        )
-                      }
+                      onPress={() => updateQuantity(item._id, item.quantity + 1)}
                       style={styles.stepBtn}
                     >
                       <Text style={styles.stepText}>+</Text>
                     </TouchableOpacity>
                   </View>
+
                 </View>
               );
             })}
+
+            {/* GST BREAKDOWN */}
+            <View style={{ marginTop: 10 }}>
+              <Text>Subtotal: ₹{subtotal}</Text>
+              <Text>GST: ₹{gstTotal}</Text>
+            </View>
+
           </View>
         )}
 
-        {items.length > 0 && (
-          <>
-            <View style={styles.section}>
-              <UserInfo />
-            </View>
+        {/* USER */}
+        <View style={styles.section}>
+          <UserInfo />
+        </View>
 
-            <View style={styles.section}>
-              <AddressSelector />
-            </View>
+        {/* ADDRESS */}
+        <View style={styles.section}>
+          <AddressSelector />
+        </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>
-                Payment Method
+        {/* PAYMENT METHOD */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            Payment Method
+          </Text>
+
+          <PaymentOption
+            label="Cash on Delivery"
+            active={paymentMode === "COD"}
+            onPress={() => setPaymentMode("COD")}
+          />
+
+          <PaymentOption
+            label="Online Payment"
+            active={paymentMode === "ONLINE"}
+            onPress={() => setPaymentMode("ONLINE")}
+          />
+
+          <PaymentOption
+            label="RM Credit"
+            active={paymentMode === "RM_CREDIT"}
+            onPress={() => setPaymentMode("RM_CREDIT")}
+          />
+
+          {paymentMode === "RM_CREDIT" && (
+            <>
+              <Text style={styles.creditInfo}>
+                Available Credit: ₹{wallet?.balance || 0}
               </Text>
 
-              <PaymentOption
-                label="Cash on Delivery"
-                active={paymentMode === "COD"}
-                onPress={() => setPaymentMode("COD")}
-              />
-
-              <PaymentOption
-                label="Online Payment"
-                active={paymentMode === "ONLINE"}
-                onPress={() =>
-                  setPaymentMode("ONLINE")
-                }
-              />
-
-              <PaymentOption
-                label="RM Credit"
-                active={paymentMode === "RM_CREDIT"}
-                onPress={() =>
-                  setPaymentMode("RM_CREDIT")
-                }
-              />
-
-              {paymentMode === "RM_CREDIT" && (
-                <>
-                  <Text style={styles.creditInfo}>
-                    Available Credit: ₹
-                    {wallet?.balance || 0}
-                  </Text>
-
-                  {insufficientCredit && (
-                    <Text style={styles.creditWarning}>
-                      Insufficient RM Credit
-                    </Text>
-                  )}
-                </>
+              {insufficientCredit && (
+                <Text style={styles.creditWarning}>
+                  Insufficient RM Credit
+                </Text>
               )}
-            </View>
-          </>
-        )}
+            </>
+          )}
+        </View>
+
       </ScrollView>
 
-      {items.length > 0 && (
-        <View style={styles.checkoutBar}>
-          <View>
-            <Text style={styles.totalLabel}>
-              Total Payable
-            </Text>
-            <Text style={styles.totalAmount}>
-              ₹{totalPrice}
-            </Text>
-          </View>
+      {/* CHECKOUT */}
+      <View style={styles.checkoutBar}>
+        <View>
+          <Text style={styles.totalLabel}>
+            Total Payable
+          </Text>
+          <Text style={styles.totalAmount}>
+            ₹{payableAmount}
+          </Text>
+        </View>
 
-          <TouchableOpacity
-            disabled={
-              !deliveryAddress ||
+        <TouchableOpacity
+          disabled={
+            !deliveryAddress ||
+            loading ||
+            insufficientCredit ||
+            processingPayment
+          }
+          onPress={handlePlaceOrder}
+          style={[
+            styles.checkoutBtn,
+            (!deliveryAddress ||
               loading ||
               insufficientCredit ||
-              processingPayment
-            }
-            onPress={handlePlaceOrder}
-            style={[
-              styles.checkoutBtn,
-              (!deliveryAddress ||
-                loading ||
-                insufficientCredit ||
-                processingPayment) &&
-                styles.disabledBtn,
-            ]}
-          >
-            <Text style={styles.checkoutText}>
-              {processingPayment
-                ? "Processing..."
-                : paymentMode === "ONLINE"
-                ? "Pay Now"
-                : "Place Order"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
+              processingPayment) &&
+              styles.disabledBtn,
+          ]}
+        >
+          <Text style={styles.checkoutText}>
+            {processingPayment || loading
+              ? "Processing..."
+              : paymentMode === "ONLINE"
+              ? "Pay Now"
+              : "Place Order"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
     </View>
   );
 }
 
-/* ===================== PAYMENT OPTION ===================== */
+/* PAYMENT OPTION */
 
 function PaymentOption({ label, active, onPress }) {
   return (
@@ -393,6 +375,9 @@ function PaymentOption({ label, active, onPress }) {
     </TouchableOpacity>
   );
 }
+
+/* ===================== PAYMENT OPTION ===================== */
+
 
 /* ===================== STYLES ===================== */
 

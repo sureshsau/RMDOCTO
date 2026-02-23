@@ -15,6 +15,8 @@ import {
 import Toast from "react-native-toast-message";
 import api from "../../../../services/axios";
 
+const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
+
 /* ================= CONSTANTS ================= */
 
 const WEEK_DAYS = [
@@ -35,8 +37,6 @@ export default function EditEmployee() {
   const { id, name = "Employee", role = "Doctor", phone = "N/A", faceUri } =
     useLocalSearchParams();
 
-  /* ================= STATE ================= */
-
   const resolveFace = (v) => {
     if (!v) return null;
     if (typeof v === "string") return v;
@@ -45,6 +45,8 @@ export default function EditEmployee() {
   };
 
   const [faceImage, setFaceImage] = useState(resolveFace(faceUri) || null);
+  const [locationAddress, setLocationAddress] = useState("");
+  const [locationLoading, setLocationLoading] = useState(true);
 
   useEffect(() => {
     setFaceImage(resolveFace(faceUri));
@@ -60,32 +62,40 @@ export default function EditEmployee() {
   const [weeklyOffDays, setWeeklyOffDays] = useState(["Sunday"]);
 
   const [allowedLocation, setAllowedLocation] = useState({
-    lat: 28.6139,
-    lng: 77.209,
+    lat: null,
+    lng: null,
     radiusMeters: 50,
   });
 
-  const [fetchingLocation, setFetchingLocation] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const [showTimeModal, setShowTimeModal] = useState(false);
   const [editingType, setEditingType] = useState(null);
 
-  /* ================= LOCATION ================= */
+  /* ================= AUTO LOCATION ================= */
 
-  const fetchAccurateLocation = async () => {
+  useEffect(() => {
+    autoFetchLocation();
+  }, []);
+
+  const reverseGeocode = async (lat, lng) => {
     try {
-      setFetchingLocation(true);
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`
+      );
+      const data = await res.json();
+      return data.results?.[0]?.formatted_address || "";
+    } catch {
+      return "";
+    }
+  };
 
+  const autoFetchLocation = async () => {
+    try {
       const { status } =
         await Location.requestForegroundPermissionsAsync();
 
       if (status !== "granted") {
-        Toast.show({
-          type: "error",
-          text1: "Permission denied",
-          text2: "Location permission is required",
-        });
+        setLocationLoading(false);
         return;
       }
 
@@ -93,17 +103,19 @@ export default function EditEmployee() {
         accuracy: Location.Accuracy.Highest,
       });
 
-      setAllowedLocation((prev) => ({
-        ...prev,
-        lat: loc.coords.latitude,
-        lng: loc.coords.longitude,
-      }));
+      const lat = loc.coords.latitude;
+      const lng = loc.coords.longitude;
 
-      Toast.show({
-        type: "success",
-        text1: "Location Updated",
-        text2: "Accurate location fetched",
+      const address = await reverseGeocode(lat, lng);
+
+      setAllowedLocation({
+        lat,
+        lng,
+        radiusMeters: 50,
       });
+
+      setLocationAddress(address);
+
     } catch {
       Toast.show({
         type: "error",
@@ -111,7 +123,7 @@ export default function EditEmployee() {
         text2: "Failed to fetch location",
       });
     } finally {
-      setFetchingLocation(false);
+      setLocationLoading(false);
     }
   };
 
@@ -133,6 +145,15 @@ export default function EditEmployee() {
         type: "error",
         text1: "Face Required",
         text2: "Please register face first",
+      });
+      return;
+    }
+
+    if (!allowedLocation.lat || !allowedLocation.lng) {
+      Toast.show({
+        type: "error",
+        text1: "Location Not Ready",
+        text2: "Please wait until location is detected",
       });
       return;
     }
@@ -159,11 +180,7 @@ export default function EditEmployee() {
       const res = await api.post(
         `/attendance/setup/${id}`,
         formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       Toast.show({
@@ -174,7 +191,6 @@ export default function EditEmployee() {
 
       router.back();
     } catch (err) {
-      console.log(err);
       const msg =
         err.response?.data?.message ||
         err.response?.data?.error ||
@@ -194,8 +210,8 @@ export default function EditEmployee() {
 
   return (
     <View style={styles.safeArea}>
-
       <ScrollView contentContainerStyle={styles.scrollContent}>
+
         {/* USER CARD */}
         <View style={styles.userCard}>
           <Image
@@ -226,10 +242,7 @@ export default function EditEmployee() {
             style={styles.faceScanner}
           >
             {faceImage ? (
-              <Image
-                source={{ uri: faceImage }}
-                style={styles.faceScanner}
-              />
+              <Image source={{ uri: faceImage }} style={styles.faceScanner} />
             ) : (
               <Ionicons name="scan-outline" size={32} color="#6b6dbf" />
             )}
@@ -264,94 +277,58 @@ export default function EditEmployee() {
           {WEEK_DAYS.map((day) => {
             const selected = weeklyOffDays.includes(day);
             return (
-            <TouchableOpacity
-              key={day}
-              onPress={() => toggleWeekOff(day)}
-              style={[
-                styles.weekDay,
-                selected ? styles.weekDaySelected : styles.weekDayUnselected,
-              ]}
-            >
-              <Text style={[
-                styles.weekDayText,
-                selected ? styles.weekDayTextSelected : styles.weekDayTextUnselected,
-              ]}>
-                {day}
-              </Text>
-            </TouchableOpacity>
-          )})}
+              <TouchableOpacity
+                key={day}
+                onPress={() => toggleWeekOff(day)}
+                style={[
+                  styles.weekDay,
+                  selected ? styles.weekDaySelected : styles.weekDayUnselected,
+                ]}
+              >
+                <Text style={[
+                  styles.weekDayText,
+                  selected ? styles.weekDayTextSelected : styles.weekDayTextUnselected,
+                ]}>
+                  {day}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* LOCATION */}
         <Section title="Allowed Location" />
         <Card>
-          <Text>Lat: {allowedLocation.lat.toFixed(6)}</Text>
-          <Text>Lng: {allowedLocation.lng.toFixed(6)}</Text>
-
-          <TouchableOpacity
-            onPress={fetchAccurateLocation}
-            style={styles.fetchBtn}
-          >
-            {fetchingLocation ? (
-              <ActivityIndicator color="#6b6dbf" />
-            ) : (
-              <Text style={styles.fetchBtnText}>
-                Fetch Accurate Location
+          {locationLoading ? (
+            <ActivityIndicator color="#6b6dbf" />
+          ) : (
+            <>
+              <Text>Lat: {allowedLocation.lat?.toFixed(6)}</Text>
+              <Text>Lng: {allowedLocation.lng?.toFixed(6)}</Text>
+              <Text style={{ marginTop: 8, fontWeight: "600" }}>
+                {locationAddress}
               </Text>
-            )}
-          </TouchableOpacity>
+            </>
+          )}
         </Card>
 
         {/* SAVE */}
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={saving}
-          style={styles.saveBtn}
+          disabled={saving || locationLoading}
+          style={[
+            styles.saveBtn,
+            (saving || locationLoading) && { opacity: 0.5 }
+          ]}
         >
           <Text style={styles.saveBtnText}>
             {saving ? "Saving..." : "Save Attendance Setup"}
           </Text>
         </TouchableOpacity>
+
+        <View style={{ height: 40 }} />
+
       </ScrollView>
-
-      {/* TIME MODAL */}
-      {showTimeModal && (
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalBox}>
-            <Text style={styles.modalTitle}>
-              Select {editingType === "start" ? "Start" : "End"} Time
-            </Text>
-
-            <ScrollView style={{ maxHeight: 300 }}>
-              {TIME_SLOTS.map((time) => (
-                <TouchableOpacity
-                  key={time}
-                  onPress={() => {
-                    editingType === "start"
-                      ? setShiftStartTime(time)
-                      : setShiftEndTime(time);
-                    setShowTimeModal(false);
-                  }}
-                  style={styles.timeSlot}
-                >
-                  <Text style={styles.timeText}>
-                    {time}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-
-            <TouchableOpacity
-              onPress={() => setShowTimeModal(false)}
-              style={styles.modalCancel}
-            >
-              <Text style={styles.modalCancelText}>
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
     </View>
   );
 }
@@ -359,16 +336,12 @@ export default function EditEmployee() {
 /* ================= COMPONENTS ================= */
 
 function Section({ title }) {
-  return (
-    <Text style={styles.sectionTitle}>
-      {title}
-    </Text>
-  );
+  return <Text style={styles.sectionTitle}>{title}</Text>;
 }
 
 function Card({ children, center }) {
   return (
-    <View style={[styles.card, center ? styles.cardCenter : null]}>
+    <View style={[styles.card, center && styles.cardCenter]}>
       {children}
     </View>
   );
@@ -390,10 +363,7 @@ function InputRow({ label, value, onChange }) {
 
 function TimeRow({ label, value, onPress }) {
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      style={styles.timeRow}
-    >
+    <TouchableOpacity onPress={onPress} style={styles.timeRow}>
       <Text style={styles.timeLabel}>{label}</Text>
       <Text style={styles.timeValue}>{value}</Text>
     </TouchableOpacity>
@@ -404,16 +374,6 @@ function TimeRow({ label, value, onPress }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#eef0fa" },
-  header: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 16,
-    backgroundColor: "#6b6dbf",
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  headerTitle: { fontSize: 20, fontWeight: "800", color: "#fff", marginLeft: 16 },
-
   scrollContent: { padding: 20 },
 
   userCard: {
@@ -425,12 +385,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
+
   avatar: { width: 80, height: 80, borderRadius: 40 },
+
   userInfo: { marginLeft: 16, flex: 1 },
+
   userName: { fontSize: 18, fontWeight: "800" },
+
   userMeta: { color: "#6b7280" },
 
-  sectionTitle: { fontSize: 12, fontWeight: "700", color: "#374151", marginBottom: 12, textTransform: "uppercase" },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#374151",
+    marginBottom: 12,
+    textTransform: "uppercase",
+  },
 
   card: {
     backgroundColor: "#fff",
@@ -439,6 +409,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     elevation: 1,
   },
+
   cardCenter: { alignItems: "center" },
 
   faceScanner: {
@@ -451,7 +422,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  faceText: { marginTop: 12, fontWeight: "700", color: "#6b6dbf" },
+
+  faceText: {
+    marginTop: 12,
+    fontWeight: "700",
+    color: "#6b6dbf",
+  },
 
   timeRow: {
     flexDirection: "row",
@@ -460,7 +436,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
+
   timeLabel: { fontWeight: "700", color: "#4b5563" },
+
   timeValue: { fontWeight: "800", color: "#111827" },
 
   inputRow: {
@@ -471,7 +449,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
   },
+
   inputLabel: { fontWeight: "700", color: "#4b5563" },
+
   inputField: {
     backgroundColor: "#f1f5f9",
     paddingHorizontal: 12,
@@ -482,23 +462,36 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  weekWrap: { flexDirection: "row", flexWrap: "wrap", marginBottom: 24 },
-  weekDay: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 999, marginRight: 12, marginBottom: 12, borderWidth: 1 },
-  weekDaySelected: { backgroundColor: "#6b6dbf", borderColor: "#6b6dbf" },
-  weekDayUnselected: { backgroundColor: "#fff", borderColor: "#cbd5e1" },
-  weekDayText: { fontWeight: "700" },
-  weekDayTextSelected: { color: "#fff" },
-  weekDayTextUnselected: { color: "#334155" },
-
-  fetchBtn: {
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: "#6b6dbf",
-    borderRadius: 12,
-    padding: 12,
-    alignItems: "center",
+  weekWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginBottom: 24,
   },
-  fetchBtnText: { color: "#6b6dbf", fontWeight: "700" },
+
+  weekDay: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
+    marginRight: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+  },
+
+  weekDaySelected: {
+    backgroundColor: "#6b6dbf",
+    borderColor: "#6b6dbf",
+  },
+
+  weekDayUnselected: {
+    backgroundColor: "#fff",
+    borderColor: "#cbd5e1",
+  },
+
+  weekDayText: { fontWeight: "700" },
+
+  weekDayTextSelected: { color: "#fff" },
+
+  weekDayTextUnselected: { color: "#334155" },
 
   saveBtn: {
     backgroundColor: "#6b6dbf",
@@ -507,27 +500,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
   },
+
   saveBtnText: { color: "#fff", fontWeight: "800" },
-
-  modalOverlay: {
-    position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-    zIndex: 50,
-  },
-  modalBox: {
-    backgroundColor: "#fff",
-    width: "85%",
-    borderRadius: 16,
-    padding: 20,
-  },
-  modalTitle: { fontSize: 18, fontWeight: "800", textAlign: "center", marginBottom: 12 },
-
-  timeSlot: { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: "#f1f5f9" },
-  timeText: { textAlign: "center", fontWeight: "600" },
-
-  modalCancel: { marginTop: 16, backgroundColor: "#6b6dbf", borderRadius: 12, padding: 12 },
-  modalCancelText: { color: "#fff", fontWeight: "700", textAlign: "center" },
 });

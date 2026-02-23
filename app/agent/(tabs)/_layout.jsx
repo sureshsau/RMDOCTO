@@ -42,6 +42,12 @@ export default function TabsLayout() {
                 : "medkit-outline";
               break;
 
+            case "store":
+              iconName = focused
+                ? "storefront"
+                : "storefront-outline";
+              break;
+
             case "profile":
               iconName = focused
                 ? "person"
@@ -72,6 +78,12 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="medicine"
         options={{ title: "Medicines" }}
+      />
+
+      {/* STORE - Global Medicine Store */}
+      <Tabs.Screen
+        name="store"
+        options={{ title: "Store" }}
       />
 
       {/* PROFILE */}

@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { useMedicine } from "../../../../context/MedicineContext";
+import { useMedicine } from "../../context/MedicineContext";
 
 
 const { width } = Dimensions.get("window");

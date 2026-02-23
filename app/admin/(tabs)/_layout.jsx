@@ -49,6 +49,17 @@ export default function AdminLayout() {
         }}
       />
 
+      {/* ================= STORE ================= */}
+      <Tabs.Screen
+        name="store"
+        options={{
+          title: "Store",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="medkit-outline" size={size} color={color} />
+          ),
+        }}
+      />
+
       {/* ================= PROFILE ================= */}
       <Tabs.Screen
         name="profile"

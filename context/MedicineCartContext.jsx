@@ -7,6 +7,7 @@ import api from "../services/axios";
 const MedicineCartContext = createContext(null);
 
 export const MedicineCartProvider = ({ children }) => {
+
   const [items, setItems] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -15,10 +16,10 @@ export const MedicineCartProvider = ({ children }) => {
   /* ================= CART ================= */
 
   const addMedicine = (medicine) => {
-    setItems((prev) => {
-      const existing = prev.find((i) => i._id === medicine._id);
+    setItems(prev => {
+      const existing = prev.find(i => i._id === medicine._id);
       if (existing) {
-        return prev.map((i) =>
+        return prev.map(i =>
           i._id === medicine._id
             ? { ...i, quantity: i.quantity + 1 }
             : i
@@ -29,19 +30,16 @@ export const MedicineCartProvider = ({ children }) => {
   };
 
   const updateQuantity = (id, quantity) => {
-    if (quantity <= 0) {
-      removeMedicine(id);
-      return;
-    }
-    setItems((prev) =>
-      prev.map((i) =>
+    if (quantity <= 0) return removeMedicine(id);
+    setItems(prev =>
+      prev.map(i =>
         i._id === id ? { ...i, quantity } : i
       )
     );
   };
 
   const removeMedicine = (id) => {
-    setItems((prev) => prev.filter((i) => i._id !== id));
+    setItems(prev => prev.filter(i => i._id !== id));
   };
 
   const clearCart = () => {
@@ -50,20 +48,63 @@ export const MedicineCartProvider = ({ children }) => {
     setError(null);
   };
 
+  /* ================= GST + AGENT PRICE ================= */
+
+  const calculatePricing = (isAgent = false) => {
+
+    let subtotal = 0;
+    let gstTotal = 0;
+
+    items.forEach(item => {
+
+      const unitPrice = isAgent
+        ? (item.specialPrice ?? item.price ?? 0)
+        : (item.price ?? 0);
+
+      const quantity = item.quantity ?? 1;
+      const gstPercent = item.gstPercentage ?? 0;
+
+      const itemSubtotal = unitPrice * quantity;
+      const itemGST = (itemSubtotal * gstPercent) / 100;
+
+      subtotal += itemSubtotal;
+      gstTotal += itemGST;
+    });
+
+    const deliveryCharge = 0;
+    const payableAmount = subtotal + gstTotal + deliveryCharge;
+
+    return {
+      subtotal: Math.round(subtotal),
+      gstTotal: Math.round(gstTotal),
+      deliveryCharge,
+      payableAmount: Math.round(payableAmount)
+    };
+  };
+
   /* ================= PLACE ORDER ================= */
 
   const placeOrder = async ({ isAgent, paymentMode }) => {
-    if (!deliveryAddress) {
-      setError("Please select delivery address");
+
+    if (
+      !deliveryAddress?.fullName ||
+      !deliveryAddress?.phone ||
+      !deliveryAddress?.addressLine1 ||
+      !deliveryAddress?.location?.coordinates
+    ) {
+      setError("Please complete delivery address");
       return { success: false };
     }
 
     try {
+
       setLoading(true);
       setError(null);
 
+      const pricing = calculatePricing(isAgent);
+
       const payload = {
-        items: items.map((i) => ({
+        items: items.map(i => ({
           medicineId: i._id,
           quantity: i.quantity,
         })),
@@ -71,14 +112,15 @@ export const MedicineCartProvider = ({ children }) => {
           ...deliveryAddress,
           location: {
             type: "Point",
-            coordinates: deliveryAddress.location.coordinates,
-          },
+            coordinates: deliveryAddress.location.coordinates
+          }
         },
+        pricing,
         paymentMode,
-        allowSpecialPrice: !!isAgent,
+        allowSpecialPrice: !!isAgent
       };
 
-      /* ===== COD & RM CREDIT ===== */
+      /* ===== COD / RM CREDIT ===== */
 
       if (paymentMode === "COD" || paymentMode === "RM_CREDIT") {
         const res = await api.post("/medicine/order", payload);
@@ -86,7 +128,7 @@ export const MedicineCartProvider = ({ children }) => {
         return { success: true, data: res.data };
       }
 
-      /* ===== ONLINE PAYMENT ===== */
+      /* ===== ONLINE ===== */
 
       const orderRes = await api.post("/medicine/order", payload);
 
@@ -94,69 +136,35 @@ export const MedicineCartProvider = ({ children }) => {
         orderRes?.data?.data?._id ||
         orderRes?.data?._id;
 
-      if (!orderId) throw new Error("Order ID missing");
+      if (!orderId)
+        throw new Error("Order ID missing");
 
       const razorRes = await api.post(
         "/medicine/order/payments/razorpay/create",
         { orderId }
       );
 
-      const { razorpayOrderId, amount, currency, key, user } =
-        razorRes.data.data;
+      const {
+        razorpayOrderId,
+        amount,
+        currency,
+        key,
+        user
+      } = razorRes.data.data;
 
-     const options = {
-  description: "Medicine Order Payment",
-  currency,
-  key,
-  amount,
-  name: "RM Doctor",
-  order_id: razorpayOrderId,
-
-  prefill: {
-    name: user?.name || "",
-    contact: user?.phone || "",
-  },
-
-  theme: { color: "#14b8a6" },
-
-  method: {
-    card: true,
-    netbanking: true,
-    wallet: true,
-    upi: true,
-    paylater: true,
-  },
-
-  config: {
-    display: {
-      blocks: {
-        upi: {
-          name: "UPI",
-          instruments: [
-            { method: "upi" }
-          ]
+      const options = {
+        key,
+        amount,
+        currency,
+        name: "RM Doctor",
+        description: "Medicine Order",
+        order_id: razorpayOrderId,
+        prefill: {
+          name: user?.name || "",
+          contact: user?.phone || "",
         },
-        card: {
-          name: "Cards",
-          instruments: [
-            { method: "card" }
-          ]
-        },
-        netbanking: {
-          name: "Netbanking",
-          instruments: [
-            { method: "netbanking" }
-          ]
-        }
-      },
-      sequence: ["block.upi", "block.card", "block.netbanking"],
-      preferences: {
-        show_default_blocks: true
-      }
-    }
-  }
-};
-
+        theme: { color: "#14b8a6" },
+      };
 
       const payment = await RazorpayCheckout.open(options);
 
@@ -174,7 +182,7 @@ export const MedicineCartProvider = ({ children }) => {
       return { success: true };
 
     } catch (err) {
-      console.log(err);
+
       const msg =
         err?.response?.data?.message ||
         err?.description ||
@@ -182,6 +190,7 @@ export const MedicineCartProvider = ({ children }) => {
 
       setError(msg);
       return { success: false, error: msg };
+
     } finally {
       setLoading(false);
     }
@@ -190,17 +199,7 @@ export const MedicineCartProvider = ({ children }) => {
   /* ================= DERIVED ================= */
 
   const totalItems = useMemo(
-    () => items.reduce((s, i) => s + i.quantity, 0),
-    [items]
-  );
-
-  const totalPrice = useMemo(
-    () =>
-      items.reduce(
-        (s, i) =>
-          s + i.quantity * (i.cartPrice ?? i.price ?? 0),
-        0
-      ),
+    () => items.reduce((s, i) => s + (i.quantity ?? 0), 0),
     [items]
   );
 
@@ -209,7 +208,6 @@ export const MedicineCartProvider = ({ children }) => {
       value={{
         items,
         totalItems,
-        totalPrice,
         deliveryAddress,
         setDeliveryAddress,
         loading,
@@ -219,6 +217,7 @@ export const MedicineCartProvider = ({ children }) => {
         removeMedicine,
         clearCart,
         placeOrder,
+        calculatePricing
       }}
     >
       {children}

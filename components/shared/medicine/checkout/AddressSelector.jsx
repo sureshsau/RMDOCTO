@@ -1,12 +1,12 @@
 import * as Location from "expo-location";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 import { useMedicineCart } from "../../../../context/MedicineCartContext";
@@ -17,6 +17,7 @@ export default function AddressSelector() {
 
   const [loading, setLoading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [locationFetched, setLocationFetched] = useState(false);
 
   const [addressLine1, setAddressLine1] = useState(
     deliveryAddress?.addressLine1 || ""
@@ -24,6 +25,15 @@ export default function AddressSelector() {
   const [pincode, setPincode] = useState(
     deliveryAddress?.pincode || ""
   );
+
+  /* ================= AUTO FETCH ON MOUNT ================= */
+
+  useEffect(() => {
+    if (!deliveryAddress?.addressLine1 && !locationFetched) {
+      fetchCurrentLocation();
+      setLocationFetched(true);
+    }
+  }, []);
 
   /* ================= FETCH GPS ================= */
 
@@ -33,6 +43,7 @@ export default function AddressSelector() {
 
       const { status } =
         await Location.requestForegroundPermissionsAsync();
+
       if (status !== "granted") {
         setLoading(false);
         return;
@@ -91,22 +102,16 @@ export default function AddressSelector() {
     setEditing(false);
   };
 
-  /* ================= EMPTY ================= */
+  /* ================= LOADING / EMPTY ================= */
 
-  if (!deliveryAddress && !editing) {
+  if ((!deliveryAddress || loading) && !editing) {
     return (
-      <TouchableOpacity
-        style={styles.btn}
-        onPress={fetchCurrentLocation}
-      >
-        {loading ? (
-          <ActivityIndicator color="#0f766e" />
-        ) : (
-          <Text style={styles.btnText}>
-            📍 Use Current Location
-          </Text>
-        )}
-      </TouchableOpacity>
+      <View style={styles.btn}>
+        <ActivityIndicator color="#0f766e" />
+        <Text style={styles.btnText}>
+          Fetching your location...
+        </Text>
+      </View>
     );
   }
 
@@ -169,7 +174,10 @@ export default function AddressSelector() {
 
         <TouchableOpacity onPress={fetchCurrentLocation}>
           {loading ? (
-            <ActivityIndicator size="small" color="#14b8a6" />
+            <ActivityIndicator
+              size="small"
+              color="#14b8a6"
+            />
           ) : (
             <Text style={styles.link}>Use GPS</Text>
           )}
@@ -187,6 +195,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
   },
 
   btnText: {

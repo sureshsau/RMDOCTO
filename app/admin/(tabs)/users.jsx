@@ -36,7 +36,10 @@ const ACTIONS_MAP = {
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
   ],
-
+  rmrider:[
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+  ],
   subadmin: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
   ],

@@ -202,7 +202,7 @@ export default function Attendance() {
           </View>
 
           <TouchableOpacity
-            onPress={() => router.push("/marketing_agent/face-verification")}
+            onPress={() => router.push("/receptionist/face-verification")}
             style={styles.verifyBtn}
           >
             <Ionicons name="scan" size={20} color="#fff" />
@@ -309,12 +309,19 @@ const LogItem = ({ log }) => {
       label: "Leave",
       icon: "airplane",
     },
+    WORKING: {
+  bg: "#e0f2fe",
+  text: "#0284c7",
+  label: "Working",
+  icon: "pulse-outline",
+}
+
   };
 
   const status = statusMap[log.status] || {
     bg: "#f3f4f6",
     text: "#6b7280",
-    label: "Unknown",
+    label: "working",
     icon: "help-circle",
   };
 

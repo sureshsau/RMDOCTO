@@ -76,23 +76,6 @@ export default function ReceptionistDashboard() {
             </Text>
           </View>
 
-          {/* ================= RM COIN CARD ================= */}
-          <View style={styles.rmCard}>
-            <View style={styles.rmRow}>
-              <Ionicons
-                name="wallet-outline"
-                size={22}
-                color="#CA8A04"
-              />
-              <Text style={styles.rmLabel}>
-                RM Coins Balance
-              </Text>
-            </View>
-
-            <Text style={styles.rmValue}>
-              ₹ {user?.rmCoinsBalance || 0}
-            </Text>
-          </View>
 
           {/* ================= QUICK ACTIONS ================= */}
           <View style={styles.quickActionsGrid}>
@@ -142,6 +125,13 @@ export default function ReceptionistDashboard() {
               onPress={() =>
                 router.push("/receptionist/face-verification")
               }
+            />
+            <QuickAction
+              icon="people-outline"
+              label="store"
+              bgColor="#ECFEFF"
+              iconColor="#0891B2"
+              onPress={() => router.push("/medicine-store")}
             />
           </View>
         </ScrollView>

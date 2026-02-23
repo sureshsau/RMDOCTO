@@ -33,10 +33,16 @@ export default function Index() {
         {/* ================= ACTION CARDS ================= */}
         <View style={styles.grid}>
           <ActionCard
-            title="Wallet"
+            title="RMCREDIT"
             subtitle="Transactions & balance"
             emoji="💰"
             onPress={() => router.push("/agent/rmcredit")}
+          />
+          <ActionCard
+            title="rmcoin"
+            subtitle="Transactions & balance"
+            emoji="💰"
+            onPress={() => router.push("/rmcoin")}
           />
 
           {/* <ActionCard
@@ -57,7 +63,13 @@ export default function Index() {
             title="Medicine Orders"
             subtitle="Customer medicine orders"
             emoji="💊"
-            onPress={() => router.push("/agent/medicine/history")}
+            onPress={() => router.push("/mymedicineorder")}
+          />
+          <ActionCard
+            title="Medicine store"
+            subtitle="Customer medicine orders"
+            emoji="  "
+            onPress={() => router.push("/medicine-store")}
           />
         </View>
       </ScrollView>

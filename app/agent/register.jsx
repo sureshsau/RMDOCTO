@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import * as Location from "expo-location";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ScrollView,
@@ -9,12 +11,14 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import api from "../../services/axios.js"; // adjust path
+import api from "../../services/axios.js";
 
-/* ===== COLORS ===== */
-const PRIMARY = "#0d9488";
-const PAGE_BG = "#f6f7fb";
-const INPUT_BG = "#f1f5f9";
+const PRIMARY = "#14b8a6";
+const PAGE_BG = "#ecfeff";
+const CARD_BG = "#ffffff";
+const INPUT_BG = "#f8fafc";
+
+const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
 
 /* ================= MAIN ================= */
 
@@ -22,7 +26,6 @@ export default function RegisterAgent() {
   const [form, setForm] = useState({
     agentName: "",
     phone: "",
-    password: "",
     address: "",
     city: "",
     state: "",
@@ -32,34 +35,116 @@ export default function RegisterAgent() {
   });
 
   const [loading, setLoading] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(true);
 
   const update = (k, v) =>
     setForm((prev) => ({ ...prev, [k]: v }));
 
+  /* ================= AUTO LOCATION ================= */
+
+  useEffect(() => {
+    autoFetchLocation();
+  }, []);
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const res = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${GOOGLE_KEY}`
+      );
+      const data = await res.json();
+      if (!data.results?.length) return {};
+
+      const result = data.results[0];
+      const components = result.address_components;
+
+      const get = (type) =>
+        components.find((c) =>
+          c.types.includes(type)
+        )?.long_name || "";
+
+      return {
+        fullAddress: result.formatted_address,
+        city:
+          get("locality") ||
+          get("administrative_area_level_2"),
+        state: get("administrative_area_level_1"),
+        pincode: get("postal_code"),
+      };
+    } catch {
+      return {};
+    }
+  };
+
+  const autoFetchLocation = async () => {
+    try {
+      const { status } =
+        await Location.requestForegroundPermissionsAsync();
+
+      if (status !== "granted") {
+        Toast.show({
+          type: "error",
+          text1: "Permission Denied",
+          text2: "Location permission is required",
+        });
+        setLocationLoading(false);
+        return;
+      }
+
+      const loc =
+        await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+
+      const { latitude, longitude } =
+        loc.coords;
+
+      const address =
+        await reverseGeocode(latitude, longitude);
+
+      setForm((prev) => ({
+        ...prev,
+        latitude: latitude.toString(),
+        longitude: longitude.toString(),
+        address: address.fullAddress || "",
+        city: address.city || "",
+        state: address.state || "",
+        pincode: address.pincode || "",
+      }));
+
+      Toast.show({
+        type: "success",
+        text1: "Location Detected",
+        text2: "Address auto-filled successfully",
+      });
+    } catch {
+      Toast.show({
+        type: "error",
+        text1: "Location Error",
+        text2: "Unable to fetch location",
+      });
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  /* ================= VALIDATION ================= */
+
+  const isFormValid =
+    form.agentName &&
+    form.phone &&
+    form.latitude &&
+    form.longitude &&
+    !locationLoading;
+
   /* ================= SUBMIT ================= */
 
   const handleSubmit = async () => {
-    const {
-      agentName,
-      phone,
-      password,
-      latitude,
-      longitude,
-    } = form;
-
-    // 🔴 REQUIRED VALIDATION
-    if (
-      !agentName ||
-      !phone ||
-      !password ||
-      !latitude ||
-      !longitude
-    ) {
+    if (!isFormValid) {
       Toast.show({
         type: "error",
         text1: "Missing Required Fields",
         text2:
-          "Agent name, phone, password & location are mandatory",
+          "Agent name, phone and location are required",
       });
       return;
     }
@@ -68,13 +153,10 @@ export default function RegisterAgent() {
       setLoading(true);
 
       const payload = {
-        agentName: agentName.trim(),
-        phone: phone.trim(),
-        password,
-        latitude: Number(latitude),
-        longitude: Number(longitude),
-
-        // OPTIONAL
+        agentName: form.agentName.trim(),
+        phone: form.phone.trim(),
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
         address: form.address || null,
         city: form.city || null,
         state: form.state || null,
@@ -89,11 +171,9 @@ export default function RegisterAgent() {
         text2: "Agent added successfully",
       });
 
-      // RESET FORM
       setForm({
         agentName: "",
         phone: "",
-        password: "",
         address: "",
         city: "",
         state: "",
@@ -101,6 +181,8 @@ export default function RegisterAgent() {
         latitude: "",
         longitude: "",
       });
+
+      autoFetchLocation();
     } catch (err) {
       Toast.show({
         type: "error",
@@ -114,112 +196,121 @@ export default function RegisterAgent() {
     }
   };
 
+  /* ================= UI ================= */
+
   return (
-    <View style={[styles.container, { backgroundColor: PAGE_BG }]}>
+    <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <View style={styles.pageHeader}>
-          <Text style={styles.pageTitle}>Register Agent</Text>
+          <Text style={styles.pageTitle}>
+            Register Agent
+          </Text>
           <Text style={styles.pageSub}>
-            Add a new agent to your network
+            Add a new agent under you
           </Text>
         </View>
 
-        {/* ================= BASIC INFO ================= */}
+        {/* BASIC */}
         <Section title="Basic Information">
           <Input
             label="Agent Name *"
-            placeholder="Full name"
             value={form.agentName}
-            onChange={(v) => update("agentName", v)}
+            onChange={(v) =>
+              update("agentName", v)
+            }
           />
-
           <Input
             label="Phone Number *"
-            placeholder="10-digit mobile number"
             keyboardType="phone-pad"
             value={form.phone}
-            onChange={(v) => update("phone", v)}
-          />
-
-          <Input
-            label="Password *"
-            placeholder="Temporary password"
-            secureTextEntry
-            value={form.password}
-            onChange={(v) => update("password", v)}
+            onChange={(v) =>
+              update("phone", v)
+            }
           />
         </Section>
 
-        {/* ================= LOCATION ================= */}
-        <Section title="Location">
-          <TwoCol>
-            <Input
-              label="Latitude *"
-              placeholder="22.5726"
-              keyboardType="numeric"
-              value={form.latitude}
-              onChange={(v) => update("latitude", v)}
-            />
-            <Input
-              label="Longitude *"
-              placeholder="88.3639"
-              keyboardType="numeric"
-              value={form.longitude}
-              onChange={(v) => update("longitude", v)}
-            />
-          </TwoCol>
+        {/* LOCATION */}
+        <Section title="Detected Location">
+          {locationLoading ? (
+            <View style={styles.locationLoading}>
+              <ActivityIndicator color={PRIMARY} />
+              <Text style={styles.locationText}>
+                Detecting your location...
+              </Text>
+            </View>
+          ) : (
+            <>
+              <Text style={styles.locationMeta}>
+                📍 {form.latitude}, {form.longitude}
+              </Text>
+              <Text style={styles.addressText}>
+                {form.address}
+              </Text>
+            </>
+          )}
         </Section>
 
-        {/* ================= ADDRESS ================= */}
-        <Section title="Address (Optional)">
+        {/* ADDRESS */}
+        <Section title="Address (Editable)">
           <Input
-            label="Address"
-            placeholder="House, Street, Area"
+            label="Full Address"
             value={form.address}
-            onChange={(v) => update("address", v)}
+            onChange={(v) =>
+              update("address", v)
+            }
           />
-
           <TwoCol>
             <Input
               label="City"
-              placeholder="City"
               value={form.city}
-              onChange={(v) => update("city", v)}
+              onChange={(v) =>
+                update("city", v)
+              }
             />
             <Input
               label="State"
-              placeholder="State"
               value={form.state}
-              onChange={(v) => update("state", v)}
+              onChange={(v) =>
+                update("state", v)
+              }
             />
           </TwoCol>
-
           <Input
             label="Pincode"
-            placeholder="Postal code"
             keyboardType="numeric"
             value={form.pincode}
-            onChange={(v) => update("pincode", v)}
+            onChange={(v) =>
+              update("pincode", v)
+            }
           />
         </Section>
 
-        {/* ================= CTA ================= */}
+        {/* SUBMIT */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={[
               styles.submitBtn,
-              loading && { opacity: 0.7 },
+              (!isFormValid || loading) && {
+                opacity: 0.5,
+              },
             ]}
             onPress={handleSubmit}
-            disabled={loading}
+            disabled={!isFormValid || loading}
           >
             {loading ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <Text style={styles.submitText}>
-                Register Agent
-              </Text>
+              <>
+                <Ionicons
+                  name="person-add-outline"
+                  size={18}
+                  color="#fff"
+                />
+                <Text style={styles.submitText}>
+                  Register Agent
+                </Text>
+              </>
             )}
           </TouchableOpacity>
 
@@ -234,36 +325,37 @@ export default function RegisterAgent() {
   );
 }
 
-/* ================= REUSABLE UI ================= */
+/* ================= UI COMPONENTS ================= */
 
 const Section = ({ title, children }) => (
   <View style={styles.section}>
-    <Text style={styles.sectionTitle}>{title}</Text>
+    <Text style={styles.sectionTitle}>
+      {title}
+    </Text>
     {children}
   </View>
 );
 
 const TwoCol = ({ children }) => (
-  <View style={styles.twoCol}>{children}</View>
+  <View style={styles.twoCol}>
+    {children}
+  </View>
 );
 
 const Input = ({
   label,
-  placeholder,
   value,
   onChange,
   keyboardType,
-  secureTextEntry,
 }) => (
   <View style={styles.inputWrap}>
-    <Text style={styles.inputLabel}>{label}</Text>
+    <Text style={styles.inputLabel}>
+      {label}
+    </Text>
     <TextInput
       style={styles.input}
-      placeholder={placeholder}
-      placeholderTextColor="#94a3b8"
       value={value}
       keyboardType={keyboardType}
-      secureTextEntry={secureTextEntry}
       onChangeText={onChange}
     />
   </View>
@@ -272,39 +364,42 @@ const Input = ({
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: PAGE_BG,
+  },
 
   pageHeader: {
-    padding: 20,
-    paddingTop: 28,
+    paddingHorizontal: 20,
+    paddingTop: 32,
+    paddingBottom: 10,
   },
 
   pageTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "900",
     color: "#0f172a",
   },
 
   pageSub: {
     fontSize: 13,
-    color: "#64748b",
-    marginTop: 4,
+    color: "#475569",
+    marginTop: 6,
   },
 
   section: {
-    backgroundColor: "#ffffff",
+    backgroundColor: CARD_BG,
     marginHorizontal: 16,
-    marginBottom: 16,
-    padding: 16,
-    borderRadius: 18,
-    elevation: 2,
+    marginBottom: 18,
+    padding: 18,
+    borderRadius: 22,
+    elevation: 4,
   },
 
   sectionTitle: {
     fontSize: 15,
     fontWeight: "800",
     marginBottom: 14,
-    color: "#0f172a",
   },
 
   inputWrap: {
@@ -315,15 +410,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#475569",
     marginBottom: 6,
+    fontWeight: "600",
   },
 
   input: {
     backgroundColor: INPUT_BG,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    fontSize: 14,
-    color: "#0f172a",
+    padding: 14,
+    borderRadius: 14,
   },
 
   twoCol: {
@@ -331,28 +424,50 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
+  locationLoading: {
+    alignItems: "center",
+  },
+
+  locationText: {
+    marginTop: 8,
+    color: "#475569",
+  },
+
+  locationMeta: {
+    fontSize: 12,
+    color: "#334155",
+  },
+
+  addressText: {
+    marginTop: 6,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+
   footer: {
     marginHorizontal: 16,
-    marginTop: 10,
   },
 
   submitBtn: {
     backgroundColor: PRIMARY,
-    paddingVertical: 15,
-    borderRadius: 16,
+    paddingVertical: 16,
+    borderRadius: 18,
     alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
   },
 
   submitText: {
-    color: "#ffffff",
+    color: "#fff",
     fontWeight: "900",
     fontSize: 15,
   },
 
   footerNote: {
     fontSize: 11,
-    color: "#64748b",
     textAlign: "center",
-    marginTop: 8,
+    color: "#475569",
+    marginTop: 10,
   },
 });

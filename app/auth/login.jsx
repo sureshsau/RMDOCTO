@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   ImageBackground,
@@ -25,24 +25,39 @@ const ICON = "#ffffff";
 export default function LoginScreen() {
   const { login } = useAuth();
 
-  const [showPassword, setShowPassword] = useState(false);
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [timer, setTimer] = useState(0);
 
   const sanitizePhone = (value) =>
     value.replace(/\D/g, "").slice(-10);
 
-  const handleLogin = async () => {
+  /* ================= TIMER ================= */
+
+  useEffect(() => {
+    let interval;
+    if (timer > 0) {
+      interval = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer]);
+
+  /* ================= SEND OTP ================= */
+
+  const handleSendOtp = async () => {
     if (loading) return;
 
     const cleanPhone = sanitizePhone(phone);
 
-    if (cleanPhone.length !== 10 || !password) {
+    if (cleanPhone.length !== 10) {
       Toast.show({
         type: "error",
-        text1: "Invalid Input",
-        text2: "Enter valid phone number and password",
+        text1: "Invalid Phone Number",
+        text2: "Please enter a valid 10-digit mobile number.",
       });
       return;
     }
@@ -50,61 +65,99 @@ export default function LoginScreen() {
     try {
       setLoading(true);
 
-     const res = await api.post(
-  "/auth/login",
-  {
-    phone: cleanPhone,
-    password,
-  },
-  {
-    headers: {
-      "User-Agent":
-        Platform.OS === "android"
-          ? "Android Mobile Expo"
-          : "iPhone Mobile Expo",
-    },
-  }
-);
+      await api.post(
+        "/login/send-otp",
+        { phone: cleanPhone },
+        {
+          headers: {
+            "User-Agent":
+              Platform.OS === "android"
+                ? "Android Mobile Expo"
+                : "iPhone Mobile Expo",
+          },
+        }
+      );
 
-      const { token, user } = res.data || {};
-
-      if (!token || !user) {
-        throw new Error("Invalid login response");
-      }
-
-      // 🔐 Save session via AuthContext
-      await login({ token, user });
+      setOtpSent(true);
+      setTimer(30);
 
       Toast.show({
         type: "success",
-        text1: "Login Successful 🎉",
-        text2: `Welcome ${user.name || ""}`,
+        text1: "OTP Sent Successfully",
+        text2:
+          "A verification code has been sent to your mobile number.",
       });
 
-      // 🔀 Role-based routing (safe)
-      const role =
-        user.role ||
-        user.roles?.[0] ||
-        "user";
-      router.replace('/');
-
-      // if (role === "admin") router.replace("/admin");
-      // else if (role === "doctor") router.replace("/doctor");
-      // else if (role === "marketing_agent") router.replace("/marketing_agent/(tabs)/index");
-      // else router.replace("/");
     } catch (err) {
       Toast.show({
         type: "error",
-        text1: "Login Failed",
+        text1: "Failed to Send OTP",
         text2:
           err?.response?.data?.message ||
-          err?.message ||
-          "Login failed. Please try again.",
+          "Something went wrong. Please try again.",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  /* ================= VERIFY OTP ================= */
+
+  const handleVerifyOtp = async () => {
+    if (loading) return;
+
+    if (otp.length !== 6) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid OTP",
+        text2: "Please enter the 6-digit verification code.",
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const res = await api.post(
+        "/login/verify-otp",
+        { phone: sanitizePhone(phone), otp },
+        {
+          headers: {
+            "User-Agent":
+              Platform.OS === "android"
+                ? "Android Mobile Expo"
+                : "iPhone Mobile Expo",
+          },
+        }
+      );
+
+      const { token, user } = res.data;
+
+      await login({ token, user });
+
+      Toast.show({
+        type: "success",
+        text1: "Login Successful",
+        text2:
+          "Welcome back! Redirecting to dashboard...",
+      });
+
+      router.replace("/");
+
+    } catch (err) {
+      Toast.show({
+        type: "error",
+        text1: "Verification Failed",
+        text2:
+          err?.response?.data?.message ||
+          "The OTP you entered is incorrect or expired.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= UI ================= */
 
   return (
     <ImageBackground
@@ -121,63 +174,108 @@ export default function LoginScreen() {
         >
           <View style={styles.card}>
             <Text style={styles.logo}>
-              RM<Text style={{ color: PRIMARY }}>Docto</Text>
+              Health<Text style={{ color: PRIMARY }}>Care</Text>
             </Text>
 
             <Text style={styles.subtitle}>
-              Login to your account
+              Login with OTP
             </Text>
 
-            {/* Phone */}
+            {/* PHONE INPUT */}
             <View style={styles.inputWrapper}>
-              <Ionicons name="call-outline" size={22} color={ICON} />
+              <Ionicons
+                name="call-outline"
+                size={22}
+                color={ICON}
+              />
               <TextInput
                 placeholder="Mobile Number"
                 keyboardType="phone-pad"
                 placeholderTextColor={PLACEHOLDER}
                 style={styles.input}
                 value={phone}
-                onChangeText={setPhone}
-                maxLength={15}
+                editable={!otpSent}
+                onChangeText={(text) =>
+                  setPhone(sanitizePhone(text))
+                }
               />
             </View>
 
-            {/* Password */}
-            <View style={styles.inputWrapper}>
-              <Ionicons name="lock-closed-outline" size={22} color={ICON} />
-              <TextInput
-                placeholder="Password"
-                secureTextEntry={!showPassword}
-                placeholderTextColor={PLACEHOLDER}
-                style={styles.input}
-                value={password}
-                onChangeText={setPassword}
-              />
-              <TouchableOpacity
-                onPress={() => setShowPassword(!showPassword)}
-              >
+            {/* OTP INPUT */}
+            {otpSent && (
+              <View style={styles.inputWrapper}>
                 <Ionicons
-                  name={showPassword ? "eye-off-outline" : "eye-outline"}
+                  name="key-outline"
                   size={22}
                   color={ICON}
                 />
-              </TouchableOpacity>
-            </View>
+                <TextInput
+                  placeholder="Enter OTP"
+                  keyboardType="number-pad"
+                  placeholderTextColor={PLACEHOLDER}
+                  style={styles.input}
+                  value={otp}
+                  onChangeText={(text) =>
+                    setOtp(
+                      text.replace(/\D/g, "").slice(0, 6)
+                    )
+                  }
+                />
+              </View>
+            )}
 
-            {/* Login Button */}
+            {/* TIMER + ACTIONS */}
+            {otpSent && (
+              <View style={styles.otpActions}>
+                {timer > 0 ? (
+                  <Text style={styles.timerText}>
+                    Resend OTP in {timer}s
+                  </Text>
+                ) : (
+                  <TouchableOpacity
+                    onPress={handleSendOtp}
+                  >
+                    <Text style={styles.resendText}>
+                      Resend OTP
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setOtpSent(false);
+                    setOtp("");
+                    setTimer(0);
+                  }}
+                >
+                  <Text style={styles.changeNumberText}>
+                    Change Number
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* BUTTON */}
             <TouchableOpacity
               style={[
                 styles.button,
                 loading && { opacity: 0.7 },
               ]}
-              onPress={handleLogin}
+              onPress={
+                otpSent
+                  ? handleVerifyOtp
+                  : handleSendOtp
+              }
               disabled={loading}
-              activeOpacity={0.85}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonText}>Login</Text>
+                <Text style={styles.buttonText}>
+                  {otpSent
+                    ? "Verify OTP"
+                    : "Send OTP"}
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -187,6 +285,8 @@ export default function LoginScreen() {
   );
 }
 
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
   container: { flex: 1 },
   safe: { flex: 1 },
@@ -195,23 +295,27 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
   },
+
   card: {
     borderRadius: 24,
     padding: 32,
   },
+
   logo: {
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: "700",
     textAlign: "center",
-    color: "#000",
+    color: "#fff",
   },
+
   subtitle: {
     textAlign: "center",
     marginTop: 12,
     marginBottom: 32,
     fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(255,255,255,0.85)",
   },
+
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
@@ -222,6 +326,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: PRIMARY,
   },
+
   input: {
     flex: 1,
     paddingVertical: 16,
@@ -229,13 +334,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#fff",
   },
+
+  otpActions: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  timerText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+
+  resendText: {
+    color: PRIMARY,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+
+  changeNumberText: {
+    color: "#fff",
+    marginTop: 10,
+    fontSize: 13,
+    textDecorationLine: "underline",
+  },
+
   button: {
     backgroundColor: PRIMARY,
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: "center",
-    marginTop: 8,
   },
+
   buttonText: {
     color: "#fff",
     fontSize: 18,

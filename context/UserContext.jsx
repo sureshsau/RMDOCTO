@@ -8,6 +8,7 @@ const UserContext = createContext(null);
 export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [riders,setRiders]=useState([]);
 
   const handleError = (err, fallback) => {
     const message =
@@ -63,15 +64,37 @@ export const UserProvider = ({ children }) => {
       setLoading(false);
     }
   };
+  // ---------------- GET RM RIDERS ----------------
+const getRMRiders = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
+    const res = await api.get("/user/rmriders");
+    console.log(res.data.data);
+    setRiders()
+    return {
+      success: true,
+      data: res.data.data || [],
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: handleError(err, "Failed to load riders"),
+    };
+  } finally {
+    setLoading(false);
+  }
+};
   return (
     <UserContext.Provider
       value={{
-        loading,
-        error,
-        createUser,
-        getUsers,
-      }}
+    loading,
+    error,
+    createUser,
+    getUsers,
+    getRMRiders, 
+  }}
     >
       {children}
     </UserContext.Provider>

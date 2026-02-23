@@ -2,18 +2,18 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Image,
-    RefreshControl,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Image,
+  RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../../../services/axios.js";
 
 export default function MedicineOrdersOverview() {
@@ -55,7 +55,9 @@ export default function MedicineOrdersOverview() {
 
       setPage(res.data.page);
       setTotalPages(res.data.totalPages);
+      console.log(res.data.data);
     } catch (err) {
+      console.log(err);
       console.log("Order Fetch Error", err);
     } finally {
       setLoading(false);

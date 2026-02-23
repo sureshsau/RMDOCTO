@@ -23,6 +23,8 @@ const DASHBOARDS = [
   { key: "marketing_agent", label: "Marketing Dashboard" },
   { key: "agent", label: "Agent Dashboard" },
   { key: "receptionist", label: "Reception Dashboard" },
+  { key: "rmrider", label: "rmrider Dashboard" },
+
 ];
 
 /* ================= MAIN ================= */
@@ -35,14 +37,11 @@ export default function AddEmployee() {
   const [roles, setRoles] = useState([]);
   const [role, setRole] = useState(null);
   const [showPermission, setShowPermission] = useState(false);
-
   const [dashboard, setDashboard] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
-    email: "",
     phone: "",
-    password: "", // ✅ ADDED
   });
 
   const [permissions, setPermissions] = useState({});
@@ -89,26 +88,18 @@ export default function AddEmployee() {
   /* ================= SAVE ================= */
 
   const handleSave = async () => {
-    if (
-      !form.name ||
-      !form.phone ||
-      !form.password || // ✅ VALIDATION
-      !role ||
-      !dashboard
-    ) {
+    if (!form.name || !form.phone || !role || !dashboard) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "Name, phone, password, role and dashboard are required",
+        text2: "Name, phone, role and dashboard are required",
       });
       return;
     }
 
     const payload = {
       name: form.name,
-      email: form.email || undefined,
       phone: form.phone,
-      password: form.password, // ✅ SEND PASSWORD
       roles: [role.key],
       permissions: Object.keys(permissions).filter(
         (p) => permissions[p]
@@ -158,30 +149,12 @@ export default function AddEmployee() {
           />
 
           <Input
-            label="Email Address"
-            value={form.email}
-            onChangeText={(v) =>
-              setForm((p) => ({ ...p, email: v }))
-            }
-          />
-
-          <Input
             label="Phone Number"
             value={form.phone}
+            keyboardType="phone-pad"
             onChangeText={(v) =>
               setForm((p) => ({ ...p, phone: v }))
             }
-          />
-
-          {/* PASSWORD */}
-          <Input
-            label="Password"
-            value={form.password}
-            onChangeText={(v) =>
-              setForm((p) => ({ ...p, password: v }))
-            }
-            secureTextEntry
-            placeholder="Enter temporary password"
           />
 
           {/* ROLE */}
@@ -345,7 +318,7 @@ const styles = StyleSheet.create({
   inputWrap: { marginBottom: 16 },
   label: { fontWeight: "600", marginBottom: 6, color: "#334155" },
   input: {
-    color:"#343a44",
+    color: "#343a44",
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#e2e8f0",

@@ -16,7 +16,6 @@ export default function MedicineCard({ medicine }) {
   const { user } = useAuth();
   const { items, addMedicine, updateQuantity } =
     useMedicineCart();
-
   /* ================= ROLE LOGIC ================= */
 
   const isAgent =
@@ -44,7 +43,7 @@ export default function MedicineCard({ medicine }) {
 
   const goToDetails = () => {
     router.push({
-      pathname: "/agent/(tabs)/medicine/details",
+      pathname: "/medicine-store/details",
       params: { id: item._id },
     });
   };
