@@ -7,7 +7,7 @@ export default function TabsLayout() {
       screenOptions={({ route }) => ({
         headerShown: false,
 
-        // 🎨 COLORS
+        /* 🎨 COLORS */
         tabBarActiveTintColor: "#14b8a6",
         tabBarInactiveTintColor: "#94a3b8",
 
@@ -25,33 +25,31 @@ export default function TabsLayout() {
           fontWeight: "600",
         },
 
-        // 🔥 ICON LOGIC
-        tabBarIcon: ({ focused, color, size }) => {
+        /* 🔥 ICON LOGIC */
+        tabBarIcon: ({ focused, color }) => {
           let iconName;
 
           switch (route.name) {
+
+            /* ===== HOME ===== */
             case "index":
               iconName = focused
                 ? "home"
                 : "home-outline";
               break;
 
-            case "medicine":
+            /* ===== NETWORK (AGENT TEAM) ===== */
+            case "network":
               iconName = focused
-                ? "medkit"
-                : "medkit-outline";
+                ? "people"
+                : "people-outline";
               break;
 
-            case "store":
-              iconName = focused
-                ? "storefront"
-                : "storefront-outline";
-              break;
-
+            /* ===== PROFILE ===== */
             case "profile":
               iconName = focused
-                ? "person"
-                : "person-outline";
+                ? "person-circle"
+                : "person-circle-outline";
               break;
 
             default:
@@ -68,29 +66,24 @@ export default function TabsLayout() {
         },
       })}
     >
-      {/* HOME */}
+      {/* ===== HOME ===== */}
       <Tabs.Screen
         name="index"
         options={{ title: "Home" }}
       />
 
-      {/* MEDICINE */}
+      {/* ===== NETWORK ===== */}
       <Tabs.Screen
-        name="medicine"
-        options={{ title: "Medicines" }}
+        name="network"
+        options={{ title: "Network" }}
       />
 
-      {/* STORE - Global Medicine Store */}
-      <Tabs.Screen
-        name="store"
-        options={{ title: "Store" }}
-      />
-
-      {/* PROFILE */}
+      {/* ===== PROFILE ===== */}
       <Tabs.Screen
         name="profile"
         options={{ title: "Profile" }}
       />
+
     </Tabs>
   );
 }

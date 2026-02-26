@@ -186,7 +186,7 @@ function OrderCard({ order }) {
       activeOpacity={0.85}
       onPress={() =>
     router.push({
-      pathname: "/receptionist/(tabs)/medicineorder/[orderId]",
+      pathname: "/admin/(tabs)/medicineorder/[orderId]",
       params: { orderId: order.orderId },
     })
   }

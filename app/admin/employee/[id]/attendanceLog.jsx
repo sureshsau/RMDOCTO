@@ -1,20 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
-  Image,
-  RefreshControl,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView,
+    StyleSheet,
+    Text,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import { useAuth } from "../../../context/AuthContext";
-import api from "../../../services/axios";
+import { useAuth } from "../../../../context/AuthContext";
+import api from "../../../../services/axios";
 
 /* =========================
    DATE HELPERS
@@ -39,6 +37,7 @@ const monthYear = today.toLocaleDateString("en-US", {
 ========================= */
 
 export default function Attendance() {
+     const { id, name = "Employee", role = "Doctor", phone = "N/A", faceUri } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -75,7 +74,7 @@ export default function Attendance() {
 
       const to = today.toISOString().split("T")[0];
 
-      const res = await api.get("/attendance/log/me", {
+      const res = await api.get(`/attendance/log/${id}`, {
         params: {
           from,
           to,
@@ -173,44 +172,6 @@ export default function Attendance() {
           </View>
         </View>
 
-        {/* FACE CARD */}
-        <View style={styles.faceCard}>
-          <View style={styles.faceCardHeader}>
-            <View>
-              <Text style={styles.faceCardTitle}>
-                Mark today's attendance
-              </Text>
-              <Text style={styles.faceCardSubtitle}>
-                Face verification required
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.faceImageContainer}>
-            <View style={styles.faceImageWrapper}>
-              {user?.profileImage ? (
-                <Image
-                  source={{ uri: user.profileImage }}
-                  style={styles.faceImage}
-                />
-              ) : (
-                <View style={styles.placeholderImage}>
-                  <Ionicons name="person" size={60} color="#d1d5db" />
-                </View>
-              )}
-            </View>
-          </View>
-
-          <TouchableOpacity
-            onPress={() => router.push("/doctor/face-verification")}
-            style={styles.verifyBtn}
-          >
-            <Ionicons name="scan" size={20} color="#fff" />
-            <Text style={styles.verifyBtnText}>
-              Start Face Verification
-            </Text>
-          </TouchableOpacity>
-        </View>
 
         {/* OVERVIEW STATS */}
         <View style={styles.statsCard}>
@@ -309,12 +270,19 @@ const LogItem = ({ log }) => {
       label: "Leave",
       icon: "airplane",
     },
+    WORKING: {
+  bg: "#e0f2fe",
+  text: "#0284c7",
+  label: "Working",
+  icon: "pulse-outline",
+}
+
   };
 
   const status = statusMap[log.status] || {
     bg: "#f3f4f6",
     text: "#6b7280",
-    label: "Unknown",
+    label: "working",
     icon: "help-circle",
   };
 

@@ -31,6 +31,7 @@ export default function Cart() {
   } = useMedicineCart();
 
   const { wallet } = useRMCredit();
+  console.log(wallet);
   const { user } = useAuth();
 
   const [paymentMode, setPaymentMode] = useState("COD");
@@ -49,9 +50,9 @@ export default function Cart() {
     [items, isAgent]
   );
 
-  const insufficientCredit =
-    paymentMode === "RM_CREDIT" &&
-    (wallet?.balance || 0) < payableAmount;
+ const insufficientCredit =
+  paymentMode === "RM_CREDIT" &&
+  (wallet?.balance || 0) < subtotal;
 
   /* ===================== HANDLE ORDER ===================== */
 

@@ -7,11 +7,9 @@ export default function AdminLayout() {
       screenOptions={{
         headerShown: false,
 
-        /* ===== TAB COLORS ===== */
         tabBarActiveTintColor: "#ffffff",
         tabBarInactiveTintColor: "#d6d7f2",
 
-        /* ===== TAB BAR STYLE ===== */
         tabBarStyle: {
           backgroundColor: "#6b6dbf",
           borderTopWidth: 0,
@@ -19,7 +17,6 @@ export default function AdminLayout() {
           paddingTop: 6,
         },
 
-        /* ===== LABEL STYLE ===== */
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "600",
@@ -38,7 +35,7 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* ================= USERS / EMPLOYEES ================= */}
+      {/* ================= USERS ================= */}
       <Tabs.Screen
         name="users"
         options={{
@@ -49,11 +46,11 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* ================= STORE ================= */}
+      {/* ================= MEDICINE ORDERS ================= */}
       <Tabs.Screen
-        name="store"
+        name="medicineorder"
         options={{
-          title: "Store",
+          title: "Orders",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="medkit-outline" size={size} color={color} />
           ),

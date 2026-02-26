@@ -14,7 +14,7 @@ import { useAuth } from "../../../context/AuthContext.jsx";
 const PRIMARY = "#14b8a6";
 const BG = "#f8fafc";
 
-export default function ReceptionistDashboard() {
+export default function RiderDashboard() {
 
   const router = useRouter();
   const { user } = useAuth();
@@ -30,80 +30,72 @@ export default function ReceptionistDashboard() {
     <View style={styles.container}>
       <StatusBar backgroundColor={PRIMARY} barStyle="light-content" />
 
-      <View style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false}>
 
-{/* ================= HEADER ================= */}
+        {/* ================= HEADER ================= */}
 
-<View style={styles.header}>
-  <View style={styles.headerRow}>
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
 
-    {user?.profileImage ? (
-      <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-    ) : (
-      <View style={styles.avatarPlaceholder}>
-        <Ionicons name="person" size={26} color="#94A3B8" />
-      </View>
-    )}
+            {user?.profileImage ? (
+              <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={26} color="#94A3B8" />
+              </View>
+            )}
 
-    <View>
-      <Text style={styles.greeting}>Welcome Back 👋</Text>
-      <Text style={styles.name}>{user?.name || "Receptionist"}</Text>
+            <View>
+              <Text style={styles.greeting}>Welcome Back 👋</Text>
+              <Text style={styles.name}>{user?.name || "Rider"}</Text>
 
-      <Text style={styles.role}>
-        {user?.roles?.[0]?.toUpperCase() || "RECEPTIONIST"}
-      </Text>
+              <Text style={styles.role}>
+                {user?.roles?.[0]?.toUpperCase() || "RIDER"}
+              </Text>
 
-      <Text style={styles.date}>{formattedDate}</Text>
-    </View>
+              <Text style={styles.date}>{formattedDate}</Text>
+            </View>
 
-  </View>
-</View>
+          </View>
+        </View>
 
-{/* ================= DASHBOARD GRID ================= */}
+        {/* ================= DASHBOARD GRID ================= */}
 
-<View style={styles.grid}>
+        <View style={styles.grid}>
 
-  <DashboardCard
-    icon="cube-outline"
-    label="My Medicine Orders"
-    onPress={() => router.push("/mymedicineorder")}
-  />
+          <DashboardCard
+            icon="cube-outline"
+            label="Medicine Orders"
+            onPress={() => router.push("/rmrider/medicine/order")}
+          />
 
-  <DashboardCard
-    icon="storefront-outline"
-    label="Medicine Store"
-    onPress={() => router.push("/medicine-store")}
-  />
+          <DashboardCard
+            icon="bag-outline"
+            label="My Orders"
+            onPress={() => router.push("/mymedicineorder")}
+          />
 
-  <DashboardCard
-    icon="people-outline"
-    label="Patients"
-    onPress={() => router.push("/receptionist/appointments")}
-  />
+          <DashboardCard
+            icon="storefront-outline"
+            label="Medicine Store"
+            onPress={() => router.push("/medicine-store")}
+          />
 
-  <DashboardCard
-    icon="medkit-outline"
-    label="Doctors"
-    onPress={() => router.push("/receptionist/doctor")}
-  />
+          <DashboardCard
+            icon="wallet-outline"
+            label="RM Coins"
+            onPress={() => router.push("/rmcoin")}
+          />
 
-  <DashboardCard
-    icon="wallet-outline"
-    label="RM Coins"
-    onPress={() => router.push("/rmcoin")}
-  />
+          <DashboardCard
+            icon="scan-outline"
+            label="Check-In"
+            onPress={() => router.push("/rmrider/face-verification")}
+          />
 
-  <DashboardCard
-    icon="scan-outline"
-    label="Check-In"
-    onPress={() => router.push("/receptionist/face-verification")}
-  />
+        </View>
 
-</View>
-
-        </ScrollView>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -133,15 +125,14 @@ const styles = StyleSheet.create({
 container: {
   flex: 1,
   backgroundColor: BG,
-  
 },
 
 header: {
   backgroundColor: PRIMARY,
   padding: 20,
+  paddingTop: 50,
   borderBottomLeftRadius: 26,
   borderBottomRightRadius: 26,
-  paddingTop:50
 },
 
 headerRow: {

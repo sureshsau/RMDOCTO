@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
   ScrollView,
@@ -8,7 +9,7 @@ import {
 } from "react-native";
 
 const PRIMARY = "#14b8a6";
-const BG = "#f8fafc";
+const BG = "#f1f5f9";
 
 export default function Index() {
   const router = useRouter();
@@ -16,142 +17,192 @@ export default function Index() {
   return (
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
+
         {/* ================= HEADER ================= */}
         <View style={styles.header}>
-          <Text style={styles.title}>Agent Dashboard</Text>
-          <Text style={styles.subtitle}>
-            Manage orders, wallet & agents
+          <Text style={styles.headerTitle}>
+            Agent Dashboard
+          </Text>
+          <Text style={styles.headerSub}>
+            Manage Orders • Wallet • Network
           </Text>
         </View>
 
         {/* ================= QUICK STATS ================= */}
-        <View style={styles.statsRow}>
-          <StatCard title="Wallet Balance" value="₹2,450" />
-          <StatCard title="Active Orders" value="12" />
+        <View style={styles.statsWrapper}>
+          <StatCard
+            icon="wallet-outline"
+            label="Wallet Balance"
+            value="₹ 2,450"
+          />
+
+          <StatCard
+            icon="cube-outline"
+            label="Active Orders"
+            value="12"
+          />
         </View>
 
-        {/* ================= ACTION CARDS ================= */}
+        {/* ================= ACTION GRID ================= */}
+        <Text style={styles.sectionTitle}>
+          Quick Actions
+        </Text>
+
         <View style={styles.grid}>
+
           <ActionCard
-            title="RMCREDIT"
-            subtitle="Transactions & balance"
-            emoji="💰"
+            icon="cash-outline"
+            title="RM Credit"
+            subtitle="View balance & history"
             onPress={() => router.push("/agent/rmcredit")}
           />
+
           <ActionCard
-            title="rmcoin"
-            subtitle="Transactions & balance"
-            emoji="💰"
+            icon="logo-bitcoin"
+            title="RM Coin"
+            subtitle="Wallet transactions"
             onPress={() => router.push("/rmcoin")}
           />
 
-          {/* <ActionCard
-            title="My Orders"
-            subtitle="Track & manage orders"
-            emoji="📦"
-            onPress={() => router.push("/agent/(tabs)/medicine/")}
-          /> */}
-
           <ActionCard
+            icon="person-add-outline"
             title="Register Agent"
-            subtitle="Add new agent"
-            emoji="👤"
+            subtitle="Add new downline"
             onPress={() => router.push("/agent/register")}
           />
 
           <ActionCard
+            icon="medkit-outline"
             title="Medicine Orders"
-            subtitle="Customer medicine orders"
-            emoji="💊"
+            subtitle="Customer orders"
             onPress={() => router.push("/mymedicineorder")}
           />
+
           <ActionCard
-            title="Medicine store"
-            subtitle="Customer medicine orders"
-            emoji="  "
+            icon="storefront-outline"
+            title="Medicine Store"
+            subtitle="Buy medicines"
             onPress={() => router.push("/medicine-store")}
           />
+
         </View>
+
       </ScrollView>
     </View>
   );
 }
 
-/* ================= SUB COMPONENTS ================= */
+/* ================= COMPONENTS ================= */
 
-const StatCard = ({ title, value }) => (
-  <View style={styles.statCard}>
-    <Text style={styles.statValue}>{value}</Text>
-    <Text style={styles.statTitle}>{title}</Text>
-  </View>
-);
+function StatCard({ icon, label, value }) {
+  return (
+    <View style={styles.statCard}>
+      <View style={styles.statIcon}>
+        <Ionicons name={icon} size={22} color={PRIMARY} />
+      </View>
 
-const ActionCard = ({ title, subtitle, emoji, onPress }) => (
-  <TouchableOpacity
-    style={styles.actionCard}
-    activeOpacity={0.85}
-    onPress={onPress}
-  >
-    <Text style={styles.emoji}>{emoji}</Text>
-    <Text style={styles.cardTitle}>{title}</Text>
-    <Text style={styles.cardSub}>{subtitle}</Text>
-  </TouchableOpacity>
-);
+      <View>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statLabel}>{label}</Text>
+      </View>
+    </View>
+  );
+}
+
+function ActionCard({ icon, title, subtitle, onPress }) {
+  return (
+    <TouchableOpacity
+      style={styles.actionCard}
+      activeOpacity={0.85}
+      onPress={onPress}
+    >
+      <View style={styles.actionIcon}>
+        <Ionicons name={icon} size={22} color="#fff" />
+      </View>
+
+      <Text style={styles.cardTitle}>{title}</Text>
+      <Text style={styles.cardSub}>{subtitle}</Text>
+    </TouchableOpacity>
+  );
+}
 
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: BG,
+    paddingTop:0
   },
 
   header: {
-    padding: 20,
-    paddingTop: 28,
+    backgroundColor: PRIMARY,
+    padding: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    marginBottom: 20,
+    paddingTop:50
   },
 
-  title: {
-    fontSize: 24,
+  headerTitle: {
+    fontSize: 22,
     fontWeight: "900",
-    color: "#0f172a",
+    color: "#fff",
   },
 
-  subtitle: {
-    fontSize: 13,
-    color: "#64748b",
+  headerSub: {
+    color: "#ccfbf1",
     marginTop: 4,
+    fontSize: 13,
   },
 
-  /* ===== STATS ===== */
-  statsRow: {
+  statsWrapper: {
     flexDirection: "row",
     gap: 12,
     paddingHorizontal: 16,
-    marginBottom: 20,
+    marginBottom: 22,
   },
 
   statCard: {
     flex: 1,
-    backgroundColor: "#ffffff",
-    borderRadius: 18,
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 20,
     padding: 16,
-    elevation: 2,
+    elevation: 3,
+    alignItems: "center",
+  },
+
+  statIcon: {
+    backgroundColor: "#ecfeff",
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
   },
 
   statValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: "900",
-    color: PRIMARY,
+    color: "#0f172a",
   },
 
-  statTitle: {
-    fontSize: 12,
+  statLabel: {
+    fontSize: 11,
     color: "#64748b",
-    marginTop: 4,
+    marginTop: 2,
   },
 
-  /* ===== ACTION GRID ===== */
+  sectionTitle: {
+    paddingHorizontal: 16,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 12,
+  },
+
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -161,26 +212,32 @@ const styles = StyleSheet.create({
 
   actionCard: {
     width: "48%",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#fff",
     borderRadius: 20,
     padding: 18,
-    elevation: 3,
+    elevation: 4,
   },
 
-  emoji: {
-    fontSize: 26,
+  actionIcon: {
+    backgroundColor: PRIMARY,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
     marginBottom: 10,
   },
 
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "800",
     color: "#0f172a",
   },
 
   cardSub: {
-    fontSize: 12,
+    fontSize: 11,
     color: "#64748b",
-    marginTop: 4,
+    marginTop: 2,
   },
+
 });

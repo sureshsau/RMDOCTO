@@ -9,10 +9,15 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useAppointments } from "../../../context/AppointmentContext";
+import { useAuth } from "../../../context/AuthContext";
 
 /* ================= MAIN SCREEN ================= */
 
 export default function AdminDashboard() {
+  const[appointments]=useAppointments();
+  const {user}=useAuth();
+  
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -34,7 +39,7 @@ export default function AdminDashboard() {
               />
             </TouchableOpacity>
             <Image
-              source={{ uri: "https://i.pravatar.cc/100?img=10" }}
+              source={{ uri: user?.profileImage }}
               style={styles.avatar}
             />
           </View>
@@ -69,36 +74,50 @@ export default function AdminDashboard() {
           </View>
         </View>
 
+     
         {/* QUICK STATS */}
-        <SectionDivider title="Quick Stats" />
-        <View style={styles.sectionPadding}>
-          <View style={styles.statsGrid}>
-            <StatCard
-              icon="medkit"
-              label="Employees"
-              value="48"
-              onPress={() => router.push("/(tabs)/employees")}
-            />
-            <StatCard
-              icon="people"
-              label="Patients"
-              value="1,240"
-              onPress={() => router.push("/(admin)/patients")}
-            />
-            <StatCard
-              icon="calendar"
-              label="Appointments"
-              value="320"
-              onPress={() => router.push("/(admin)/appointments")}
-            />
-            <StatCard
-              icon="wallet"
-              label="Wallet Balance"
-              value="₹1,20,500"
-              onPress={() => router.push("/admin/rmcoin")}
-            />
-          </View>
-        </View>
+<SectionDivider title="Quick Access" />
+<View style={styles.sectionPadding}>
+  <View style={styles.statsGrid}>
+
+    <StatCard
+      icon="people-outline"
+      label="Manage Users"
+      onPress={() => router.push("/admin/(tabs)/users")}
+    />
+
+    <StatCard
+      icon="calendar-outline"
+      label="Appointments"
+      onPress={() => router.push("/admin/appointments")}
+    />
+
+    <StatCard
+      icon="wallet-outline"
+      label="Wallet"
+      onPress={() => router.push("/admin/rmcoin")}
+    />
+
+    <StatCard
+      icon="medkit-outline"
+      label="Medicine Store"
+      onPress={() => router.push("/medicine-store")}
+    />
+
+    {/* <StatCard
+      icon="cube-outline"
+      label="Medicine Orders"
+      onPress={() => router.push("/admin/(tabs)/medicine-orders")}
+    />
+
+    <StatCard
+      icon="analytics-outline"
+      label="Reports"
+      onPress={() => router.push("/admin/(tabs)/reports-analysis")}
+    /> */}
+
+  </View>
+</View>
 
         {/* STAFF ONLINE */}
         <SectionDivider title="Staff Online" />
@@ -111,8 +130,9 @@ export default function AdminDashboard() {
         {/* QUICK ACTIONS */}
         <SectionDivider title="Admin Actions" />
         <View style={styles.sectionPadding}>
+          <QuickAction icon="add-circle" label="my medicine order" onPress={() => router.push("/mymedicineorder")} />
           <QuickAction icon="add-circle" label="Add Employee" onPress={() => router.push("/admin/employee/add")} />
-          <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/(admin)/patients")} />
+          <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />
           <QuickAction icon="medkit" label="Medicine Management" onPress={() => router.push("/admin/medicine")} />
           <QuickAction icon="flask" label="Lab Management" onPress={() => router.push("/(tabs)/lab-management")} />
@@ -159,19 +179,20 @@ function StatusItem({ label, value, color }) {
   );
 }
 
-function StatCard({ icon, label, value, onPress }) {
+function StatCard({ icon, label, onPress }) {
   return (
-    <TouchableOpacity style={styles.statCard} onPress={onPress} activeOpacity={0.8}>
-      <View style={styles.statHeader}>
-        <View style={styles.statIcon}>
-          <Ionicons name={icon} size={20} color="#6b6dbf" />
-        </View>
-        <View style={styles.liveBadge}>
-          <Text style={styles.liveText}>LIVE</Text>
-        </View>
+    <TouchableOpacity
+      style={styles.statCard}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.statIcon}>
+        <Ionicons name={icon} size={22} color="#6b6dbf" />
       </View>
-      <Text style={styles.statLabel}>{label}</Text>
-      <Text style={styles.statValue}>{value}</Text>
+
+      <Text style={styles.statLabelNew}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -401,4 +422,10 @@ const styles = StyleSheet.create({
     color: "#64748b",
     marginTop: 4,
   },
+  statLabelNew: {
+  fontSize: 13,
+  fontWeight: "700",
+  color: "#1e293b",
+  marginTop: 10,
+},
 });

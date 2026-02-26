@@ -14,7 +14,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import api from "../../../../services/axios.js";
+import api from "../../../../../services/axios";
 
 export default function MedicineOrdersOverview() {
   const [orders, setOrders] = useState([]);
@@ -186,7 +186,7 @@ function OrderCard({ order }) {
       activeOpacity={0.85}
       onPress={() =>
     router.push({
-      pathname: "/receptionist/(tabs)/medicineorder/[orderId]",
+      pathname: "/admin/(tabs)/medicineorder/[orderId]",
       params: { orderId: order.orderId },
     })
   }

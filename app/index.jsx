@@ -20,6 +20,6 @@ export default function Index() {
   if (user.dashboard === "marketing_agent") return <Redirect href="/marketing_agent" />;
   if(user.dashboard === "receptionist") return <Redirect href="/receptionist" />;
   if (user.dashboard === "doctor") return <Redirect href="/doctor" />;
-
+  if(user.dashboard=="rmrider") return <Redirect href="/rmrider"/>
   return <Redirect href="/auth/login" />;
 }

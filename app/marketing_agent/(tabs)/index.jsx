@@ -1,96 +1,218 @@
-import { router } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import {
+  Image,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { useAuth } from "../../../context/AuthContext.jsx";
 
-export default function MarketingAgentHome() {
+const PRIMARY = "#14b8a6";
+const BG = "#f8fafc";
+
+export default function MarketingAgentDashboard() {
+
+  const router = useRouter();
+  const { user } = useAuth();
+
+  const today = new Date();
+  const formattedDate = today.toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+
   return (
-    <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Marketing Agent Dashboard</Text>
+    <View style={styles.container}>
+      <StatusBar backgroundColor={PRIMARY} barStyle="light-content" />
 
-      <View style={styles.cardContainer}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.card,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => router.push("/marketing_agent/register-agent")}
-        >
-          <Text style={styles.cardTitle}>Register Agent</Text>
-          <Text style={styles.cardSub}>Add new agents under you</Text>
-        </Pressable>
+      <View style={{ flex: 1 }}>
+        <ScrollView showsVerticalScrollIndicator={false}>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.card,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => router.push("/marketing_agent/my-network")}
-        >
-          <Text style={styles.cardTitle}>My Network</Text>
-          <Text style={styles.cardSub}>View your agent hierarchy</Text>
-        </Pressable>
-        <Pressable
-          style={({ pressed }) => [
-            styles.card,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => router.push("/rmcoin")}
-        >
-          <Text style={styles.cardTitle}>wallet</Text>
-          <Text style={styles.cardSub}>View your agent hierarchy</Text>
-        </Pressable>
+{/* ================= HEADER ================= */}
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.card,
-            pressed && styles.pressed,
-          ]}
-          onPress={() => router.push("/marketing_agent/medicine/order")}
-        >
-          <Text style={styles.cardTitle}>My Medicine Orders</Text>
-          <Text style={styles.cardSub}>Track orders & commissions</Text>
-        </Pressable>
+<View style={styles.header}>
+  <View style={styles.headerRow}>
+
+    {user?.profileImage ? (
+      <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+    ) : (
+      <View style={styles.avatarPlaceholder}>
+        <Ionicons name="person" size={26} color="#94A3B8" />
       </View>
-    </SafeAreaView>
+    )}
+
+    <View>
+      <Text style={styles.greeting}>Welcome Back 👋</Text>
+      <Text style={styles.name}>{user?.name || "Agent"}</Text>
+
+      <Text style={styles.role}>
+        {user?.roles?.[0]?.toUpperCase() || "MARKETING AGENT"}
+      </Text>
+
+      <Text style={styles.date}>{formattedDate}</Text>
+    </View>
+
+  </View>
+</View>
+
+{/* ================= DASHBOARD GRID ================= */}
+
+<View style={styles.grid}>
+
+  <DashboardCard
+    icon="person-add-outline"
+    label="Register Agent"
+    onPress={() => router.push("/marketing_agent/register-agent")}
+  />
+
+  <DashboardCard
+    icon="git-network-outline"
+    label="My Network"
+    onPress={() => router.push("/marketing_agent/my-network")}
+  />
+
+  <DashboardCard
+    icon="wallet-outline"
+    label="Wallet"
+    onPress={() => router.push("/rmcoin")}
+  />
+
+  <DashboardCard
+    icon="medkit-outline"
+    label="My Medicine Orders"
+    onPress={() => router.push("/mymedicineorder")}
+  />
+
+  <DashboardCard
+    icon="storefront-outline"
+    label="Medicine Store"
+    onPress={() => router.push("/medicine-store")}
+  />
+
+</View>
+
+        </ScrollView>
+      </View>
+    </View>
   );
 }
 
+/* ================= CARD ================= */
+
+function DashboardCard({ icon, label, onPress }) {
+  return (
+    <TouchableOpacity
+      style={styles.card}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
+      <View style={styles.iconBox}>
+        <Ionicons name={icon} size={22} color={PRIMARY} />
+      </View>
+
+      <Text style={styles.cardLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+/* ================= STYLES ================= */
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f0fdfa",
-    padding: 16,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#0f766e",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  cardContainer: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  card: {
-    backgroundColor: "#14b8a6",
-    borderRadius: 14,
-    padding: 20,
-    marginBottom: 16,
-    elevation: 4,
-  },
-  pressed: {
-    opacity: 0.85,
-    transform: [{ scale: 0.98 }],
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#ffffff",
-    marginBottom: 6,
-  },
-  cardSub: {
-    fontSize: 14,
-    color: "#ecfeff",
-  },
+
+container: {
+  flex: 1,
+  backgroundColor: BG,
+},
+
+header: {
+  backgroundColor: PRIMARY,
+  padding: 20,
+  borderBottomLeftRadius: 26,
+  borderBottomRightRadius: 26,
+  paddingTop:50
+},
+
+headerRow: {
+  flexDirection: "row",
+  alignItems: "center",
+  gap: 14,
+},
+
+avatar: {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+},
+
+avatarPlaceholder: {
+  width: 60,
+  height: 60,
+  borderRadius: 30,
+  backgroundColor: "#F1F5F9",
+  justifyContent: "center",
+  alignItems: "center",
+},
+
+greeting: {
+  fontSize: 12,
+  color: "#ccfbf1",
+},
+
+name: {
+  fontSize: 18,
+  fontWeight: "800",
+  color: "#fff",
+},
+
+role: {
+  fontSize: 11,
+  color: "#e0fdfa",
+},
+
+date: {
+  fontSize: 11,
+  color: "#ccfbf1",
+  marginTop: 2,
+},
+
+grid: {
+  flexDirection: "row",
+  flexWrap: "wrap",
+  justifyContent: "space-between",
+  padding: 20,
+  marginTop: 10,
+},
+
+card: {
+  width: "48%",
+  backgroundColor: "#ffffff",
+  borderRadius: 18,
+  padding: 20,
+  alignItems: "center",
+  marginBottom: 14,
+  elevation: 3,
+},
+
+iconBox: {
+  width: 50,
+  height: 50,
+  borderRadius: 14,
+  backgroundColor: "#ecfeff",
+  justifyContent: "center",
+  alignItems: "center",
+  marginBottom: 10,
+},
+
+cardLabel: {
+  fontSize: 13,
+  fontWeight: "600",
+  color: "#334155",
+  textAlign: "center",
+},
+
 });

@@ -31,27 +31,36 @@ const ACTIONS_MAP = {
   ],
 
   marketing_agent: [
-    { id: "view-network", label: "View Network", route: "/marketing_agent/network" },
-    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+    // { id: "view-network", label: "View Network", route: "/marketing_agent/network" },
+    // { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
   ],
   rmrider:[
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+
   ],
   subadmin: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+
   ],
 
   receptionist: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
+        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+
   ],
 
   doctor: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
+        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+
   ],
 
   agent: [
@@ -62,7 +71,10 @@ const ACTIONS_MAP = {
   ],
 
   default: [
-    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+    // { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+        { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+        { id: "give-role", label: "Give Role", route: "/admin/employee/add" },
+
   ],
 };
 

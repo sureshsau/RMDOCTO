@@ -2,6 +2,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
   Alert,
+  Image,
+  ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,7 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "../../../context/AuthContext";
 
-const PRIMARY = "#6b6dbf";
+const PRIMARY = "#1BA6A6";
 
 export default function Profile() {
   const { logout, user } = useAuth();
@@ -33,9 +36,12 @@ export default function Profile() {
     );
   };
 
-  const Detail = ({ label, value }) => (
+  const DetailItem = ({ icon, label, value }) => (
     <View style={styles.detailRow}>
-      <Text style={styles.detailLabel}>{label}</Text>
+      <View style={styles.detailLeft}>
+        <Ionicons name={icon} size={18} color="#64748B" />
+        <Text style={styles.detailLabel}>{label}</Text>
+      </View>
       <Text style={styles.detailValue}>
         {value || "—"}
       </Text>
@@ -44,34 +50,91 @@ export default function Profile() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.card}>
-        {/* AVATAR */}
-        <Ionicons
-          name="person-circle-outline"
-          size={88}
-          color={PRIMARY}
-        />
+      <StatusBar barStyle="dark-content" />
 
-        {/* NAME */}
-        <Text style={styles.name}>
-          {user?.name || "User"}
-        </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 40 }}
+      >
+        {/* ================= HEADER CARD ================= */}
+        <View style={styles.headerCard}>
+          {user?.profileImage ? (
+            <Image
+              source={{ uri: user.profileImage }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={styles.avatarPlaceholder}>
+              <Ionicons name="person" size={40} color="#94A3B8" />
+            </View>
+          )}
 
-        {/* ROLE */}
-        {user?.role && (
-          <Text style={styles.role}>
-            {user.role.toUpperCase()}
+          <Text style={styles.name}>
+            {user?.name || "User"}
           </Text>
-        )}
 
-        {/* DETAILS */}
-        <View style={styles.detailsBox}>
-          <Detail label="Email" value={user?.email} />
-          <Detail label="Phone" value={user?.phone} />
-          <Detail label="User ID" value={user?._id} />
+          <View style={styles.roleBadge}>
+            <Text style={styles.roleText}>
+              {user?.roles?.[0]?.toUpperCase() ||
+                "USER"}
+            </Text>
+          </View>
         </View>
 
-        {/* LOGOUT */}
+        {/* ================= RM COIN CARD ================= */}
+        <View style={styles.rmCard}>
+          <View style={styles.rmLeft}>
+            <Ionicons
+              name="wallet-outline"
+              size={22}
+              color="#CA8A04"
+            />
+            <Text style={styles.rmLabel}>
+              RM Coins Balance
+            </Text>
+          </View>
+
+          <Text style={styles.rmValue}>
+            ₹ {user?.rmCoinsBalance || 0}
+          </Text>
+        </View>
+
+        {/* ================= DETAILS CARD ================= */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            Account Details
+          </Text>
+
+          <DetailItem
+            icon="mail-outline"
+            label="Email"
+            value={user?.email}
+          />
+
+          <DetailItem
+            icon="call-outline"
+            label="Phone"
+            value={user?.phone}
+          />
+
+          <DetailItem
+            icon="person-outline"
+            label="User ID"
+            value={user?.id}
+          />
+
+          <DetailItem
+            icon="shield-checkmark-outline"
+            label="Roles"
+            value={
+              user?.roles?.length
+                ? user.roles.join(", ")
+                : "—"
+            }
+          />
+        </View>
+
+        {/* ================= LOGOUT BUTTON ================= */}
         <TouchableOpacity
           onPress={handleLogout}
           activeOpacity={0.85}
@@ -79,12 +142,14 @@ export default function Profile() {
         >
           <Ionicons
             name="log-out-outline"
-            size={22}
-            color="white"
+            size={20}
+            color="#fff"
           />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>
+            Logout
+          </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -94,68 +159,146 @@ export default function Profile() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#eef0fa",
-    justifyContent: "center",
-    paddingHorizontal: 24,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 20,
   },
-  card: {
+
+  /* HEADER */
+  headerCard: {
     backgroundColor: "#fff",
-    borderRadius: 28,
-    padding: 24,
+    borderRadius: 24,
+    paddingVertical: 30,
     alignItems: "center",
+    marginTop: 10,
+    marginBottom: 20,
+    elevation: 3,
   },
+
+  avatar: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    marginBottom: 12,
+  },
+
+  avatarPlaceholder: {
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: "#E2E8F0",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+
   name: {
     fontSize: 20,
     fontWeight: "800",
-    color: "#0f172a",
-    marginTop: 8,
+    color: "#0F172A",
   },
-  role: {
+
+  roleBadge: {
+    marginTop: 8,
+    backgroundColor: "#E0F2F1",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
+
+  roleText: {
     fontSize: 12,
     fontWeight: "700",
     color: PRIMARY,
+  },
+
+  /* RM COIN CARD */
+  rmCard: {
+    backgroundColor: "#FFFBEB",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 20,
+    elevation: 2,
+  },
+
+  rmLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
+
+  rmLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#92400E",
+  },
+
+  rmValue: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#CA8A04",
+  },
+
+  /* DETAILS CARD */
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 20,
+    marginBottom: 30,
+    elevation: 2,
+  },
+
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "800",
     marginBottom: 16,
-    marginTop: 2,
-    letterSpacing: 1,
+    color: "#0F172A",
   },
-  detailsBox: {
-    width: "100%",
-    marginBottom: 28,
-    marginTop: 16,
-    borderTopWidth: 1,
-    borderColor: "#e5e7eb",
-  },
+
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 12,
+    alignItems: "center",
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderColor: "#e5e7eb",
+    borderColor: "#F1F5F9",
   },
-  detailLabel: {
-    color: "#64748b",
-    fontSize: 13,
-    fontWeight: "600",
-  },
-  detailValue: {
-    color: "#0f172a",
-    fontSize: 13,
-    fontWeight: "600",
-    maxWidth: "65%",
-    textAlign: "right",
-  },
-  logoutBtn: {
-    backgroundColor: "#ef4444",
-    borderRadius: 20,
-    paddingHorizontal: 40,
-    paddingVertical: 16,
+
+  detailLeft: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
   },
+
+  detailLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#64748B",
+  },
+
+  detailValue: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#0F172A",
+    maxWidth: "55%",
+    textAlign: "right",
+  },
+
+  /* LOGOUT */
+  logoutBtn: {
+    backgroundColor: "#EF4444",
+    borderRadius: 18,
+    paddingVertical: 16,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+    elevation: 2,
+  },
+
   logoutText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "800",
-    marginLeft: 8,
   },
 });

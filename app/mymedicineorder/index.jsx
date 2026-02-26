@@ -13,23 +13,43 @@ import {
 import Toast from "react-native-toast-message";
 import api from "../../services/axios.js";
 
-/* ================= MAIN ================= */
-
 export default function MedicineHistory() {
+
   const router = useRouter();
 
   const [orders, setOrders] = useState([]);
+  const [totalPaid, setTotalPaid] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  /* ================= FETCH ORDERS ================= */
+  /* ================= FETCH ================= */
 
-  const fetchOrders = async (isRefresh = false) => {
+  const fetchOrders = async (p = 1, isRefresh = false) => {
     try {
-      if (!isRefresh) setLoading(true);
 
-      const res = await api.get("/medicine/order");
-      setOrders(res.data.data || []);
+      if (!isRefresh && p === 1) setLoading(true);
+      if (p > 1) setLoadingMore(true);
+
+      const res = await api.get(
+        `/medicine/order?page=${p}&limit=10`
+      );
+
+      const newOrders = res?.data?.orders || [];
+
+      if (p === 1) {
+        setOrders(newOrders);
+      } else {
+        setOrders(prev => [...prev, ...newOrders]);
+      }
+
+      setTotalPaid(res?.data?.totalPaidAmount || 0);
+      setTotalPages(res?.data?.pagination?.totalPages || 1);
+      setPage(p);
+
     } catch (err) {
       Toast.show({
         type: "error",
@@ -41,23 +61,29 @@ export default function MedicineHistory() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchOrders();
+    fetchOrders(1);
   }, []);
-
-  /* ================= PULL TO REFRESH ================= */
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    fetchOrders(true);
+    fetchOrders(1, true);
   }, []);
 
-  /* ================= RENDER ITEM ================= */
+  const loadMore = () => {
+    if (page < totalPages && !loadingMore) {
+      fetchOrders(page + 1);
+    }
+  };
+
+  /* ================= ITEM ================= */
 
   const renderItem = ({ item }) => {
+
     const statusColor =
       item.orderStatus === "CONFIRMED"
         ? "#dcfce7"
@@ -76,14 +102,17 @@ export default function MedicineHistory() {
         }
       >
         <View style={styles.card}>
+
           {/* HEADER */}
           <View style={styles.headerRow}>
             <View>
               <Text style={styles.orderId}>
-                #{item.orderId.slice(-6)}
+                #{item?.orderId?.slice(-6) || "----"}
               </Text>
               <Text style={styles.date}>
-                {new Date(item.createdAt).toDateString()}
+                {item?.createdAt
+                  ? new Date(item.createdAt).toDateString()
+                  : "-"}
               </Text>
             </View>
 
@@ -94,7 +123,7 @@ export default function MedicineHistory() {
               ]}
             >
               <Text style={styles.statusText}>
-                {item.orderStatus}
+                {item?.orderStatus || "-"}
               </Text>
             </View>
           </View>
@@ -102,20 +131,20 @@ export default function MedicineHistory() {
           {/* MEDICINE */}
           <View style={styles.medicineRow}>
             <Image
-              source={{ uri: item.medicine.image }}
+              source={{
+                uri: item?.medicine?.image ||
+                  "https://via.placeholder.com/60"
+              }}
               style={styles.image}
             />
 
             <View style={{ flex: 1 }}>
-              <Text
-                numberOfLines={2}
-                style={styles.medicineName}
-              >
-                {item.medicine.name}
+              <Text numberOfLines={2} style={styles.medicineName}>
+                {item?.medicine?.name || "Medicine"}
               </Text>
 
               <Text style={styles.qty}>
-                Qty: {item.medicine.quantity}
+                Qty: {item?.medicine?.quantity ?? 0}
               </Text>
             </View>
           </View>
@@ -124,10 +153,10 @@ export default function MedicineHistory() {
           <View style={styles.footerRow}>
             <View>
               <Text style={styles.payment}>
-                {item.paymentMode} • {item.paymentStatus}
+                {item?.paymentMode} • {item?.paymentStatus}
               </Text>
               <Text style={styles.amount}>
-                ₹{item.payableAmount}
+                ₹{item?.payableAmount ?? 0}
               </Text>
             </View>
 
@@ -137,12 +166,11 @@ export default function MedicineHistory() {
               </Text>
             </View>
           </View>
+
         </View>
       </TouchableOpacity>
     );
   };
-
-  /* ================= LOADING ================= */
 
   if (loading) {
     return (
@@ -152,35 +180,30 @@ export default function MedicineHistory() {
     );
   }
 
-  /* ================= MAIN VIEW ================= */
-
   return (
     <View style={styles.container}>
       <FlatList
         data={orders}
         keyExtractor={(item) => item.orderId}
         renderItem={renderItem}
-        showsVerticalScrollIndicator={false}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.4}
+        ListFooterComponent={
+          loadingMore
+            ? <ActivityIndicator size="small" color="#14b8a6" />
+            : null
+        }
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor="#14b8a6"
           />
         }
         ListHeaderComponent={
           <View style={styles.pageHeader}>
             <Text style={styles.title}>My Orders</Text>
             <Text style={styles.subtitle}>
-              Track your medicine orders
-            </Text>
-          </View>
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyIcon}>📦</Text>
-            <Text style={styles.emptyText}>
-              No orders found
+              Total Spent ₹{totalPaid}
             </Text>
           </View>
         }

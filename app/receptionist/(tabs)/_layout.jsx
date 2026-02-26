@@ -3,47 +3,97 @@ import { Tabs } from "expo-router";
 
 export default function ReceptionistTabs() {
   return (
-    <Tabs screenOptions={{ headerShown: false }}>
+    <Tabs
+      screenOptions={({ route }) => ({
+        headerShown: false,
 
+        tabBarActiveTintColor: "#14b8a6",
+        tabBarInactiveTintColor: "#94a3b8",
+
+        tabBarStyle: {
+          height: 62,
+          paddingBottom: 8,
+          paddingTop: 6,
+          borderTopWidth: 0.5,
+          borderTopColor: "#e5e7eb",
+          backgroundColor: "#ffffff",
+        },
+
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: "600",
+        },
+
+        /* ===== ICON SWITCH ===== */
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+
+          switch (route.name) {
+
+            /* HOME */
+            case "index":
+              iconName = focused
+                ? "home"
+                : "home-outline";
+              break;
+
+            /* ATTENDANCE */
+            case "attendance":
+              iconName = focused
+                ? "time"
+                : "time-outline";
+              break;
+
+            /* MEDICINE ORDERS */
+            case "medicineorder":
+              iconName = focused
+                ? "medkit"
+                : "medkit-outline";
+              break;
+
+            /* PROFILE */
+            case "profile":
+              iconName = focused
+                ? "person"
+                : "person-outline";
+              break;
+
+            default:
+              iconName = "ellipse-outline";
+          }
+
+          return (
+            <Ionicons
+              name={iconName}
+              size={22}
+              color={color}
+            />
+          );
+        },
+      })}
+    >
+      {/* HOME */}
       <Tabs.Screen
         name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={22} color={color} />
-          ),
-        }}
+        options={{ title: "Home" }}
       />
 
+      {/* ATTENDANCE */}
       <Tabs.Screen
-        name="patients"
-        options={{
-          title: "Patients",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="people" size={22} color={color} />
-          ),
-        }}
+        name="attendance"
+        options={{ title: "Attendance" }}
       />
 
-      {/* 👇 PUBLIC STORE TAB */}
+      {/* MEDICINE ORDERS */}
       <Tabs.Screen
-        name="medicine-store"
-        options={{
-          title: "Store",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="medkit" size={22} color={color} />
-          ),
-        }}
+        name="medicineorder"
+        options={{ title: "Orders" }}
       />
 
+      {/* PROFILE */}
       <Tabs.Screen
         name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color }) => (
-            <Ionicons name="person" size={22} color={color} />
-          ),
-        }}
+        options={{ title: "Profile" }}
       />
 
     </Tabs>
