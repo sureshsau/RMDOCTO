@@ -7,7 +7,7 @@ export default function ReceptionistTabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
 
-        tabBarActiveTintColor: "#14b8a6",
+        tabBarActiveTintColor: "#1BA6A6",
         tabBarInactiveTintColor: "#94a3b8",
 
         tabBarStyle: {

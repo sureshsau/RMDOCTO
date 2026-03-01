@@ -57,27 +57,30 @@ export default function AddressSelector() {
         loc.coords
       );
 
-      const newAddress = {
-        ...deliveryAddress,
-        addressLine1: `${geo[0]?.street || ""}, ${geo[0]?.city || ""}, ${geo[0]?.region || ""}`,
-        addressLine2: "",
-        city: geo[0]?.city || "",
-        state: geo[0]?.region || "",
-        pincode: geo[0]?.postalCode || "",
-        location: {
-          type: "Point",
-          coordinates: [
-            loc.coords.longitude,
-            loc.coords.latitude,
-          ],
-        },
-        source: "GPS",
-        updatedAt: Date.now(),
-      };
+      setDeliveryAddress((prev) => {
+        const newAddress = {
+          ...prev,
+          addressLine1: `${geo[0]?.street || ""}, ${geo[0]?.city || ""}, ${geo[0]?.region || ""}`,
+          addressLine2: "",
+          city: geo[0]?.city || "",
+          state: geo[0]?.region || "",
+          pincode: geo[0]?.postalCode || "",
+          location: {
+            type: "Point",
+            coordinates: [
+              loc.coords.longitude,
+              loc.coords.latitude,
+            ],
+          },
+          source: "GPS",
+          updatedAt: Date.now(),
+        };
 
-      setDeliveryAddress(newAddress);
-      setAddressLine1(newAddress.addressLine1);
-      setPincode(newAddress.pincode);
+        setAddressLine1(newAddress.addressLine1);
+        setPincode(newAddress.pincode);
+        return newAddress;
+      });
+
       setEditing(false);
     } catch (e) {
       console.log("Location error", e);

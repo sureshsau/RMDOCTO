@@ -4,9 +4,28 @@ const _layout = () => {
   return (
     <Stack
       screenOptions={{
+        headerStyle: {
+          backgroundColor: "#6b6dbf",
+        },
+        headerTintColor: "#ffffff",
+        headerTitleStyle: {
+          fontWeight: "700",
+        },
       }}
     >
-        <Stack.Screen name='index' options={{headerShown:false}}/>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="[orderId]"
+        options={{
+          title: "Order Details",
+        }}
+      />
+      <Stack.Screen
+        name="track"
+        options={{
+          title: "Track Order",
+        }}
+      />
     </Stack>
   )
 }

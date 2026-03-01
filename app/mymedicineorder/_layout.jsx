@@ -3,9 +3,31 @@ import { Stack } from 'expo-router'
 const _layout = () => {
   return (
     <Stack
-    initialRouteName='index'
+      initialRouteName="index"
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: "#1BA6A6",
+          elevation: 4,
+          shadowColor: "#000",
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        },
+        headerTintColor: "#ffffff",
+        headerTitleStyle: {
+          fontWeight: "700",
+          fontSize: 18,
+        },
+        headerTitleAlign: "center",
+      }}
     >
-
+      <Stack.Screen
+        name="index"
+        options={{ title: "My Medicine Orders" }}
+      />
+      <Stack.Screen
+        name="historyDetails"
+        options={{ title: "Order Details" }}
+      />
     </Stack>
   )
 }

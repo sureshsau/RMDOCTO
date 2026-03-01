@@ -90,21 +90,9 @@ export default function Profile() {
           </Text>
 
           <DetailItem
-            icon="mail-outline"
-            label="Email"
-            value={user?.email}
-          />
-
-          <DetailItem
             icon="call-outline"
             label="Phone"
             value={user?.phone}
-          />
-
-          <DetailItem
-            icon="person-outline"
-            label="User ID"
-            value={user?.id}
           />
 
           <DetailItem
@@ -115,6 +103,12 @@ export default function Profile() {
                 ? user.roles.join(", ")
                 : "—"
             }
+          />
+
+          <DetailItem
+            icon="grid-outline"
+            label="Dashboard"
+            value="RM Rider"
           />
         </View>
 

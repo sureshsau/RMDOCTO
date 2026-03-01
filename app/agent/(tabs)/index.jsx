@@ -29,7 +29,7 @@ export default function Index() {
         </View>
 
         {/* ================= QUICK STATS ================= */}
-        <View style={styles.statsWrapper}>
+        {/* <View style={styles.statsWrapper}>
           <StatCard
             icon="wallet-outline"
             label="Wallet Balance"
@@ -41,7 +41,7 @@ export default function Index() {
             label="Active Orders"
             value="12"
           />
-        </View>
+        </View> */}
 
         {/* ================= ACTION GRID ================= */}
         <Text style={styles.sectionTitle}>
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: BG,
-    paddingTop:0
+    paddingTop: 0
   },
 
   header: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     marginBottom: 20,
-    paddingTop:50
+    paddingTop: 50
   },
 
   headerTitle: {

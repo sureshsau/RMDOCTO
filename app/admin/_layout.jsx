@@ -43,6 +43,26 @@ export default function _layout() {
         }}
       />
 
+      {/* OTHER ADMIN SCREENS */}
+      <Stack.Screen
+        name="addpatient"
+        options={{
+          title: "Add Patient",
+        }}
+      />
+      <Stack.Screen
+        name="appointments"
+        options={{
+          title: "Appointments",
+        }}
+      />
+      <Stack.Screen
+        name="rmcoin/index"
+        options={{
+          title: "RM Coin",
+        }}
+      />
+
     </Stack>
   );
 }

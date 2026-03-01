@@ -26,8 +26,14 @@ export default function MedicineLayout() {
           title: "Create Role",
         }}
       />
+      <Stack.Screen
+        name="assign"
+        options={{
+          title: "Assign Role",
+        }}
+      />
 
-      
+
     </Stack>
   );
 }

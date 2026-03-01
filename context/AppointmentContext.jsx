@@ -40,7 +40,6 @@ export const AppointmentProvider = ({ children }) => {
       );
 
       if (!res.data.success) throw new Error("Failed");
-
       const newData = res.data.data || [];
 
       if (page === 1 || isRefresh) {

@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-    ActivityIndicator,
-    Modal,
-    Pressable,
-    RefreshControl,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../../services/axios";
 
@@ -92,7 +93,7 @@ export default function AgentNetwork() {
   const { marketingAgent, parentAgent, self, downlineTree } = data;
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         refreshControl={
           <RefreshControl
@@ -169,7 +170,7 @@ export default function AgentNetwork() {
           </View>
         </Pressable>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

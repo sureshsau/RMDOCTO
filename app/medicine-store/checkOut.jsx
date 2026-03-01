@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
   Image,
@@ -50,9 +51,9 @@ export default function Cart() {
     [items, isAgent]
   );
 
- const insufficientCredit =
-  paymentMode === "RM_CREDIT" &&
-  (wallet?.balance || 0) < subtotal;
+  const insufficientCredit =
+    paymentMode === "RM_CREDIT" &&
+    (wallet?.balance || 0) < subtotal;
 
   /* ===================== HANDLE ORDER ===================== */
 
@@ -82,6 +83,7 @@ export default function Cart() {
           type: "success",
           text1: "Order placed successfully",
         });
+        router.push("/mymedicineorder");
       } else {
         Toast.show({
           type: "error",
@@ -170,6 +172,7 @@ export default function Cart() {
             type: "success",
             text1: "Payment Successful",
           });
+          router.push("/mymedicineorder");
 
         })
         .catch(() => {
@@ -196,6 +199,13 @@ export default function Cart() {
   };
 
   /* ===================== UI ===================== */
+
+  const isValidAddress =
+    deliveryAddress?.fullName &&
+    deliveryAddress?.phone &&
+    deliveryAddress?.phone?.length >= 10 &&
+    deliveryAddress?.addressLine1 &&
+    deliveryAddress?.location?.coordinates?.length === 2;
 
   return (
     <View style={styles.container}>
@@ -325,7 +335,7 @@ export default function Cart() {
 
         <TouchableOpacity
           disabled={
-            !deliveryAddress ||
+            !isValidAddress ||
             loading ||
             insufficientCredit ||
             processingPayment
@@ -333,19 +343,19 @@ export default function Cart() {
           onPress={handlePlaceOrder}
           style={[
             styles.checkoutBtn,
-            (!deliveryAddress ||
+            (!isValidAddress ||
               loading ||
               insufficientCredit ||
               processingPayment) &&
-              styles.disabledBtn,
+            styles.disabledBtn,
           ]}
         >
           <Text style={styles.checkoutText}>
             {processingPayment || loading
               ? "Processing..."
               : paymentMode === "ONLINE"
-              ? "Pay Now"
-              : "Place Order"}
+                ? "Pay Now"
+                : "Place Order"}
           </Text>
         </TouchableOpacity>
       </View>

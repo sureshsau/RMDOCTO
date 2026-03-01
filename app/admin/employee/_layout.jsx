@@ -20,6 +20,38 @@ export default function MedicineLayout() {
           title: "Add User",
         }}
       />
+
+      {/* EMPLOYEE INNER PAGES */}
+      <Stack.Screen
+        name="[id]/attendance"
+        options={{
+          title: "Attendance Setup",
+        }}
+      />
+      <Stack.Screen
+        name="[id]/attendanceLog"
+        options={{
+          title: "Attendance Log",
+        }}
+      />
+      <Stack.Screen
+        name="[id]/face-capture"
+        options={{
+          title: "Face Capture",
+        }}
+      />
+      <Stack.Screen
+        name="[id]/profile"
+        options={{
+          title: "Employee Profile",
+        }}
+      />
+      <Stack.Screen
+        name="[id]/rmcredit/index"
+        options={{
+          title: "RM Credit",
+        }}
+      />
     </Stack>
   );
 }

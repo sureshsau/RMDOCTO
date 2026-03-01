@@ -12,10 +12,11 @@ import {
 import MapView, {
   AnimatedRegion,
   Marker,
+  Polyline,
 } from "react-native-maps";
 import MapViewDirections from "react-native-maps-directions";
 
-const GOOGLE_KEY =Constants.expoConfig?.extra?.EXPO_PUBLIC_GOOGLE_MAPS_KEY;;
+const GOOGLE_KEY = Constants.expoConfig?.extra?.EXPO_PUBLIC_GOOGLE_MAPS_KEY;;
 
 /* ================= CONSTANTS ================= */
 
@@ -31,6 +32,7 @@ const REROUTE_DELAY = 3000; // ms
 
 export default function AgentOrderTrack() {
   const { destLat, destLng } = useLocalSearchParams();
+  // const { destLat, destLng } = { destLat: 31.1471, destLng: 75.3412 };
 
   const mapRef = useRef(null);
   const watchRef = useRef(null);
@@ -70,6 +72,11 @@ export default function AgentOrderTrack() {
   ).current;
 
   const [driverCoord, setDriverCoord] = useState(null);
+  const [routeOrigin, setRouteOrigin] = useState(null);
+  const routeOriginRef = useRef(null);
+  const [fullRoute, setFullRoute] = useState([]);
+  const lastClosestIdxRef = useRef(0);
+
   const [heading, setHeading] = useState(0);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
   const [eta, setEta] = useState(null);
@@ -107,6 +114,22 @@ export default function AgentOrderTrack() {
 
           const plainCoord = { latitude, longitude };
           setDriverCoord(plainCoord);
+
+          if (!routeOriginRef.current) {
+            routeOriginRef.current = plainCoord;
+            setRouteOrigin(plainCoord);
+
+            // Instant zoom on first location fetch
+            mapRef.current?.animateCamera(
+              {
+                center: plainCoord,
+                heading: gpsHeading || 0,
+                pitch: 60,
+                zoom: 17,
+              },
+              { duration: 1000 }
+            );
+          }
 
           /* ===== SMOOTH MARKER ===== */
           driverAnimated.timing({
@@ -162,7 +185,11 @@ export default function AgentOrderTrack() {
             if (!rerouteTimeoutRef.current) {
               rerouteTimeoutRef.current = setTimeout(() => {
                 setRerouteKey((k) => k + 1);
+                routeOriginRef.current = plainCoord;
+                setRouteOrigin(plainCoord);
                 routeCoordsRef.current = [];
+                setFullRoute([]);
+                lastClosestIdxRef.current = 0;
                 rerouteTimeoutRef.current = null;
               }, REROUTE_DELAY);
             }
@@ -220,10 +247,48 @@ export default function AgentOrderTrack() {
       prev === "standard"
         ? "satellite"
         : prev === "satellite"
-        ? "hybrid"
-        : "standard"
+          ? "hybrid"
+          : "standard"
     );
   };
+
+  /* ================= ROUTE SPLITTING ================= */
+  const getSplitRoute = () => {
+    if (!fullRoute.length || !driverCoord) return { past: [], future: fullRoute };
+
+    let minDistance = Infinity;
+    let closestIdx = lastClosestIdxRef.current;
+
+    const searchStart = Math.max(0, lastClosestIdxRef.current - 5);
+    const searchEnd = Math.min(fullRoute.length, lastClosestIdxRef.current + 20);
+
+    for (let i = searchStart; i < searchEnd; i++) {
+      const d = distanceBetween(driverCoord, fullRoute[i]);
+      if (d < minDistance) {
+        minDistance = d;
+        closestIdx = i;
+      }
+    }
+
+    if (minDistance > OFF_ROUTE_DISTANCE * 2) {
+      for (let i = 0; i < fullRoute.length; i++) {
+        const d = distanceBetween(driverCoord, fullRoute[i]);
+        if (d < minDistance) {
+          minDistance = d;
+          closestIdx = i;
+        }
+      }
+    }
+
+    lastClosestIdxRef.current = closestIdx;
+
+    const past = fullRoute.slice(0, closestIdx + 1);
+    const future = [driverCoord, ...fullRoute.slice(closestIdx)];
+
+    return { past, future };
+  };
+
+  const { past, future } = getSplitRoute();
 
   /* ================= MAP ================= */
 
@@ -234,58 +299,74 @@ export default function AgentOrderTrack() {
         style={StyleSheet.absoluteFill}
         mapType={mapType}
         showsCompass={false}
+        showsUserLocation={true}
         showsMyLocationButton={false}
         onPanDrag={() => (followRef.current = false)}
+        initialRegion={{
+          latitude: 20.5937,
+          longitude: 78.9629,
+          latitudeDelta: 30,
+          longitudeDelta: 30,
+        }}
       >
         {/* DRIVER */}
-       <Marker.Animated
-  coordinate={driverAnimated}
-  anchor={{ x: 0.5, y: 0.5 }}
-  rotation={heading}
-  flat
->
-  <View
-    style={{
-      width: 40,
-      height: 40,
-      justifyContent: "center",
-      alignItems: "center",
-      backgroundColor: "#fff",
-      borderRadius: 20,
-      elevation: 4
-    }}
-  >
-    <MaterialIcons
-      name="navigation"
-      size={26}
-      color="#1a73e8"
-    />
-  </View>
-</Marker.Animated>
+        {driverCoord && (
+          <Marker
+            coordinate={driverCoord}
+            anchor={{ x: 0.5, y: 0.5 }}
+            rotation={heading}
+            flat
+            tracksViewChanges={false}
+          >
+            <View style={styles.driverDotOuter}>
+              <MaterialIcons name="navigation" size={60} color="#fb923c" />
+            </View>
+          </Marker>
+        )}
 
         {/* DESTINATION */}
         <Marker coordinate={destination} pinColor="#ea4335" />
 
-        {/* ROUTE */}
-        {driverCoord && (
-          <MapViewDirections
-            key={rerouteKey}
-            origin={driverCoord}
-            destination={destination}
-            apikey={GOOGLE_KEY}
-            strokeWidth={7}
-            strokeColor="#1a73e8"
+        {/* VISIBLE PATHS */}
+        {past.length > 0 && (
+          <Polyline
+            coordinates={past}
+            strokeColor="#9ca3af"
+            strokeWidth={5}
             lineCap="round"
             lineJoin="round"
+          />
+        )}
+        {future.length > 0 && (
+          <Polyline
+            coordinates={future}
+            strokeColor="#1a73e8"
+            strokeWidth={6}
+            lineCap="round"
+            lineJoin="round"
+          />
+        )}
+
+        {/* ROUTE FETCHER (INVISIBLE) */}
+        {routeOrigin && (
+          <MapViewDirections
+            key={rerouteKey}
+            origin={routeOrigin}
+            destination={destination}
+            apikey={GOOGLE_KEY}
+            strokeWidth={0}
             optimizeWaypoints
             onReady={(res) => {
               routeCoordsRef.current = res.coordinates;
+              setFullRoute(res.coordinates);
               setEta(Math.ceil(res.duration));
               setDistance(
                 res.distance < 1
                   ? `${Math.round(res.distance * 1000)} m`
                   : `${res.distance.toFixed(1)} km`
               );
+
+              followRef.current = true;
             }}
           />
         )}
@@ -293,12 +374,12 @@ export default function AgentOrderTrack() {
 
       {/* ETA */}
       {eta !== null && (
-  <View style={styles.etaCard}>
-    <Text style={styles.etaText}>
-      {eta} min • {distance}
-    </Text>
-  </View>
-)}
+        <View style={styles.etaCard}>
+          <Text style={styles.etaText}>
+            {eta} min • {distance}
+          </Text>
+        </View>
+      )}
 
       {/* CONTROLS */}
       <View style={styles.controls}>
@@ -341,8 +422,8 @@ function distanceBetween(a, b) {
   const x =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(dLng / 2) ** 2;
+    Math.cos(lat2) *
+    Math.sin(dLng / 2) ** 2;
 
   return 2 * R * Math.asin(Math.sqrt(x));
 }
@@ -394,5 +475,21 @@ const styles = StyleSheet.create({
   etaText: {
     color: "#fff",
     fontWeight: "800",
+  },
+
+  driverDotOuter: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    backgroundColor: "#fff",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 3,
+    borderColor: "#ea580c",
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
   },
 });

@@ -15,9 +15,9 @@ import { useAuth } from "../../../context/AuthContext";
 /* ================= MAIN SCREEN ================= */
 
 export default function AdminDashboard() {
-  const[appointments]=useAppointments();
-  const {user}=useAuth();
-  
+  const [appointments] = useAppointments();
+  const { user } = useAuth();
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView
@@ -74,37 +74,37 @@ export default function AdminDashboard() {
           </View>
         </View>
 
-     
+
         {/* QUICK STATS */}
-<SectionDivider title="Quick Access" />
-<View style={styles.sectionPadding}>
-  <View style={styles.statsGrid}>
+        <SectionDivider title="Quick Access" />
+        <View style={styles.sectionPadding}>
+          <View style={styles.statsGrid}>
 
-    <StatCard
-      icon="people-outline"
-      label="Manage Users"
-      onPress={() => router.push("/admin/(tabs)/users")}
-    />
+            <StatCard
+              icon="people-outline"
+              label="Manage Users"
+              onPress={() => router.push("/admin/(tabs)/users")}
+            />
 
-    <StatCard
-      icon="calendar-outline"
-      label="Appointments"
-      onPress={() => router.push("/admin/appointments")}
-    />
+            <StatCard
+              icon="calendar-outline"
+              label="Appointments"
+              onPress={() => router.push("/admin/appointments")}
+            />
 
-    <StatCard
-      icon="wallet-outline"
-      label="Wallet"
-      onPress={() => router.push("/admin/rmcoin")}
-    />
+            <StatCard
+              icon="wallet-outline"
+              label="Wallet"
+              onPress={() => router.push("/admin/rmcoin")}
+            />
 
-    <StatCard
-      icon="medkit-outline"
-      label="Medicine Store"
-      onPress={() => router.push("/medicine-store")}
-    />
+            <StatCard
+              icon="medkit-outline"
+              label="Medicine Store"
+              onPress={() => router.push("/medicine-store")}
+            />
 
-    {/* <StatCard
+            {/* <StatCard
       icon="cube-outline"
       label="Medicine Orders"
       onPress={() => router.push("/admin/(tabs)/medicine-orders")}
@@ -116,8 +116,8 @@ export default function AdminDashboard() {
       onPress={() => router.push("/admin/(tabs)/reports-analysis")}
     /> */}
 
-  </View>
-</View>
+          </View>
+        </View>
 
         {/* STAFF ONLINE */}
         <SectionDivider title="Staff Online" />
@@ -423,9 +423,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statLabelNew: {
-  fontSize: 13,
-  fontWeight: "700",
-  color: "#1e293b",
-  marginTop: 10,
-},
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#1e293b",
+    marginTop: 10,
+  },
 });

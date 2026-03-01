@@ -5,10 +5,9 @@ import { RMCreditProvider } from "../../context/RMCreditContext";
 
 const PRIMARY = "#14b8a6";
 
-export default function MedicineLayout() {
+export default function AgentLayout() {
   return (
     <RMCreditProvider>
-
       {/* 🔥 STATUS BAR COLOR */}
       <StatusBar
         style="light"
@@ -23,13 +22,10 @@ export default function MedicineLayout() {
             headerStyle: {
               backgroundColor: PRIMARY,
             },
-
             headerTintColor: "#ffffff",
-
             headerTitleStyle: {
               fontWeight: "700",
             },
-
             headerShadowVisible: false,
           }}
         >
@@ -41,27 +37,20 @@ export default function MedicineLayout() {
             }}
           />
 
-          {/* MEDICINE LIST */}
+          {/* REGISTER AGENT */}
           <Stack.Screen
-            name="medicine-list"
+            name="register"
             options={{
-              title: "Medicine List",
+              title: "Register Agent",
             }}
           />
 
-          {/* DETAILS */}
+          {/* RM CREDIT */}
           <Stack.Screen
-            name="details"
+            name="rmcredit"
             options={{
-              title: "Medicine Details",
-            }}
-          />
-
-          {/* UPLOAD */}
-          <Stack.Screen
-            name="upload"
-            options={{
-              title: "Add Medicine",
+              title: "RM Credit",
+              heade
             }}
           />
         </Stack>

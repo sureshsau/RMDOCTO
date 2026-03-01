@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { useEffect, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -7,8 +8,50 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useMedicine } from "../../../context/MedicineContext";
 
 export default function MedicineManagement() {
+  const { getMedicines } = useMedicine();
+  const [stats, setStats] = useState({
+    total: 0,
+    lowStock: 0,
+    sold: 0,
+    revenue: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const res = await getMedicines({ limit: 1000 }); // Fetch a large number to calculate stats
+      if (res.success && res.data) {
+        let lowStockCount = 0;
+        let totalSold = 0;
+        let totalRevenue = 0;
+
+        res.data.forEach((medicine) => {
+          // Check for low stock
+          const qty = medicine.stock?.totalQuantity || 0;
+          const minAlert = medicine.stock?.minAlertQuantity || 10;
+          if (qty <= minAlert) {
+            lowStockCount++;
+          }
+
+          // Compute sold and revenue (assuming sold property exists or default to 0)
+          const sold = medicine.sold || medicine.totalSold || 0;
+          totalSold += sold;
+          totalRevenue += sold * (medicine.pricing?.price || medicine.price || 0);
+        });
+
+        setStats({
+          total: res.pagination?.totalItems || res.data.length,
+          lowStock: lowStockCount,
+          sold: totalSold,
+          revenue: totalRevenue > 0 ? `₹${(totalRevenue / 1000).toFixed(1)}K` : "₹0",
+        });
+      }
+    };
+    fetchStats();
+  }, []);
+
   return (
     <View style={styles.container} edges={["top", "left", "right", "bottom"]}>
       <ScrollView
@@ -21,10 +64,10 @@ export default function MedicineManagement() {
           <Text style={styles.overviewSub}>Today’s medicine status</Text>
 
           <View style={styles.overviewRow}>
-            <OverviewStat label="Medicines" value="320" />
-            <OverviewStat label="Low Stock" value="18" />
-            <OverviewStat label="Sold" value="94" />
-            <OverviewStat label="Revenue" value="₹45K" />
+            <OverviewStat label="Medicines" value={stats.total} />
+            <OverviewStat label="Low Stock" value={stats.lowStock} />
+            <OverviewStat label="Sold" value={stats.sold} />
+            <OverviewStat label="Revenue" value={stats.revenue} />
           </View>
         </View>
 

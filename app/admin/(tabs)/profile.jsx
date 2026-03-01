@@ -81,23 +81,7 @@ export default function Profile() {
           </View>
         </View>
 
-        {/* ================= RM COIN CARD ================= */}
-        <View style={styles.rmCard}>
-          <View style={styles.rmLeft}>
-            <Ionicons
-              name="wallet-outline"
-              size={22}
-              color="#CA8A04"
-            />
-            <Text style={styles.rmLabel}>
-              RM Coins Balance
-            </Text>
-          </View>
 
-          <Text style={styles.rmValue}>
-            ₹ {user?.rmCoinsBalance || 0}
-          </Text>
-        </View>
 
         {/* ================= DETAILS CARD ================= */}
         <View style={styles.card}>
@@ -105,11 +89,6 @@ export default function Profile() {
             Account Details
           </Text>
 
-          <DetailItem
-            icon="mail-outline"
-            label="Email"
-            value={user?.email}
-          />
 
           <DetailItem
             icon="call-outline"
@@ -117,11 +96,6 @@ export default function Profile() {
             value={user?.phone}
           />
 
-          <DetailItem
-            icon="person-outline"
-            label="User ID"
-            value={user?.id}
-          />
 
           <DetailItem
             icon="shield-checkmark-outline"
@@ -131,6 +105,12 @@ export default function Profile() {
                 ? user.roles.join(", ")
                 : "—"
             }
+          />
+
+          <DetailItem
+            icon="grid-outline"
+            label="Dashboard"
+            value="Admin"
           />
         </View>
 

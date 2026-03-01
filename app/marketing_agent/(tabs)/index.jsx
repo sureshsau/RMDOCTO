@@ -33,68 +33,68 @@ export default function MarketingAgentDashboard() {
       <View style={{ flex: 1 }}>
         <ScrollView showsVerticalScrollIndicator={false}>
 
-{/* ================= HEADER ================= */}
+          {/* ================= HEADER ================= */}
 
-<View style={styles.header}>
-  <View style={styles.headerRow}>
+          <View style={styles.header}>
+            <View style={styles.headerRow}>
 
-    {user?.profileImage ? (
-      <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-    ) : (
-      <View style={styles.avatarPlaceholder}>
-        <Ionicons name="person" size={26} color="#94A3B8" />
-      </View>
-    )}
+              {user?.profileImage ? (
+                <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+              ) : (
+                <View style={styles.avatarPlaceholder}>
+                  <Ionicons name="person" size={26} color="#94A3B8" />
+                </View>
+              )}
 
-    <View>
-      <Text style={styles.greeting}>Welcome Back 👋</Text>
-      <Text style={styles.name}>{user?.name || "Agent"}</Text>
+              <View>
+                <Text style={styles.greeting}>Welcome Back 👋</Text>
+                <Text style={styles.name}>{user?.name || "Agent"}</Text>
 
-      <Text style={styles.role}>
-        {user?.roles?.[0]?.toUpperCase() || "MARKETING AGENT"}
-      </Text>
+                <Text style={styles.role}>
+                  {user?.roles?.[0]?.toUpperCase() || "MARKETING AGENT"}
+                </Text>
 
-      <Text style={styles.date}>{formattedDate}</Text>
-    </View>
+                <Text style={styles.date}>{formattedDate}</Text>
+              </View>
 
-  </View>
-</View>
+            </View>
+          </View>
 
-{/* ================= DASHBOARD GRID ================= */}
+          {/* ================= DASHBOARD GRID ================= */}
 
-<View style={styles.grid}>
+          <View style={styles.grid}>
 
-  <DashboardCard
-    icon="person-add-outline"
-    label="Register Agent"
-    onPress={() => router.push("/marketing_agent/register-agent")}
-  />
+            <DashboardCard
+              icon="person-add-outline"
+              label="Register Agent"
+              onPress={() => router.push("/marketing_agent/register-agent")}
+            />
 
-  <DashboardCard
-    icon="git-network-outline"
-    label="My Network"
-    onPress={() => router.push("/marketing_agent/my-network")}
-  />
+            <DashboardCard
+              icon="git-network-outline"
+              label="My Network"
+              onPress={() => router.push("/marketing_agent/(tabs)/network")}
+            />
 
-  <DashboardCard
-    icon="wallet-outline"
-    label="Wallet"
-    onPress={() => router.push("/rmcoin")}
-  />
+            <DashboardCard
+              icon="wallet-outline"
+              label="RM Coins"
+              onPress={() => router.push("/rmcoin")}
+            />
 
-  <DashboardCard
-    icon="medkit-outline"
-    label="My Medicine Orders"
-    onPress={() => router.push("/mymedicineorder")}
-  />
+            <DashboardCard
+              icon="medkit-outline"
+              label="My Medicine Orders"
+              onPress={() => router.push("/mymedicineorder")}
+            />
 
-  <DashboardCard
-    icon="storefront-outline"
-    label="Medicine Store"
-    onPress={() => router.push("/medicine-store")}
-  />
+            <DashboardCard
+              icon="storefront-outline"
+              label="Medicine Store"
+              onPress={() => router.push("/medicine-store")}
+            />
 
-</View>
+          </View>
 
         </ScrollView>
       </View>
@@ -124,95 +124,95 @@ function DashboardCard({ icon, label, onPress }) {
 
 const styles = StyleSheet.create({
 
-container: {
-  flex: 1,
-  backgroundColor: BG,
-},
+  container: {
+    flex: 1,
+    backgroundColor: BG,
+  },
 
-header: {
-  backgroundColor: PRIMARY,
-  padding: 20,
-  borderBottomLeftRadius: 26,
-  borderBottomRightRadius: 26,
-  paddingTop:50
-},
+  header: {
+    backgroundColor: PRIMARY,
+    padding: 20,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    paddingTop: 50
+  },
 
-headerRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 14,
-},
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
 
-avatar: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-},
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
 
-avatarPlaceholder: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: "#F1F5F9",
-  justifyContent: "center",
-  alignItems: "center",
-},
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-greeting: {
-  fontSize: 12,
-  color: "#ccfbf1",
-},
+  greeting: {
+    fontSize: 12,
+    color: "#ccfbf1",
+  },
 
-name: {
-  fontSize: 18,
-  fontWeight: "800",
-  color: "#fff",
-},
+  name: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#fff",
+  },
 
-role: {
-  fontSize: 11,
-  color: "#e0fdfa",
-},
+  role: {
+    fontSize: 11,
+    color: "#e0fdfa",
+  },
 
-date: {
-  fontSize: 11,
-  color: "#ccfbf1",
-  marginTop: 2,
-},
+  date: {
+    fontSize: 11,
+    color: "#ccfbf1",
+    marginTop: 2,
+  },
 
-grid: {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-  padding: 20,
-  marginTop: 10,
-},
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 20,
+    marginTop: 10,
+  },
 
-card: {
-  width: "48%",
-  backgroundColor: "#ffffff",
-  borderRadius: 18,
-  padding: 20,
-  alignItems: "center",
-  marginBottom: 14,
-  elevation: 3,
-},
+  card: {
+    width: "48%",
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 20,
+    alignItems: "center",
+    marginBottom: 14,
+    elevation: 3,
+  },
 
-iconBox: {
-  width: 50,
-  height: 50,
-  borderRadius: 14,
-  backgroundColor: "#ecfeff",
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: 10,
-},
+  iconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#ecfeff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
 
-cardLabel: {
-  fontSize: 13,
-  fontWeight: "600",
-  color: "#334155",
-  textAlign: "center",
-},
+  cardLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    textAlign: "center",
+  },
 
 });

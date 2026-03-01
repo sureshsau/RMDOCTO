@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../../services/axios.js";
 
@@ -93,7 +94,7 @@ export default function MarketingNetwork() {
   }
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <ScrollView
         refreshControl={
           <RefreshControl
@@ -153,7 +154,7 @@ export default function MarketingNetwork() {
           </View>
         </Pressable>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
