@@ -121,11 +121,11 @@ export default function AdminDashboard() {
 
         {/* STAFF ONLINE */}
         <SectionDivider title="Staff Online" />
-        <View style={styles.onlineRow}>
+        {/* <View style={styles.onlineRow}>
           <OnlineAvatar name="Dr. Alex" />
           <OnlineAvatar name="Nurse Riya" />
           <OnlineAvatar name="Reception" />
-        </View>
+        </View> */}
 
         {/* QUICK ACTIONS */}
         <SectionDivider title="Admin Actions" />
@@ -135,17 +135,17 @@ export default function AdminDashboard() {
           <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />
           <QuickAction icon="medkit" label="Medicine Management" onPress={() => router.push("/admin/medicine")} />
-          <QuickAction icon="flask" label="Lab Management" onPress={() => router.push("/(tabs)/lab-management")} />
-          <QuickAction icon="analytics" label="Reports & Analytics" onPress={() => router.push("/(tabs)/reports-analysis")} />
+          <QuickAction icon="flask" label="Lab Management" />
+          <QuickAction icon="analytics" label="Reports & Analytics" />
         </View>
 
         {/* RECENT ACTIVITY */}
-        <SectionDivider title="Recent Activity" />
+        {/* <SectionDivider title="Recent Activity" />
         <View style={styles.sectionPadding}>
           <ActivityCard title="New doctor added" subtitle="Dr. Alex Morgan" />
           <ActivityCard title="Appointment booked" subtitle="Patient: Rahul Das" />
           <ActivityCard title="Payment received" subtitle="₹1,200 OPD" />
-        </View>
+        </View> */}
       </ScrollView>
     </SafeAreaView>
   );

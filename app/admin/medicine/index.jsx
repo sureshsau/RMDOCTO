@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 export default function MedicineManagement() {
@@ -32,7 +32,7 @@ export default function MedicineManagement() {
 
         <View style={styles.cardGrid}>
           <ActionCard icon="cube" label="All Medicines" onPress={() => router.push("/admin/medicine/medicine-list")} />
-          <ActionCard icon="alert-circle" label="Low Stock" onPress={() => router.push("/(tabs)/medicine/low-stock")} />
+          <ActionCard icon="alert-circle" label="Low Stock" />
           <ActionCard icon="cart" label="Sales" />
           <ActionCard icon="add-circle" label="Add Medicine" onPress={() => router.push("/admin/medicine/upload")} />
           <ActionCard icon="document-text" label="Invoices" />
