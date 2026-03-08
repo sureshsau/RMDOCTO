@@ -37,43 +37,43 @@ const ACTIONS_MAP = {
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
   ],
-  rmrider:[
+  rmrider: [
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
-        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
 
   ],
   subadmin: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
-        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
 
   ],
 
   receptionist: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
-        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
 
   ],
 
   doctor: [
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
-        { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
 
   ],
 
   agent: [
     { id: "orders", label: "View Orders", route: "/agent/orders" },
     { id: "rmcredit", label: "RM Credit", route: "/admin/employee/:id/rmcredit" }, // ✅
-   
+
     { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
   ],
 
   default: [
     // { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
-        { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
-        { id: "give-role", label: "Give Role", route: "/admin/employee/add" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "give-role", label: "Give Role", route: "/admin/employee/add" },
 
   ],
 };
@@ -92,8 +92,8 @@ export default function Employees() {
   const [actionsModalVisible, setActionsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [transferModal, setTransferModal] = useState(false);
-const [transferAmount, setTransferAmount] = useState("");
-const [transferLoading, setTransferLoading] = useState(false);
+  const [transferAmount, setTransferAmount] = useState("");
+  const [transferLoading, setTransferLoading] = useState(false);
 
 
 
@@ -106,56 +106,56 @@ const [transferLoading, setTransferLoading] = useState(false);
     setSelectedUser(null);
     setActionsModalVisible(false);
   };
-const handleAction = (action) => {
-  if (!selectedUser) return;
+  const handleAction = (action) => {
+    if (!selectedUser) return;
 
-  // ✅ OPEN TRANSFER MODAL
-  if (action.id === "transfer-rmcoin") {
-    setTransferModal(true);
-    setActionsModalVisible(false);
-    return;
-  }
-
-  if (action.route) {
-    const route = action.route.includes(":id")
-      ? action.route.replace(":id", selectedUser._id)
-      : action.route;
-
-    const faceUri =
-      selectedUser?.faceImage?.url ||
-      (typeof selectedUser?.faceImage === "string"
-        ? selectedUser.faceImage
-        : null) ||
-      selectedUser?.faceUri ||
-      "";
-
-    if (
-      action.id === "rmcredit" ||
-      action.id === "rmcoin" ||
-      route.includes("/rmcredit") ||
-      route.includes("/rmcoin")
-    ) {
-      router.push({
-        pathname: route,
-        params: {
-          id: selectedUser._id,
-          name: selectedUser.name,
-          phone: selectedUser.phone,
-          email: selectedUser.email,
-          role: selectedUser.roles?.[0] || "",
-          faceUri,
-        },
-      });
-
+    // ✅ OPEN TRANSFER MODAL
+    if (action.id === "transfer-rmcoin") {
+      setTransferModal(true);
       setActionsModalVisible(false);
       return;
     }
 
-    router.push({ pathname: route });
-  }
+    if (action.route) {
+      const route = action.route.includes(":id")
+        ? action.route.replace(":id", selectedUser._id)
+        : action.route;
 
-  setActionsModalVisible(false);
-};
+      const faceUri =
+        selectedUser?.faceImage?.url ||
+        (typeof selectedUser?.faceImage === "string"
+          ? selectedUser.faceImage
+          : null) ||
+        selectedUser?.faceUri ||
+        "";
+
+      if (
+        action.id === "rmcredit" ||
+        action.id === "rmcoin" ||
+        route.includes("/rmcredit") ||
+        route.includes("/rmcoin")
+      ) {
+        router.push({
+          pathname: route,
+          params: {
+            id: selectedUser._id,
+            name: selectedUser.name,
+            phone: selectedUser.phone,
+            email: selectedUser.email,
+            role: selectedUser.roles?.[0] || "",
+            faceUri,
+          },
+        });
+
+        setActionsModalVisible(false);
+        return;
+      }
+
+      router.push({ pathname: route });
+    }
+
+    setActionsModalVisible(false);
+  };
 
 
   /* ================= LOAD ================= */
@@ -239,7 +239,7 @@ const handleAction = (action) => {
       await loadUsers();
 
     } catch (error) {
-      
+
       Toast.show({
         type: "error",
         text1: "Transfer Failed",
@@ -257,64 +257,64 @@ const handleAction = (action) => {
   return (
     <SafeAreaView style={styles.container}>
       <Modal visible={transferModal} transparent animationType="fade">
-  <TouchableWithoutFeedback onPress={() => setTransferModal(false)}>
-    <View style={styles.actionsOverlay}>
-      <TouchableWithoutFeedback onPress={() => {}}>
-        <View style={styles.actionsBox}>
-          <Text style={styles.sectionText}>Transfer RM Coins</Text>
+        <TouchableWithoutFeedback onPress={() => setTransferModal(false)}>
+          <View style={styles.actionsOverlay}>
+            <TouchableWithoutFeedback onPress={() => { }}>
+              <View style={styles.actionsBox}>
+                <Text style={styles.sectionText}>Transfer RM Coins</Text>
 
-          <Text style={{ marginTop: 10, fontWeight: "600" }}>
-            Name: {selectedUser?.name}
-          </Text>
+                <Text style={{ marginTop: 10, fontWeight: "600" }}>
+                  Name: {selectedUser?.name}
+                </Text>
 
-          <Text style={{ marginBottom: 12, color: "#64748b" }}>
-            Phone: {selectedUser?.phone}
-          </Text>
+                <Text style={{ marginBottom: 12, color: "#64748b" }}>
+                  Phone: {selectedUser?.phone}
+                </Text>
 
-          <TextInput
-            placeholder="Enter Amount"
-            keyboardType="numeric"
-            value={transferAmount}
-            onChangeText={setTransferAmount}
-            style={{
-              borderWidth: 1,
-              borderColor: "#e2e8f0",
-              borderRadius: 10,
-              padding: 12,
-              marginBottom: 16,
-            }}
-          />
+                <TextInput
+                  placeholder="Enter Amount"
+                  keyboardType="numeric"
+                  value={transferAmount}
+                  onChangeText={setTransferAmount}
+                  style={{
+                    borderWidth: 1,
+                    borderColor: "#e2e8f0",
+                    borderRadius: 10,
+                    padding: 12,
+                    marginBottom: 16,
+                  }}
+                />
 
-          <TouchableOpacity
-            style={{
-              backgroundColor: "#6b6dbf",
-              paddingVertical: 12,
-              borderRadius: 10,
-              alignItems: "center",
-            }}
-            onPress={handleTransferSubmit}
-            disabled={transferLoading}
-          >
-            {transferLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={{ color: "#fff", fontWeight: "600" }}>
-                Transfer
-              </Text>
-            )}
-          </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: "#6b6dbf",
+                    paddingVertical: 12,
+                    borderRadius: 10,
+                    alignItems: "center",
+                  }}
+                  onPress={handleTransferSubmit}
+                  disabled={transferLoading}
+                >
+                  {transferLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={{ color: "#fff", fontWeight: "600" }}>
+                      Transfer
+                    </Text>
+                  )}
+                </TouchableOpacity>
 
-          <TouchableOpacity
-            style={{ marginTop: 12, alignItems: "center" }}
-            onPress={() => setTransferModal(false)}
-          >
-            <Text style={{ color: "#6b6dbf" }}>Cancel</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableWithoutFeedback>
-    </View>
-  </TouchableWithoutFeedback>
-</Modal>
+                <TouchableOpacity
+                  style={{ marginTop: 12, alignItems: "center" }}
+                  onPress={() => setTransferModal(false)}
+                >
+                  <Text style={{ color: "#6b6dbf" }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
 
       {/* SEARCH + ADD USER */}
       <View style={styles.searchWrapper}>
@@ -415,7 +415,7 @@ const handleAction = (action) => {
       <Modal visible={actionsModalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={closeActions}>
           <View style={styles.actionsOverlay}>
-            <TouchableWithoutFeedback onPress={() => {}}>
+            <TouchableWithoutFeedback onPress={() => { }}>
               <View style={styles.actionsBox}>
                 <Text style={styles.sectionText}>Actions</Text>
                 {(() => {
@@ -468,12 +468,7 @@ function EmployeeCard({ user, onOpenActions }) {
     <View style={styles.card}>
       <TouchableOpacity
         activeOpacity={0.85}
-        onPress={() =>
-          router.push({
-            pathname: "/admin/employee/profile/abc",
-            params: { id: user._id },
-          })
-        }
+
         style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
       >
         {/* AVATAR */}
@@ -566,22 +561,22 @@ function EmployeeCard({ user, onOpenActions }) {
 
 const styles = StyleSheet.create({
   walletRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginTop: 6,
-  backgroundColor: "#ECFDF5",
-  alignSelf: "flex-start",
-  paddingHorizontal: 8,
-  paddingVertical: 4,
-  borderRadius: 10,
-},
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+    backgroundColor: "#ECFDF5",
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
 
-walletText: {
-  fontSize: 11,
-  fontWeight: "600",
-  color: "#065F46",
-  marginLeft: 6,
-},
+  walletText: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#065F46",
+    marginLeft: 6,
+  },
 
   container: { flex: 1, backgroundColor: "#eef0fa" },
 
