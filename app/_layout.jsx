@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 
 import { AppointmentProvider } from "../context/AppointmentContext";
@@ -14,30 +15,32 @@ import { toastConfig } from "../utils/toastConfig";
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <UserProvider>
-        <RBACProvider>
-          <MedicineProvider>
-            <MedicineCartProvider>
-              <RMCreditProvider>
-                <AppointmentProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <UserProvider>
+          <RBACProvider>
+            <MedicineProvider>
+              <MedicineCartProvider>
+                <RMCreditProvider>
+                  <AppointmentProvider>
 
-                  {/* 🔥 ALL NAVIGATION MUST BE INSIDE PROVIDERS */}
-                  <Stack screenOptions={{ headerShown: false }} />
+                    {/* 🔥 ALL NAVIGATION MUST BE INSIDE PROVIDERS */}
+                    <Stack screenOptions={{ headerShown: false }} />
 
-                  <StatusBar barStyle="dark-content" />
-                  <Toast
-                    config={toastConfig}
-                    position="bottom"
-                    bottomOffset={70}
-                  />
+                    <StatusBar barStyle="dark-content" />
+                    <Toast
+                      config={toastConfig}
+                      position="bottom"
+                      bottomOffset={70}
+                    />
 
-                </AppointmentProvider>
-              </RMCreditProvider>
-            </MedicineCartProvider>
-          </MedicineProvider>
-        </RBACProvider>
-      </UserProvider>
-    </AuthProvider>
+                  </AppointmentProvider>
+                </RMCreditProvider>
+              </MedicineCartProvider>
+            </MedicineProvider>
+          </RBACProvider>
+        </UserProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

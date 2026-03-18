@@ -42,11 +42,18 @@ export default function ReceptionistAppointments() {
 
     const keyword = search.toLowerCase();
 
-    return appointments.filter((a) =>
-      a.patientName?.toLowerCase().includes(keyword) ||
-      a.patientPhone?.includes(search) ||
-      a.doctorId?.name?.toLowerCase().includes(keyword)
-    );
+    return appointments.filter((a) => {
+      if (!a) return false;
+      const pName = a.patientName || "";
+      const pPhone = a.patientPhone || "";
+      const dName = a.doctorId?.name || "";
+
+      return (
+        pName.toLowerCase().includes(keyword) ||
+        String(pPhone).includes(search) ||
+        dName.toLowerCase().includes(keyword)
+      );
+    });
   }, [appointments, search]);
 
   /* ================= REFRESH ================= */
@@ -88,7 +95,7 @@ export default function ReceptionistAppointments() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
 
       {/* SEARCH */}
       <View style={styles.searchBox}>
@@ -111,7 +118,7 @@ export default function ReceptionistAppointments() {
             style={[
               styles.filterChip,
               filterType === type &&
-                styles.filterChipActive,
+              styles.filterChipActive,
             ]}
           >
             <Text
@@ -141,7 +148,7 @@ export default function ReceptionistAppointments() {
 
           if (
             layoutMeasurement.height +
-              contentOffset.y >=
+            contentOffset.y >=
             contentSize.height - 20
           ) {
             loadMore();
@@ -167,12 +174,15 @@ export default function ReceptionistAppointments() {
           </View>
         )}
 
-        {filteredAppointments.map((item) => (
-          <AppointmentCard
-            key={item._id}
-            appointment={item}
-          />
-        ))}
+        {filteredAppointments.map((item, idx) => {
+          if (!item) return null;
+          return (
+            <AppointmentCard
+              key={item._id || idx}
+              appointment={item}
+            />
+          );
+        })}
 
         {loadingMore && (
           <ActivityIndicator
@@ -241,13 +251,13 @@ function AppointmentCard({ appointment }) {
         />
       </View>
 
-      {appointment.symptoms && (
+      {!!appointment.symptoms && (
         <View style={styles.symptomsBox}>
           <Text style={styles.symptomsLabel}>
             Symptoms
           </Text>
           <Text style={styles.symptomsText}>
-            {appointment.symptoms}
+            {String(appointment.symptoms)}
           </Text>
         </View>
       )}

@@ -2,7 +2,7 @@
   "expo": {
     "name": "RMDOCTO",
     "slug": "RMDOCTO",
-    "version": "1.0.8",
+    "version": "1.0.9",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "rmdocto",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.sureshsau2004.RMDOCTO",
-      "versionCode": 8,
+      "versionCode": 9,
       "usesCleartextTraffic": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",

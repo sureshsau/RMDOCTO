@@ -50,7 +50,6 @@ export default function AgentLayout() {
             name="rmcredit"
             options={{
               title: "RM Credit",
-              heade
             }}
           />
         </Stack>
