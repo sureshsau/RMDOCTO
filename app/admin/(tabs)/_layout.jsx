@@ -4,23 +4,28 @@ import { Tabs } from "expo-router";
 export default function AdminLayout() {
   return (
     <Tabs
+      safeAreaInsets={{ bottom: 0 }}
+      sceneContainerStyle={{ backgroundColor: "#ffffff" }}
       screenOptions={{
         headerShown: false,
 
         tabBarActiveTintColor: "#ffffff",
-        tabBarInactiveTintColor: "#d6d7f2",
+        tabBarInactiveTintColor: "rgba(255, 255, 255, 0.7)",
 
         tabBarStyle: {
-          backgroundColor: "#6b6dbf",
-          borderTopWidth: 0,
-          height: 64,
+          height: 62,
+          paddingBottom: 8,
           paddingTop: 6,
+          borderTopWidth: 0,
+          borderTopColor: "transparent",
+          elevation: 0,
+          shadowOpacity: 0,
+          backgroundColor: "#6b6dbf",
         },
 
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: "600",
-          marginBottom: 6,
         },
       }}
     >
@@ -46,13 +51,19 @@ export default function AdminLayout() {
         }}
       />
 
-      {/* ================= MEDICINE ORDERS ================= */}
+      {/* ================= MEDICINE ORDERS — hidden from tab bar ================= */}
       <Tabs.Screen
         name="medicineorder"
+        options={{ href: null }}
+      />
+
+      {/* ================= NETWORK TREE ================= */}
+      <Tabs.Screen
+        name="network"
         options={{
-          title: "Orders",
+          title: "Network",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="medkit-outline" size={size} color={color} />
+            <Ionicons name="git-network-outline" size={size} color={color} />
           ),
         }}
       />

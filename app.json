@@ -2,7 +2,7 @@
   "expo": {
     "name": "RMDOCTO",
     "slug": "RMDOCTO",
-    "version": "1.0.9",
+    "version": "1.0.10",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "rmdocto",
@@ -13,11 +13,16 @@
     },
     "android": {
       "package": "com.sureshsau2004.RMDOCTO",
-      "versionCode": 9,
+      "versionCode": 13,
       "usesCleartextTraffic": true,
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION"
+      ],
+      "blockedPermissions": [
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO",
+        "android.permission.READ_EXTERNAL_STORAGE"
       ],
       "config": {
         "googleMaps": {

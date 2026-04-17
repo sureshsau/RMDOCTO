@@ -417,6 +417,7 @@ const styles = StyleSheet.create({
     backgroundColor: INPUT_BG,
     padding: 14,
     borderRadius: 14,
+    color: "#0f172a",
   },
 
   twoCol: {

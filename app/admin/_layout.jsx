@@ -62,7 +62,14 @@ export default function _layout() {
           title: "RM Coin",
         }}
       />
-
+      <Stack.Screen
+        name="rmcredit"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="orders"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

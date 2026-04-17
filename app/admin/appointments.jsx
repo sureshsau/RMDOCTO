@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppointments } from "../../context/AppointmentContext";
 
 export default function ReceptionistAppointments() {
@@ -86,14 +86,14 @@ export default function ReceptionistAppointments() {
 
   if (loading && appointments.length === 0) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top"]}>
         <ActivityIndicator size="large" color="#1BA6A6" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
 
 
@@ -211,16 +211,16 @@ function AppointmentCard({ appointment }) {
 
         <View style={{ flex: 1 }}>
           <Text style={styles.patientName}>
-            {appointment.patientName}
+            {String(appointment.patientName || "Unknown")}
           </Text>
           <Text style={styles.doctorName}>
-            Dr. {appointment.doctorId?.name}
+            Dr. {String(appointment.doctorId?.name || "Unknown")}
           </Text>
         </View>
 
         <View style={styles.timeBadge}>
           <Text style={styles.timeText}>
-            {appointment.appointmentTime}
+            {String(appointment.appointmentTime || "--:--")}
           </Text>
         </View>
       </View>
@@ -230,13 +230,15 @@ function AppointmentCard({ appointment }) {
       <View style={styles.detailsRow}>
         <DetailItem
           icon="call-outline"
-          text={appointment.patientPhone}
+          text={String(appointment.patientPhone || "N/A")}
         />
         <DetailItem
           icon="calendar-outline"
-          text={new Date(
+          text={
             appointment.appointmentDate
-          ).toDateString()}
+              ? new Date(appointment.appointmentDate).toDateString()
+              : "No Date"
+          }
         />
       </View>
 
@@ -273,7 +275,7 @@ function DetailItem({ icon, text }) {
         size={14}
         color="#64748B"
       />
-      <Text style={styles.detailText}>{text}</Text>
+      <Text style={styles.detailText}>{text != null ? String(text) : "N/A"}</Text>
     </View>
   );
 }

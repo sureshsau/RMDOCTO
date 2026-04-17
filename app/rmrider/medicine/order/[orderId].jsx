@@ -12,6 +12,7 @@ import {
   View
 } from "react-native";
 import Toast from "react-native-toast-message";
+import InvoiceGenerator from "../../../../components/shared/medicine/InvoiceGenerator";
 import api from "../../../../services/axios";
 
 const PRIMARY = "#14b8a6";
@@ -175,9 +176,14 @@ export default function OrderDetails() {
 
         </View>
 
+        {/* ================= INVOICE GENERATOR ================= */}
+        <View style={{ marginHorizontal: 16 }}>
+          <InvoiceGenerator order={order} />
+        </View>
+
         {/* CUSTOMER */}
 
-        <View style={styles.card}>
+        <View style={[styles.card, { marginTop: 16 }]}>
           <Text style={styles.sectionTitle}>Customer</Text>
 
           <Text style={styles.body}>

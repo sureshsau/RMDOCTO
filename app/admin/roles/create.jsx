@@ -22,7 +22,8 @@ const ROLE_KEYS = [
   "doctor",
   "agent",
   "receptionist",
-  "rmrider"
+  "rmrider",
+  "employee"
 ];
 
 /* ================= MAIN ================= */

@@ -4,7 +4,7 @@ import { Alert, Image, Pressable, StyleSheet, Text, TouchableOpacity, View } fro
 import Toast from "react-native-toast-message";
 import { useMedicine } from "../../../../context/MedicineContext";
 
-export default function MedicineCard({ medicine, onDeleted }) {
+export default function MedicineCard({ medicine, onDeleted, detailsPath = "/admin/medicine/details" }) {
   const { deleteMedicine } = useMedicine();
 
   const {
@@ -57,9 +57,9 @@ export default function MedicineCard({ medicine, onDeleted }) {
     <Pressable
   onPress={() =>
     router.push({
-      pathname: "/admin/medicine/details",
+      pathname: detailsPath,
       params: {
-        id: _id, // full object
+        id: _id,
       },
     })
   }

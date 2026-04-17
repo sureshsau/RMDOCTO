@@ -83,7 +83,6 @@ export default function Attendance() {
           limit: LIMIT,
         },
       });
-
       if (res.data.success) {
         const newLogs = res.data.logs || [];
 
@@ -138,7 +137,7 @@ export default function Attendance() {
 
           if (
             layoutMeasurement.height + contentOffset.y >=
-              contentSize.height - 20 &&
+            contentSize.height - 20 &&
             pagination.page < pagination.totalPages &&
             !loadingMore
           ) {
@@ -278,10 +277,10 @@ const LogItem = ({ log }) => {
   const formatTime = (dateString) =>
     dateString
       ? new Date(dateString).toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
       : "--:--";
 
   const statusMap = {
@@ -310,11 +309,11 @@ const LogItem = ({ log }) => {
       icon: "airplane",
     },
     WORKING: {
-  bg: "#e0f2fe",
-  text: "#0284c7",
-  label: "Working",
-  icon: "pulse-outline",
-}
+      bg: "#e0f2fe",
+      text: "#0284c7",
+      label: "Working",
+      icon: "pulse-outline",
+    }
 
   };
 
@@ -438,111 +437,111 @@ const LogItem = ({ log }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafb" },
   logCard: {
-  backgroundColor: "#fff",
-  borderRadius: 18,
-  padding: 16,
-  marginBottom: 14,
-  marginHorizontal: 20,
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-  elevation: 3,
-  shadowColor: "#000",
-  shadowOpacity: 0.06,
-  shadowRadius: 10,
-},
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 14,
+    marginHorizontal: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+  },
 
-logLeft: {
-  flexDirection: "row",
-  alignItems: "center",
-  flex: 1,
-},
+  logLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+  },
 
-dateCircle: {
-  width: 54,
-  height: 54,
-  borderRadius: 14,
-  backgroundColor: "#f0fdfa",
-  alignItems: "center",
-  justifyContent: "center",
-  marginRight: 14,
-},
+  dateCircle: {
+    width: 54,
+    height: 54,
+    borderRadius: 14,
+    backgroundColor: "#f0fdfa",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
 
-dateDay: {
-  fontSize: 16,
-  fontWeight: "700",
-  color: "#0f172a",
-},
+  dateDay: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
 
-dateMonth: {
-  fontSize: 10,
-  color: "#64748b",
-  fontWeight: "600",
-},
+  dateMonth: {
+    fontSize: 10,
+    color: "#64748b",
+    fontWeight: "600",
+  },
 
-timeRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginTop: 6,
-},
+  timeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 6,
+  },
 
-timeText: {
-  fontSize: 12,
-  color: "#475569",
-  marginLeft: 4,
-},
+  timeText: {
+    fontSize: 12,
+    color: "#475569",
+    marginLeft: 4,
+  },
 
-extraRow: {
-  flexDirection: "row",
-  marginTop: 8,
-  gap: 8,
-},
+  extraRow: {
+    flexDirection: "row",
+    marginTop: 8,
+    gap: 8,
+  },
 
-extraBadge: {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#fef3c7",
-  paddingHorizontal: 8,
-  paddingVertical: 4,
-  borderRadius: 999,
-},
+  extraBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fef3c7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
 
-extraBadgeGreen: {
-  flexDirection: "row",
-  alignItems: "center",
-  backgroundColor: "#dcfce7",
-  paddingHorizontal: 8,
-  paddingVertical: 4,
-  borderRadius: 999,
-},
+  extraBadgeGreen: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#dcfce7",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+  },
 
-extraText: {
-  fontSize: 10,
-  color: "#b45309",
-  marginLeft: 4,
-  fontWeight: "600",
-},
+  extraText: {
+    fontSize: 10,
+    color: "#b45309",
+    marginLeft: 4,
+    fontWeight: "600",
+  },
 
-extraTextGreen: {
-  fontSize: 10,
-  color: "#15803d",
-  marginLeft: 4,
-  fontWeight: "600",
-},
+  extraTextGreen: {
+    fontSize: 10,
+    color: "#15803d",
+    marginLeft: 4,
+    fontWeight: "600",
+  },
 
-statusBadgeNew: {
-  flexDirection: "row",
-  alignItems: "center",
-  paddingHorizontal: 10,
-  paddingVertical: 6,
-  borderRadius: 999,
-},
+  statusBadgeNew: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+  },
 
-statusTextNew: {
-  fontSize: 11,
-  fontWeight: "700",
-  marginLeft: 4,
-},
+  statusTextNew: {
+    fontSize: 11,
+    fontWeight: "700",
+    marginLeft: 4,
+  },
 
 
   headerContainer: { backgroundColor: "#fff", marginBottom: 20 },

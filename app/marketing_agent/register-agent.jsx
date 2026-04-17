@@ -431,6 +431,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     paddingVertical: 14,
+    color: "#0f172a",
   },
 
   row: {

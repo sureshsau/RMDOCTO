@@ -11,12 +11,13 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ProfileAvatarUploader from "../../../components/shared/ProfileAvatarUploader";
 import { useAuth } from "../../../context/AuthContext";
 
 const PRIMARY = "#1BA6A6";
 
 export default function Profile() {
-  const { logout, user } = useAuth();
+  const { logout, user, updateUser } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -58,16 +59,10 @@ export default function Profile() {
       >
         {/* ================= HEADER CARD ================= */}
         <View style={styles.headerCard}>
-          {user?.profileImage ? (
-            <Image
-              source={{ uri: user.profileImage }}
-              style={styles.avatar}
-            />
-          ) : (
-            <View style={styles.avatarPlaceholder}>
-              <Ionicons name="person" size={40} color="#94A3B8" />
-            </View>
-          )}
+          <ProfileAvatarUploader 
+            user={user} 
+            onUploadSuccess={(newUrl) => updateUser({ profileImage: newUrl })} 
+          />
 
           <Text style={styles.name}>
             {user?.name || "User"}

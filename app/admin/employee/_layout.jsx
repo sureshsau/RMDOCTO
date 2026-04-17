@@ -47,9 +47,9 @@ export default function MedicineLayout() {
         }}
       />
       <Stack.Screen
-        name="[id]/rmcredit/index"
+        name="[id]/settings"
         options={{
-          title: "RM Credit",
+          title: "Update Avatar",
         }}
       />
     </Stack>

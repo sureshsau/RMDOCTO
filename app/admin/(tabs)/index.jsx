@@ -81,9 +81,9 @@ export default function AdminDashboard() {
           <View style={styles.statsGrid}>
 
             <StatCard
-              icon="people-outline"
-              label="Manage Users"
-              onPress={() => router.push("/admin/(tabs)/users")}
+              icon="card-outline"
+              label="RM Credit"
+              onPress={() => router.push("/admin/rmcredit")}
             />
 
             <StatCard
@@ -104,17 +104,11 @@ export default function AdminDashboard() {
               onPress={() => router.push("/medicine-store")}
             />
 
-            {/* <StatCard
-      icon="cube-outline"
-      label="Medicine Orders"
-      onPress={() => router.push("/admin/(tabs)/medicine-orders")}
-    />
-
-    <StatCard
-      icon="analytics-outline"
-      label="Reports"
-      onPress={() => router.push("/admin/(tabs)/reports-analysis")}
-    /> */}
+            <StatCard
+              icon="receipt-outline"
+              label="Medicine Orders"
+              onPress={() => router.push("/admin/(tabs)/medicineorder")}
+            />
 
           </View>
         </View>
@@ -131,6 +125,7 @@ export default function AdminDashboard() {
         <SectionDivider title="Admin Actions" />
         <View style={styles.sectionPadding}>
           <QuickAction icon="add-circle" label="my medicine order" onPress={() => router.push("/mymedicineorder")} />
+          <QuickAction icon="receipt-outline" label="View All Medicine Orders" onPress={() => router.push("/admin/(tabs)/medicineorder")} />
           <QuickAction icon="add-circle" label="Add Employee" onPress={() => router.push("/admin/employee/add")} />
           <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
-  SafeAreaView,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -12,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../services/axios";
 
 export default function DoctorAppointments() {
@@ -122,14 +122,14 @@ export default function DoctorAppointments() {
 
   if (loading && appointments.length === 0) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top"]}>
         <ActivityIndicator size="large" color="#1BA6A6" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
 
       {/* SEARCH */}
@@ -152,7 +152,7 @@ export default function DoctorAppointments() {
             style={[
               styles.filterChip,
               filterType === type &&
-                styles.filterChipActive,
+              styles.filterChipActive,
             ]}
           >
             <Text
@@ -182,7 +182,7 @@ export default function DoctorAppointments() {
 
           if (
             layoutMeasurement.height +
-              contentOffset.y >=
+            contentOffset.y >=
             contentSize.height - 20
           ) {
             loadMore();
@@ -237,16 +237,16 @@ function AppointmentCard({ appointment }) {
 
         <View style={{ flex: 1 }}>
           <Text style={styles.patientName}>
-            {appointment.patientName}
+            {String(appointment.patientName || "Unknown")}
           </Text>
           <Text style={styles.phoneText}>
-            {appointment.patientPhone}
+            {String(appointment.patientPhone || "N/A")}
           </Text>
         </View>
 
         <View style={styles.timeBadge}>
           <Text style={styles.timeText}>
-            {appointment.appointmentTime}
+            {String(appointment.appointmentTime || "--:--")}
           </Text>
         </View>
       </View>
@@ -260,9 +260,9 @@ function AppointmentCard({ appointment }) {
           color="#64748B"
         />
         <Text style={styles.detailText}>
-          {new Date(
-            appointment.appointmentDate
-          ).toDateString()}
+          {appointment.appointmentDate
+            ? new Date(appointment.appointmentDate).toDateString()
+            : "No Date"}
         </Text>
       </View>
     </View>

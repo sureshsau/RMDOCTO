@@ -1,10 +1,12 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import api from "../services/axios";
+import { useAuth } from "./AuthContext";
 
 const RMCreditContext = createContext();
 
 export const RMCreditProvider = ({ children }) => {
-  const [loading, setLoading] = useState(true);
+  const { user, isAuthenticated } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const [wallet, setWallet] = useState({
     balance: 0,
@@ -54,8 +56,10 @@ export const RMCreditProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    fetchRMCredit();
-  }, []);
+    if (isAuthenticated) {
+      fetchRMCredit();
+    }
+  }, [isAuthenticated]);
 
   return (
     <RMCreditContext.Provider

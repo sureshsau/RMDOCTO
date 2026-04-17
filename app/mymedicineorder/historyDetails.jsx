@@ -18,6 +18,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import InvoiceGenerator from "../../components/shared/medicine/InvoiceGenerator";
 
 
 /* ================= MAIN ================= */
@@ -121,8 +122,13 @@ export default function OrderDetails() {
           </View>
         </View>
 
+        {/* ================= INVOICE GENERATOR ================= */}
+        <View style={{ marginHorizontal: 16 }}>
+          <InvoiceGenerator order={order} />
+        </View>
+
         {/* ===== PROGRESS ===== */}
-        <View style={styles.card}>
+        <View style={[styles.card, { marginTop: 16 }]}>
           <Text style={styles.title}>Order Progress</Text>
 
           {steps.map((step, index) => {

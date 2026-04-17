@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -102,9 +103,15 @@ export default function MedicineCard({ medicine }) {
           </TouchableOpacity>
 
           {/* COUNT */}
-          <Text style={styles.qtyValue}>
-            {cartItem.quantity}
-          </Text>
+          <TextInput
+            style={styles.qtyInput}
+            value={String(cartItem.quantity)}
+            keyboardType="numeric"
+            onChangeText={(text) => {
+              const val = text.replace(/[^0-9]/g, '');
+              updateQuantity(item._id, val === '' ? '' : parseInt(val, 10));
+            }}
+          />
 
           {/* PLUS */}
           <TouchableOpacity
@@ -239,6 +246,16 @@ const styles = StyleSheet.create({
   qtyValue: {
     color: "#ffffff",
     fontWeight: "800",
+  },
+
+  qtyInput: {
+    color: "#ffffff",
+    fontWeight: "800",
+    fontSize: 16,
+    textAlign: "center",
+    minWidth: 40,
+    padding: 0,
+    marginHorizontal: 8,
   },
 
   deleteBtn: {

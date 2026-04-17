@@ -15,7 +15,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
-import api from "../../../../../services/axios.js";
+import api from "../../../services/axios.js";
 
 export default function RMCreditAdmin() {
   const { id, name = "Agent", phone = "-", role = "-" } =

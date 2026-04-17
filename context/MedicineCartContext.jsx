@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, useContext, useMemo, useState } from "react";
-import RazorpayCheckout from "react-native-razorpay";
 import api from "../services/axios";
 
 const MedicineCartContext = createContext(null);
@@ -12,10 +11,12 @@ export const MedicineCartProvider = ({ children }) => {
   const [deliveryAddress, setDeliveryAddress] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [pendingOrderId, setPendingOrderId] = useState(null);
 
   /* ================= CART ================= */
 
   const addMedicine = (medicine) => {
+    setPendingOrderId(null); // Invalidate pending order if cart changes
     setItems(prev => {
       const existing = prev.find(i => i._id === medicine._id);
       if (existing) {
@@ -30,7 +31,8 @@ export const MedicineCartProvider = ({ children }) => {
   };
 
   const updateQuantity = (id, quantity) => {
-    if (quantity <= 0) return removeMedicine(id);
+    setPendingOrderId(null); // Invalidate pending order if cart changes
+    if (typeof quantity === 'number' && quantity <= 0) return removeMedicine(id);
     setItems(prev =>
       prev.map(i =>
         i._id === id ? { ...i, quantity } : i
@@ -39,6 +41,7 @@ export const MedicineCartProvider = ({ children }) => {
   };
 
   const removeMedicine = (id) => {
+    setPendingOrderId(null); // Invalidate pending order if cart changes
     setItems(prev => prev.filter(i => i._id !== id));
   };
 
@@ -46,6 +49,7 @@ export const MedicineCartProvider = ({ children }) => {
     setItems([]);
     setDeliveryAddress(null);
     setError(null);
+    setPendingOrderId(null);
   };
 
   /* ================= GST + AGENT PRICE ================= */
@@ -61,24 +65,27 @@ export const MedicineCartProvider = ({ children }) => {
         ? (item.specialPrice ?? item.price ?? 0)
         : (item.price ?? 0);
 
-      const quantity = item.quantity ?? 1;
+      const quantityStr = item.quantity;
+      const quantity = (quantityStr === '' || isNaN(quantityStr)) ? 1 : Number(quantityStr);
       const gstPercent = item.gstPercentage ?? 0;
 
-      const itemSubtotal = unitPrice * quantity;
-      const itemGST = (itemSubtotal * gstPercent) / 100;
+      const itemSubtotal = Number((unitPrice * quantity).toFixed(2));
+      const itemGST = Number(((itemSubtotal * gstPercent) / 100).toFixed(2));
 
       subtotal += itemSubtotal;
       gstTotal += itemGST;
     });
 
     const deliveryCharge = 0;
-    const payableAmount = subtotal + gstTotal + deliveryCharge;
+    subtotal = Number(subtotal.toFixed(2));
+    gstTotal = Number(gstTotal.toFixed(2));
+    const payableAmount = Number((subtotal + gstTotal + deliveryCharge).toFixed(2));
 
     return {
-      subtotal: Math.round(subtotal),
-      gstTotal: Math.round(gstTotal),
+      subtotal,
+      gstTotal,
       deliveryCharge,
-      payableAmount: Math.round(payableAmount)
+      payableAmount
     };
   };
 
@@ -122,7 +129,7 @@ export const MedicineCartProvider = ({ children }) => {
 
       /* ===== COD / RM CREDIT ===== */
 
-      if (paymentMode === "COD" || paymentMode === "RM_CREDIT") {
+      if (paymentMode !== "ONLINE") {
         const res = await api.post("/medicine/order", payload);
         clearCart();
         return { success: true, data: res.data };
@@ -130,14 +137,16 @@ export const MedicineCartProvider = ({ children }) => {
 
       /* ===== ONLINE ===== */
 
-      const orderRes = await api.post("/medicine/order", payload);
+      let orderId = pendingOrderId;
 
-      const orderId =
-        orderRes?.data?.data?._id ||
-        orderRes?.data?._id;
-
-      if (!orderId)
-        throw new Error("Order ID missing");
+      if (!orderId) {
+        const orderRes = await api.post("/medicine/order", payload);
+        orderId = orderRes?.data?.data?._id || orderRes?.data?._id;
+        
+        if (!orderId) throw new Error("Order ID missing");
+        
+        setPendingOrderId(orderId);
+      }
 
       const razorRes = await api.post(
         "/medicine/order/payments/razorpay/create",
@@ -166,6 +175,8 @@ export const MedicineCartProvider = ({ children }) => {
         theme: { color: "#14b8a6" },
       };
 
+      // Lazy-load razorpay only at point-of-use so Expo Go doesn't crash
+      const RazorpayCheckout = (await import("react-native-razorpay")).default;
       const payment = await RazorpayCheckout.open(options);
 
       await api.post(
@@ -199,7 +210,7 @@ export const MedicineCartProvider = ({ children }) => {
   /* ================= DERIVED ================= */
 
   const totalItems = useMemo(
-    () => items.reduce((s, i) => s + (i.quantity ?? 0), 0),
+    () => items.length,
     [items]
   );
 

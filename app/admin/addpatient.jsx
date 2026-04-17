@@ -7,7 +7,6 @@ import {
     KeyboardAvoidingView,
     Modal,
     Platform,
-    SafeAreaView,
     ScrollView,
     StatusBar,
     StyleSheet,
@@ -16,6 +15,7 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../services/axios";
 
@@ -130,14 +130,14 @@ export default function ReceptionistDashboard() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.center}>
+      <SafeAreaView style={styles.center} edges={["top"]}>
         <ActivityIndicator size="large" color="#1BA6A6" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <StatusBar barStyle="dark-content" />
 
       {/* SEARCH */}
@@ -145,6 +145,7 @@ export default function ReceptionistDashboard() {
         <Ionicons name="search" size={18} color="#64748B" />
         <TextInput
           placeholder="Search doctor name or phone"
+          placeholderTextColor="#94A3B8"
           value={search}
           onChangeText={setSearch}
           style={styles.searchInput}
@@ -202,6 +203,7 @@ export default function ReceptionistDashboard() {
 
               <TextInput
                 placeholder="Patient Name"
+                placeholderTextColor="#94A3B8"
                 value={form.patientName}
                 onChangeText={(t) =>
                   setForm({ ...form, patientName: t })
@@ -211,6 +213,7 @@ export default function ReceptionistDashboard() {
 
               <TextInput
                 placeholder="Patient Phone"
+                placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 value={form.patientPhone}
                 onChangeText={(t) =>
@@ -221,6 +224,7 @@ export default function ReceptionistDashboard() {
 
               <TextInput
                 placeholder="Patient Age"
+                placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 value={form.patientAge}
                 onChangeText={(t) =>
@@ -262,9 +266,8 @@ export default function ReceptionistDashboard() {
                 style={styles.input}
                 onPress={() => setShowDatePicker(true)}
               >
-                <Text>
-                  {form.appointmentDate ||
-                    "Select Appointment Date"}
+                <Text style={{ color: form.appointmentDate ? "#0F172A" : "#94A3B8" }}>
+                  {form.appointmentDate || "Select Appointment Date"}
                 </Text>
               </TouchableOpacity>
 
@@ -290,9 +293,8 @@ export default function ReceptionistDashboard() {
                 style={styles.input}
                 onPress={() => setShowTimePicker(true)}
               >
-                <Text>
-                  {form.appointmentTime ||
-                    "Select Appointment Time"}
+                <Text style={{ color: form.appointmentTime ? "#0F172A" : "#94A3B8" }}>
+                  {form.appointmentTime || "Select Appointment Time"}
                 </Text>
               </TouchableOpacity>
 
@@ -314,6 +316,7 @@ export default function ReceptionistDashboard() {
 
               <TextInput
                 placeholder="Consultation Fee"
+                placeholderTextColor="#94A3B8"
                 keyboardType="number-pad"
                 value={form.consultationFee}
                 onChangeText={(t) =>

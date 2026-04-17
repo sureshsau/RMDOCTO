@@ -25,56 +25,67 @@ import api from "../../../services/axios.js";
 // Edit these arrays to change available actions per role
 const ACTIONS_MAP = {
   admin: [
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
     { id: "give-role", label: "Give Role", route: "/admin/employee/roles" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
-    { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
 
   marketing_agent: [
-    // { id: "view-network", label: "View Network", route: "/marketing_agent/network" },
-    // { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
   rmrider: [
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
-
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
   subadmin: [
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
-
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
 
   receptionist: [
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
-
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
-
-  doctor: [
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+  employee: [
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
     { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
-
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
+  ],
+  doctor: [
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
+    { id: "set-attendance", label: "Set Attendance", route: "/admin/employee/:id/attendance" },
+    { id: "view-attendance-log", label: "view Attendance log", route: "/admin/employee/:id/attendanceLog" },
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
 
   agent: [
-    { id: "orders", label: "View Orders", route: "/agent/orders" },
-    { id: "rmcredit", label: "RM Credit", route: "/admin/employee/:id/rmcredit" }, // ✅
-
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "rmcredit", label: "RM Credit", route: "/admin/rmcredit/details" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
 
   default: [
-    // { id: "edit-profile", label: "Edit Profile", route: "/admin/employee/edit" },
-    { id: "transfer-rmcoin", label: "Transfer RM Coins" }, // ✅
+    { id: "view-orders", label: "View Orders", icon: "receipt-outline" },
+    { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "give-role", label: "Give Role", route: "/admin/employee/add" },
-
+    { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
   ],
 };
 
@@ -108,6 +119,19 @@ export default function Employees() {
   };
   const handleAction = (action) => {
     if (!selectedUser) return;
+
+    // ✅ VIEW ORDERS
+    if (action.id === "view-orders") {
+      router.push({
+        pathname: "/admin/orders/user-orders",
+        params: {
+          userId: selectedUser._id,
+          userName: selectedUser.name,
+        },
+      });
+      setActionsModalVisible(false);
+      return;
+    }
 
     // ✅ OPEN TRANSFER MODAL
     if (action.id === "transfer-rmcoin") {
@@ -468,7 +492,23 @@ function EmployeeCard({ user, onOpenActions }) {
     <View style={styles.card}>
       <TouchableOpacity
         activeOpacity={0.85}
-
+        onPress={() => {
+          router.push({
+            pathname: `/admin/employee/${user._id}/profile`,
+            params: {
+              id: user._id,
+              name: user.name,
+              role: user.roles?.join(", ") || "No Role",
+              department: user.department?.[0] || "General",
+              status: user.isActive ? "Active" : "Inactive",
+              faceUri:
+                user.faceImage?.url ||
+                (typeof user.faceImage === "string" ? user.faceImage : null) ||
+                user.faceUri ||
+                "",
+            },
+          });
+        }}
         style={{ flexDirection: "row", alignItems: "center", flex: 1 }}
       >
         {/* AVATAR */}

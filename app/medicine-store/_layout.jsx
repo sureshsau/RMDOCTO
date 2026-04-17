@@ -177,7 +177,21 @@ export default function MedicineLayout() {
          <Stack.Screen
           name="checkOut"
           options={{
-            title: "Medicine Details",
+            title: "Cart",
+            headerRight:()=>null
+          }}
+        />
+         <Stack.Screen
+          name="address"
+          options={{
+            title: "Delivery Address",
+            headerRight:()=>null
+          }}
+        />
+         <Stack.Screen
+          name="payment"
+          options={{
+            title: "Payment",
             headerRight:()=>null
           }}
         />

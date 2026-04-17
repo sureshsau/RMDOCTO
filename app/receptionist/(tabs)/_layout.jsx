@@ -4,19 +4,23 @@ import { Tabs } from "expo-router";
 export default function ReceptionistTabs() {
   return (
     <Tabs
+      safeAreaInsets={{ bottom: 0 }}
+      sceneContainerStyle={{ backgroundColor: "#ffffff" }}
       screenOptions={({ route }) => ({
         headerShown: false,
 
-        tabBarActiveTintColor: "#1BA6A6",
-        tabBarInactiveTintColor: "#94a3b8",
+        tabBarActiveTintColor: "#ffffff",
+        tabBarInactiveTintColor: "rgba(255, 255, 255, 0.7)",
 
         tabBarStyle: {
           height: 62,
           paddingBottom: 8,
           paddingTop: 6,
-          borderTopWidth: 0.5,
-          borderTopColor: "#e5e7eb",
-          backgroundColor: "#ffffff",
+          borderTopWidth: 0,
+          borderTopColor: "transparent",
+          elevation: 0,
+          shadowOpacity: 0,
+          backgroundColor: "#1BA6A6",
         },
 
         tabBarLabelStyle: {

@@ -23,7 +23,7 @@
         "buildType": "app-bundle"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://10.99.208.147:5000",
+        "EXPO_PUBLIC_API_URL": "https://api.rmdocto.in",
         "EXPO_PUBLIC_GOOGLE_MAPS_KEY": "AIzaSyDX_n9riz8mS2Wo5-K2ZRfip7N_scxDuTU"
       }
     }

@@ -11,18 +11,25 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function EmployeeDetails() {
-  const { name, role, department, status, id } = useLocalSearchParams();
+  const { name, role, department, status, id, faceUri } = useLocalSearchParams();
   const isActive = status === "Active";
+  const safeFaceUri = (faceUri && faceUri !== "null" && faceUri !== "undefined" && faceUri !== "") ? faceUri : null;
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         {/* ================= PROFILE CARD ================= */}
         <View style={styles.profileCard}>
-          <Image
-            source={{ uri: "https://i.pravatar.cc/150" }}
-            style={styles.avatar}
-          />
+          {safeFaceUri ? (
+            <Image
+              source={{ uri: safeFaceUri }}
+              style={styles.avatar}
+            />
+          ) : (
+            <View style={[styles.avatar, { backgroundColor: "#E2E8F0", justifyContent: "center", alignItems: "center" }]}>
+              <Ionicons name="person" size={40} color="#94A3B8" />
+            </View>
+          )}
 
           <Text style={styles.name}>{name}</Text>
 

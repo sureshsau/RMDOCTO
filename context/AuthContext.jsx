@@ -45,6 +45,14 @@ export const AuthProvider = ({ children }) => {
     await saveSession({ token, user });
   };
 
+  // ---------------- UPDATE ----------------
+  const updateUser = async (newUserData) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...newUserData };
+    await saveUser(updatedUser);
+    setUser(updatedUser);
+  };
+
   // ---------------- LOGOUT ----------------
 
   const logout = async () => {
@@ -90,6 +98,7 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         login,
         logout,
+        updateUser,
       }}
     >
       {children}

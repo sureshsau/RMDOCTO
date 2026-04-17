@@ -100,6 +100,18 @@ export default function ReceptionistDashboard() {
               onPress={() => router.push("/receptionist/face-verification")}
             />
 
+            <DashboardCard
+              icon="receipt-outline"
+              label="Medicine Orders"
+              onPress={() => router.push("/receptionist/(tabs)/medicineorder")}
+            />
+
+            <DashboardCard
+              icon="medkit-outline"
+              label="Medicine Management"
+              onPress={() => router.push("/receptionist/medicine")}
+            />
+
           </View>
 
         </ScrollView>

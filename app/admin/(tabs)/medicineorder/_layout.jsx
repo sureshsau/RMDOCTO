@@ -26,6 +26,15 @@ const _layout = () => {
           title: "Track Order",
         }}
       />
+      <Stack.Screen
+        name="user-orders"
+        options={{
+          title: "Order History",
+          headerStyle: { backgroundColor: "#6b6dbf" },
+          headerTintColor: "#ffffff",
+          headerTitleStyle: { fontWeight: "700" },
+        }}
+      />
     </Stack>
   )
 }

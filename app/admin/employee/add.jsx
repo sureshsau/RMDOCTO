@@ -20,11 +20,11 @@ import { useUser } from "../../../context/UserContext";
 const DASHBOARDS = [
   { key: "admin", label: "Admin Dashboard" },
   { key: "doctor", label: "Doctor Dashboard" },
+  { key: "employee", label: "Employee Dashboard" },
   { key: "marketing_agent", label: "Marketing Dashboard" },
   { key: "agent", label: "Agent Dashboard" },
   { key: "receptionist", label: "Reception Dashboard" },
   { key: "rmrider", label: "rmrider Dashboard" },
-
 ];
 
 /* ================= MAIN ================= */
