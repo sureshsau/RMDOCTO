@@ -110,6 +110,18 @@ export default function AdminDashboard() {
               onPress={() => router.push("/admin/(tabs)/medicineorder")}
             />
 
+            <StatCard
+              icon="flask-outline"
+              label="Lab Management"
+              onPress={() => router.push("/admin/lab")}
+            />
+
+            <StatCard
+              icon="receipt-outline"
+              label="Lab Orders"
+              onPress={() => router.push("/admin/lab/lab-orders")}
+            />
+
           </View>
         </View>
 
@@ -130,7 +142,9 @@ export default function AdminDashboard() {
           <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />
           <QuickAction icon="medkit" label="Medicine Management" onPress={() => router.push("/admin/medicine")} />
-          <QuickAction icon="flask" label="Lab Management" />
+          <QuickAction icon="flask" label="Lab Management" onPress={() => router.push("/admin/lab")} />
+          <QuickAction icon="flask-outline" label="All Lab Tests" onPress={() => router.push("/admin/lab/tests-list")} />
+          <QuickAction icon="receipt-outline" label="Lab Orders" onPress={() => router.push("/admin/lab/lab-orders")} />
           <QuickAction icon="analytics" label="Reports & Analytics" />
         </View>
 

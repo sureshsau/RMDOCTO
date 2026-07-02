@@ -70,6 +70,12 @@ export default function _layout() {
         name="orders"
         options={{ headerShown: false }}
       />
+
+      {/* LAB */}
+      <Stack.Screen
+        name="lab"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }
