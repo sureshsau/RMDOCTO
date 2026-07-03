@@ -12,8 +12,10 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Linking,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import * as DocumentPicker from "expo-document-picker";
 import { useUser } from "../../../context/UserContext";
 import api from "../../../services/axios";
 
@@ -108,6 +110,39 @@ export default function LabOrderDetail() {
       setModalError(e?.response?.data?.message || "Update failed");
     } finally {
       setStatusLoading(false);
+    }
+  };
+
+  /* ── Upload Lab Report ── */
+  const [reportUploading, setReportUploading] = useState(false);
+  const uploadReport = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled) return;
+      const file = result.assets[0];
+
+      setReportUploading(true);
+      const formData = new FormData();
+      formData.append("report", {
+        uri: file.uri,
+        name: file.name || "report.pdf",
+        type: file.mimeType || "application/pdf",
+      });
+
+      await api.post(`/lab/order/${orderId}/report`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      Toast.show({ type: "success", text1: "Report uploaded successfully!" });
+      fetchOrder(true);
+    } catch (e) {
+      Toast.show({ type: "error", text1: e?.response?.data?.message || "Report upload failed" });
+    } finally {
+      setReportUploading(false);
     }
   };
 
@@ -265,12 +300,29 @@ export default function LabOrderDetail() {
         )}
 
         {/* ── Report ── */}
-        {order.reportUrl && (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Lab Report</Text>
-            <Row icon="document-text-outline" label="Report available" />
-          </View>
-        )}
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Lab Report</Text>
+          {order.reportUrl ? (
+            <>
+              <Row icon="document-text-outline" label="Report available" />
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+                <TouchableOpacity style={[styles.btnPrimary, { flex: 1, backgroundColor: "#f0fdf4", borderColor: "#6ee7b7", borderWidth: 1 }]} onPress={() => Linking.openURL(order.reportUrl)}>
+                  <Text style={{ color: GREEN, fontWeight: "700", fontSize: 14 }}>View Report</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.btnPrimary, { flex: 1, marginTop: 0 }]} onPress={uploadReport} disabled={reportUploading}>
+                  <Text style={styles.btnPrimaryTxt}>{reportUploading ? "Uploading..." : "Replace Report"}</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.emptyNote}>No report uploaded yet.</Text>
+              <TouchableOpacity style={styles.btnPrimary} onPress={uploadReport} disabled={reportUploading}>
+                <Text style={styles.btnPrimaryTxt}>{reportUploading ? "Uploading..." : "Upload Lab Report"}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
 
         {/* ── Change Status ── */}
         {nextStatuses.length > 0 && (

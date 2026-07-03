@@ -1,6 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import { router } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -95,6 +97,8 @@ const ACTIONS_MAP = {
 export default function Employees() {
   const { getUsers } = useUser();
   const { fetchRoles } = useRBAC();
+  const kycScrollRef = useRef(null);
+  const [currentKycIndex, setCurrentKycIndex] = useState(0);
 
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState(["All"]);
@@ -329,6 +333,25 @@ export default function Employees() {
     }
   };
 
+  const handleDownloadDocument = async (url, documentType) => {
+    try {
+      if (!url) return;
+      Toast.show({ type: "info", text1: "Downloading..." });
+      const fileName = `kyc_${documentType || "document"}_${Date.now()}.jpg`;
+      const fileUri = FileSystem.documentDirectory + fileName;
+      const { uri } = await FileSystem.downloadAsync(url, fileUri);
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Toast.show({ type: "success", text1: "Downloaded", text2: "Saved to device" });
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: "error", text1: "Download Failed", text2: "Could not download the document" });
+    }
+  };
+
   /* ================= UI ================= */
 
   return (
@@ -336,26 +359,94 @@ export default function Employees() {
       <Modal visible={kycModalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setKycModalVisible(false)}>
           <View style={styles.actionsOverlay}>
-            <TouchableWithoutFeedback onPress={() => { }}>
-              <View style={[styles.actionsBox, { width: "90%", maxHeight: "80%" }]}>
+            <TouchableOpacity activeOpacity={1} style={[styles.actionsBox, { width: "90%", maxHeight: "80%" }]}>
                 <Text style={styles.sectionText}>Agent KYC Document</Text>
                 <Text style={{ marginTop: 10, fontWeight: "600", marginBottom: 12 }}>
                   {selectedUser?.name} • Status: {selectedUser?.kycStatus?.toUpperCase() || "NONE"}
                 </Text>
                 
-                <ScrollView contentContainerStyle={{ alignItems: "center" }} style={{ maxHeight: 300 }}>
-                  {selectedUser?.kycDocuments && selectedUser.kycDocuments.length > 0 ? (
-                    selectedUser.kycDocuments.map((doc, idx) => (
-                      <Image 
-                        key={idx}
-                        source={{ uri: doc.url }} 
-                        style={{ width: 280, height: 280, resizeMode: "contain", marginBottom: 10, borderRadius: 8, backgroundColor: "#f1f5f9" }} 
-                      />
-                    ))
-                  ) : (
-                    <Text style={{ color: "#94a3b8", paddingVertical: 40 }}>No Document Uploaded</Text>
+                <View style={{ width: "100%", backgroundColor: "#f8fafc", padding: 10, borderRadius: 8, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "600" }}>Address: </Text>{selectedUser?.address || "N/A"}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "600" }}>District: </Text>{selectedUser?.district || "N/A"}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>
+                    <Text style={{ fontWeight: "600" }}>State: </Text>{selectedUser?.state || "N/A"}
+                  </Text>
+                  <Text style={{ fontSize: 13, color: "#475569" }}>
+                    <Text style={{ fontWeight: "600" }}>Pin Code: </Text>{selectedUser?.pincode || "N/A"}
+                  </Text>
+                </View>
+                
+                <View style={{ width: "100%", position: "relative" }}>
+                  <ScrollView 
+                    ref={kycScrollRef}
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    snapToInterval={275}
+                    snapToAlignment="center"
+                    decelerationRate="fast"
+                    onMomentumScrollEnd={(e) => {
+                      const offset = e.nativeEvent.contentOffset.x;
+                      const index = Math.round(offset / 275);
+                      setCurrentKycIndex(index);
+                    }}
+                    contentContainerStyle={{ alignItems: "center", paddingHorizontal: 10 }} 
+                    style={{ maxHeight: 300, width: "100%" }}
+                  >
+                    {selectedUser?.kycDocuments && selectedUser.kycDocuments.length > 0 ? (
+                      selectedUser.kycDocuments.map((doc, idx) => (
+                        <View key={idx} style={{ alignItems: "center", marginRight: 15 }}>
+                          <Text style={{ fontSize: 12, fontWeight: "bold", color: "#64748b", marginBottom: 6 }}>
+                            {doc.documentType === "agent_picture" ? "Agent Photo" : doc.documentType === "id_document" ? "ID Document" : `Document ${idx + 1}`}
+                          </Text>
+                          <Image 
+                            source={{ uri: doc.url }} 
+                            style={{ width: 260, height: 260, resizeMode: "contain", borderRadius: 8, backgroundColor: "#f1f5f9" }} 
+                          />
+                          <TouchableOpacity 
+                            style={{ marginTop: 8, backgroundColor: "#e2e8f0", paddingVertical: 6, paddingHorizontal: 16, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 }}
+                            onPress={() => handleDownloadDocument(doc.url, doc.documentType)}
+                          >
+                            <Ionicons name="download-outline" size={16} color="#475569" />
+                            <Text style={{ fontSize: 12, fontWeight: "600", color: "#475569" }}>Download</Text>
+                          </TouchableOpacity>
+                        </View>
+                      ))
+                    ) : (
+                      <View style={{ width: "100%", alignItems: "center", paddingHorizontal: 50 }}>
+                        <Text style={{ color: "#94a3b8", paddingVertical: 40 }}>No Document Uploaded</Text>
+                      </View>
+                    )}
+                  </ScrollView>
+                  
+                  {selectedUser?.kycDocuments && selectedUser.kycDocuments.length > 1 && (
+                    <>
+                      <TouchableOpacity 
+                        style={{ position: "absolute", left: -10, top: "45%", backgroundColor: "#fff", borderRadius: 20, padding: 8, elevation: 3, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}
+                        onPress={() => {
+                          const prev = Math.max(0, currentKycIndex - 1);
+                          kycScrollRef.current?.scrollTo({ x: prev * 275, animated: true });
+                          setCurrentKycIndex(prev);
+                        }}
+                      >
+                        <Ionicons name="chevron-back" size={24} color="#6b6dbf" />
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={{ position: "absolute", right: -10, top: "45%", backgroundColor: "#fff", borderRadius: 20, padding: 8, elevation: 3, shadowColor: "#000", shadowOpacity: 0.2, shadowRadius: 3, shadowOffset: { width: 0, height: 1 } }}
+                        onPress={() => {
+                          const next = Math.min((selectedUser?.kycDocuments?.length || 1) - 1, currentKycIndex + 1);
+                          kycScrollRef.current?.scrollTo({ x: next * 275, animated: true });
+                          setCurrentKycIndex(next);
+                        }}
+                      >
+                        <Ionicons name="chevron-forward" size={24} color="#6b6dbf" />
+                      </TouchableOpacity>
+                    </>
                   )}
-                </ScrollView>
+                </View>
 
                 <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
                   <TouchableOpacity
@@ -378,17 +469,15 @@ export default function Employees() {
                 <TouchableOpacity style={{ marginTop: 16, alignItems: "center" }} onPress={() => setKycModalVisible(false)}>
                   <Text style={{ color: "#6b6dbf" }}>Close</Text>
                 </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
+              </TouchableOpacity>
+            </View>
         </TouchableWithoutFeedback>
       </Modal>
 
       <Modal visible={transferModal} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setTransferModal(false)}>
           <View style={styles.actionsOverlay}>
-            <TouchableWithoutFeedback onPress={() => { }}>
-              <View style={styles.actionsBox}>
+            <TouchableOpacity activeOpacity={1} style={styles.actionsBox}>
                 <Text style={styles.sectionText}>Transfer RM Coins</Text>
 
                 <Text style={{ marginTop: 10, fontWeight: "600" }}>
@@ -438,8 +527,7 @@ export default function Employees() {
                 >
                   <Text style={{ color: "#6b6dbf" }}>Cancel</Text>
                 </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
+              </TouchableOpacity>
           </View>
         </TouchableWithoutFeedback>
       </Modal>
@@ -457,12 +545,20 @@ export default function Employees() {
           />
         </View>
 
-        <TouchableOpacity
-          onPress={() => router.push("/admin/employee/add")}
-          style={styles.addBtn}
-        >
-          <Ionicons name="add" size={22} color="#fff" />
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <TouchableOpacity
+            onPress={() => router.push("/admin/employee/add")}
+            style={styles.addBtn}
+          >
+            <Ionicons name="person-add" size={20} color="#fff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => router.push("/admin/employee/register-agent")}
+            style={[styles.addBtn, { backgroundColor: "#14b8a6" }]}
+          >
+            <Ionicons name="location" size={20} color="#fff" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* FILTER */}
@@ -543,8 +639,7 @@ export default function Employees() {
       <Modal visible={actionsModalVisible} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={closeActions}>
           <View style={styles.actionsOverlay}>
-            <TouchableWithoutFeedback onPress={() => { }}>
-              <View style={styles.actionsBox}>
+            <TouchableOpacity activeOpacity={1} style={styles.actionsBox}>
                 <Text style={styles.sectionText}>Actions</Text>
                 {(() => {
                   const roleRaw = selectedUser?.roles?.[0] || "";
@@ -571,9 +666,8 @@ export default function Employees() {
                 <TouchableOpacity style={[styles.actionItem, styles.actionCancel, { marginTop: 8 }]} onPress={closeActions}>
                   <Text style={[styles.actionText, { color: '#6b6dbf' }]}>Close</Text>
                 </TouchableOpacity>
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
+              </TouchableOpacity>
+            </View>
         </TouchableWithoutFeedback>
       </Modal>
     </SafeAreaView>

@@ -7,6 +7,8 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  ScrollView,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
@@ -19,7 +21,16 @@ import { useRouter } from "expo-router";
 export default function AgentKycScreen() {
   const { user, login, updateUser, logout } = useAuth();
   const router = useRouter();
-  const [image, setImage] = useState(null);
+
+  const [name, setName] = useState(user?.name || "");
+  const [address, setAddress] = useState(user?.address || "");
+  const [district, setDistrict] = useState(user?.district || "");
+  const [state, setState] = useState(user?.state || "");
+  const [pincode, setPincode] = useState(user?.pincode || "");
+
+  const [agentPicture, setAgentPicture] = useState(null);
+  const [idDocumentFront, setIdDocumentFront] = useState(null);
+  const [idDocumentBack, setIdDocumentBack] = useState(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,79 +43,137 @@ export default function AgentKycScreen() {
     router.replace("/auth/login");
   };
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      setImage(result.assets[0]);
-    }
-  };
-
-  const takePhoto = async () => {
+  const takeAgentPhoto = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "error",
-        text1: "Permission Denied",
-        text2: "We need camera permissions to take a photo.",
-      });
+      Toast.show({ type: "error", text1: "Permission Denied", text2: "We need camera permissions to take a photo." });
       return;
     }
-
     let result = await ImagePicker.launchCameraAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
     });
-
     if (!result.canceled) {
-      setImage(result.assets[0]);
+      setAgentPicture(result.assets[0]);
+    }
+  };
+
+  const pickDocumentImage = async (setDoc) => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setDoc(result.assets[0]);
+    }
+  };
+
+  const takeDocumentPhoto = async (setDoc) => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== "granted") {
+      Toast.show({ type: "error", text1: "Permission Denied", text2: "We need camera permissions to take a photo." });
+      return;
+    }
+    let result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setDoc(result.assets[0]);
     }
   };
 
   const uploadKyc = async () => {
-    if (!image) {
+    if (!agentPicture || !idDocumentFront || !idDocumentBack || !name || !address || !district || !state || !pincode) {
       Toast.show({
         type: "error",
-        text1: "Missing Document",
-        text2: "Please select an image first",
+        text1: "Missing Information",
+        text2: "Please provide all required details and documents.",
       });
       return;
     }
 
     try {
       setLoading(true);
-      const formData = new FormData();
-      formData.append("documentType", "aadhaar_pan");
 
-      const uriParts = image.uri.split(".");
-      const fileType = uriParts[uriParts.length - 1];
-
-      formData.append("document", {
-        uri: Platform.OS === "ios" ? image.uri.replace("file://", "") : image.uri,
-        name: `kyc.${fileType}`,
-        type: `image/${fileType}`,
+      // Update User Details
+      const detailsRes = await api.patch(`/user/${user.id}/details`, {
+        name,
+        address,
+        district,
+        state,
+        pincode,
       });
 
-      const res = await api.post(`/user/${user.id}/kyc`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+      if (!detailsRes.data.success) {
+         throw new Error("Failed to update user details");
+      }
+
+      // Upload Agent Picture
+      const formData1 = new FormData();
+      formData1.append("documentType", "agent_picture");
+      const uriParts1 = agentPicture.uri.split(".");
+      const fileType1 = uriParts1[uriParts1.length - 1];
+      formData1.append("document", {
+        uri: Platform.OS === "ios" ? agentPicture.uri.replace("file://", "") : agentPicture.uri,
+        name: `agent_picture.${fileType1}`,
+        type: `image/${fileType1}`,
       });
 
-      if (res.data.success) {
+      await api.post(`/user/${user.id}/kyc`, formData1, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Upload ID Document Front
+      const formData2 = new FormData();
+      formData2.append("documentType", "id_document_front");
+      const uriParts2 = idDocumentFront.uri.split(".");
+      const fileType2 = uriParts2[uriParts2.length - 1];
+      formData2.append("document", {
+        uri: Platform.OS === "ios" ? idDocumentFront.uri.replace("file://", "") : idDocumentFront.uri,
+        name: `id_document_front.${fileType2}`,
+        type: `image/${fileType2}`,
+      });
+
+      await api.post(`/user/${user.id}/kyc`, formData2, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Upload ID Document Back
+      const formData3 = new FormData();
+      formData3.append("documentType", "id_document_back");
+      const uriParts3 = idDocumentBack.uri.split(".");
+      const fileType3 = uriParts3[uriParts3.length - 1];
+      formData3.append("document", {
+        uri: Platform.OS === "ios" ? idDocumentBack.uri.replace("file://", "") : idDocumentBack.uri,
+        name: `id_document_back.${fileType3}`,
+        type: `image/${fileType3}`,
+      });
+
+      const res3 = await api.post(`/user/${user.id}/kyc`, formData3, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      if (res3.data.success) {
         Toast.show({
           type: "success",
           text1: "Success",
-          text2: res.data.message,
+          text2: "Documents uploaded successfully",
         });
         
-        // Update local user context to reflect pending status
-        updateUser({ kycStatus: "pending", kycDocuments: res.data.kycDocuments });
+        // Update local user context to reflect pending status and updated details
+        updateUser({ 
+          kycStatus: "pending", 
+          kycDocuments: res3.data.kycDocuments,
+          name,
+          address,
+          district,
+          state,
+          pincode
+        });
       }
     } catch (error) {
       console.error(error);
@@ -177,64 +246,138 @@ export default function AgentKycScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-        <Ionicons name="log-out-outline" size={24} color="#ef4444" />
-      </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={24} color="#ef4444" />
+        </TouchableOpacity>
 
-      <View style={styles.header}>
-        <Text style={styles.title}>Agent KYC</Text>
-        <Text style={styles.subtitle}>
-          Please upload a clear photo of your Aadhar or PAN card to verify your identity.
-        </Text>
-      </View>
-
-      {isRejected && (
-        <View style={styles.alertBox}>
-          <Ionicons name="alert-circle" size={24} color="#ef4444" />
-          <Text style={styles.alertText}>
-            Your previous KYC was rejected. Please upload a clearer document.
+        <View style={styles.header}>
+          <Text style={styles.title}>Agent KYC</Text>
+          <Text style={styles.subtitle}>
+            Please provide your details, a live picture of yourself and a valid ID document (Aadhar/Voter/PAN).
           </Text>
         </View>
-      )}
 
-      <View style={styles.uploadSection}>
-        {image ? (
-          <View style={styles.previewContainer}>
-            <Image source={{ uri: image.uri }} style={styles.previewImage} />
-            <TouchableOpacity style={styles.removeBtn} onPress={() => setImage(null)}>
-              <Ionicons name="close-circle" size={28} color="#ef4444" />
+        {isRejected && (
+          <View style={styles.alertBox}>
+            <Ionicons name="alert-circle" size={24} color="#ef4444" />
+            <Text style={styles.alertText}>
+              Your previous KYC was rejected. Please re-upload clearer documents.
+            </Text>
+          </View>
+        )}
+
+        {/* Details Section */}
+        <Text style={styles.sectionLabel}>1. Personal Details</Text>
+        <View style={styles.formSection}>
+          <Text style={styles.inputLabel}>Full Name</Text>
+          <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter your full name" />
+          
+          <Text style={styles.inputLabel}>Address</Text>
+          <TextInput style={styles.input} value={address} onChangeText={setAddress} placeholder="Enter your address" />
+          
+          <Text style={styles.inputLabel}>District</Text>
+          <TextInput style={styles.input} value={district} onChangeText={setDistrict} placeholder="Enter your district" />
+          
+          <Text style={styles.inputLabel}>State</Text>
+          <TextInput style={styles.input} value={state} onChangeText={setState} placeholder="Enter your state" />
+          
+          <Text style={styles.inputLabel}>Pin Code</Text>
+          <TextInput style={styles.input} value={pincode} onChangeText={setPincode} placeholder="Enter your pin code" keyboardType="numeric" />
+        </View>
+
+        {/* Section 1: Agent Picture */}
+        <Text style={styles.sectionLabel}>2. Live Selfie</Text>
+        <View style={styles.uploadSection}>
+          {agentPicture ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: agentPicture.uri }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeBtn} onPress={() => setAgentPicture(null)}>
+                <Ionicons name="close-circle" size={28} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Ionicons name="camera-outline" size={64} color="#94a3b8" />
+              <Text style={styles.placeholderText}>No Photo Taken</Text>
+            </View>
+          )}
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionBtn} onPress={takeAgentPhoto}>
+              <Ionicons name="camera" size={24} color="#fff" />
+              <Text style={styles.actionBtnText}>Take Photo</Text>
             </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.placeholderContainer}>
-            <Ionicons name="document-text-outline" size={64} color="#94a3b8" />
-            <Text style={styles.placeholderText}>No Document Selected</Text>
-          </View>
-        )}
-
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionBtn} onPress={takePhoto}>
-            <Ionicons name="camera" size={24} color="#fff" />
-            <Text style={styles.actionBtnText}>Camera</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionBtn} onPress={pickImage}>
-            <Ionicons name="image" size={24} color="#fff" />
-            <Text style={styles.actionBtnText}>Gallery</Text>
-          </TouchableOpacity>
         </View>
-      </View>
 
-      <TouchableOpacity
-        style={[styles.submitBtn, (!image || loading) && styles.disabledBtn]}
-        onPress={uploadKyc}
-        disabled={!image || loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitBtnText}>Submit Document</Text>
-        )}
-      </TouchableOpacity>
+        {/* Section 2: ID Document Front */}
+        <Text style={styles.sectionLabel}>3. ID Document Front (Aadhar/Voter/PAN)</Text>
+        <View style={styles.uploadSection}>
+          {idDocumentFront ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: idDocumentFront.uri }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeBtn} onPress={() => setIdDocumentFront(null)}>
+                <Ionicons name="close-circle" size={28} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Ionicons name="card-outline" size={64} color="#94a3b8" />
+              <Text style={styles.placeholderText}>No Front Document Selected</Text>
+            </View>
+          )}
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => takeDocumentPhoto(setIdDocumentFront)}>
+              <Ionicons name="camera" size={24} color="#fff" />
+              <Text style={styles.actionBtnText}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => pickDocumentImage(setIdDocumentFront)}>
+              <Ionicons name="image" size={24} color="#fff" />
+              <Text style={styles.actionBtnText}>Gallery</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Section 3: ID Document Back */}
+        <Text style={styles.sectionLabel}>4. ID Document Back</Text>
+        <View style={styles.uploadSection}>
+          {idDocumentBack ? (
+            <View style={styles.previewContainer}>
+              <Image source={{ uri: idDocumentBack.uri }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeBtn} onPress={() => setIdDocumentBack(null)}>
+                <Ionicons name="close-circle" size={28} color="#ef4444" />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.placeholderContainer}>
+              <Ionicons name="card-outline" size={64} color="#94a3b8" />
+              <Text style={styles.placeholderText}>No Back Document Selected</Text>
+            </View>
+          )}
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => takeDocumentPhoto(setIdDocumentBack)}>
+              <Ionicons name="camera" size={24} color="#fff" />
+              <Text style={styles.actionBtnText}>Camera</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionBtn} onPress={() => pickDocumentImage(setIdDocumentBack)}>
+              <Ionicons name="image" size={24} color="#fff" />
+              <Text style={styles.actionBtnText}>Gallery</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[styles.submitBtn, (!agentPicture || !idDocumentFront || !idDocumentBack || !name || !address || !district || !state || !pincode || loading) && styles.disabledBtn]}
+          onPress={uploadKyc}
+          disabled={!agentPicture || !idDocumentFront || !idDocumentBack || !name || !address || !district || !state || !pincode || loading}
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitBtnText}>Submit KYC</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -243,8 +386,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#f8fafc",
+  },
+  scrollContent: {
     padding: 20,
+    paddingBottom: 40,
     position: "relative",
+  },
+  sectionLabel: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#334155",
+    marginBottom: 10,
+    marginLeft: 4,
   },
   logoutBtn: {
     position: "absolute",
@@ -292,6 +445,33 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 14,
     fontWeight: "500",
+  },
+  formSection: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  inputLabel: {
+    fontSize: 14,
+    color: "#475569",
+    marginBottom: 6,
+    fontWeight: "500",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    color: "#0f172a",
+    marginBottom: 16,
+    backgroundColor: "#f8fafc",
   },
   uploadSection: {
     backgroundColor: "#fff",

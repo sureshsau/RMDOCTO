@@ -99,6 +99,20 @@ export default function Index() {
             onPress={() => router.push("/medicine-store")}
           />
 
+          <ActionCard
+            icon="flask-outline"
+            title="Book Lab"
+            subtitle="Diagnostic tests"
+            onPress={() => router.push("/lab")}
+          />
+
+          <ActionCard
+            icon="document-text-outline"
+            title="Lab Orders"
+            subtitle="Test reports & status"
+            onPress={() => router.push("/lab/my-orders")}
+          />
+
         </View>
 
       </ScrollView>

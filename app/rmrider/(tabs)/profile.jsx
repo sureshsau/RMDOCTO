@@ -11,6 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import ProfileNameEditor from "../../../components/shared/ProfileNameEditor";
 import ProfileAvatarUploader from "../../../components/shared/ProfileAvatarUploader";
 import { useAuth } from "../../../context/AuthContext";
 
@@ -65,9 +66,7 @@ export default function Profile() {
             onUploadSuccess={(newUrl) => updateUser({ profileImage: newUrl })} 
           />
 
-          <Text style={styles.name}>
-            {user?.name || "User"}
-          </Text>
+          <ProfileNameEditor user={user} onNameUpdated={(newName) => updateUser({ name: newName })} />
 
           <View style={styles.roleBadge}>
             <Text style={styles.roleText}>
