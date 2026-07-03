@@ -42,6 +42,7 @@ export default function AddTest() {
     category:             CATEGORIES[0],
     sampleType:           SAMPLE_TYPES[0],
     labId:                "",
+    mrp:                  "",
     userPrice:            "",
     agentPrice:           "",
     gstPercentage:        "0",
@@ -71,6 +72,7 @@ export default function AddTest() {
             category:   d.category   ?? CATEGORIES[0],
             sampleType: d.sampleType ?? SAMPLE_TYPES[0],
             labId:      d.labId?._id ?? d.labId ?? "",
+            mrp:        String(d.pricing?.mrp        ?? ""),
             userPrice:  String(d.pricing?.userPrice  ?? ""),
             agentPrice: String(d.pricing?.agentPrice ?? ""),
             gstPercentage: String(d.gstPercentage ?? "0"),
@@ -95,6 +97,7 @@ export default function AddTest() {
   const handleSave = async () => {
     if (!form.name.trim())      return Toast.show({ type: "error", text1: "Test name required" });
     if (!form.labId)            return Toast.show({ type: "error", text1: "Select a lab" });
+    if (!form.mrp)              return Toast.show({ type: "error", text1: "MRP is required" });
     if (!form.userPrice)        return Toast.show({ type: "error", text1: "User price required" });
 
     const payload = {
@@ -104,8 +107,9 @@ export default function AddTest() {
       sampleType: form.sampleType,
       labId:      form.labId,
       pricing: {
+        mrp:        parseFloat(form.mrp)        || 0,
         userPrice:  parseFloat(form.userPrice)  || 0,
-        agentPrice: parseFloat(form.agentPrice) || undefined,
+        agentPrice: parseFloat(form.agentPrice) || 0,
       },
       gstPercentage:        parseFloat(form.gstPercentage) || 0,
       reportTat:            form.reportTat,
@@ -205,6 +209,7 @@ export default function AddTest() {
         </ScrollView>
 
         <Text style={styles.sectionLabel}>Pricing</Text>
+        <Field label="MRP (₹) *" value={form.mrp} onChange={(v) => set("mrp", v)} keyboardType="decimal-pad" placeholder="0.00" />
         <View style={{ flexDirection: "row", gap: 12 }}>
           <View style={{ flex: 1 }}>
             <Field label="User Price (₹) *" value={form.userPrice}  onChange={(v) => set("userPrice", v)}  keyboardType="decimal-pad" placeholder="0.00" />

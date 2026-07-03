@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../services/axios";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const PURPLE = "#6b6dbf";
 const TEAL   = "#14b8a6";
@@ -41,6 +42,42 @@ export default function BookLab() {
   const [collectionType, setCollectionType] = useState("HOME");
   const [paymentMode,    setPaymentMode]    = useState("COD");
   const [scheduledAt,    setScheduledAt]    = useState("");
+  const [showPicker,     setShowPicker]     = useState(false);
+  const [pickerMode,     setPickerMode]     = useState("date");
+  const [dateObj,        setDateObj]        = useState(new Date());
+
+  const handleDateChange = (event, selectedDate) => {
+    if (Platform.OS === "android") {
+      setShowPicker(false);
+    }
+    
+    if (event.type === "dismissed") return;
+
+    if (selectedDate) {
+      setDateObj(selectedDate);
+      if (Platform.OS === "android") {
+        if (pickerMode === "date") {
+          setPickerMode("time");
+          setTimeout(() => setShowPicker(true), 50);
+        } else {
+          formatAndSetDate(selectedDate);
+        }
+      } else {
+        formatAndSetDate(selectedDate);
+      }
+    }
+  };
+
+  const formatAndSetDate = (d) => {
+    const pad = (n) => n.toString().padStart(2, "0");
+    const formatted = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+    setScheduledAt(formatted);
+  };
+
+  const openPicker = () => {
+    setPickerMode(Platform.OS === "ios" ? "datetime" : "date");
+    setShowPicker(true);
+  };
   const [address, setAddress] = useState({
     fullName:     "",
     phone:        "",
@@ -147,12 +184,29 @@ export default function BookLab() {
         )}
 
         {/* Schedule */}
-        <Field
-          label="Scheduled Date & Time *"
-          value={scheduledAt}
-          onChange={setScheduledAt}
-          placeholder="e.g. 2026-07-01T08:00:00"
-        />
+        <View style={styles.fieldWrap}>
+          <Text style={styles.fieldLabel}>Scheduled Date & Time *</Text>
+          <TouchableOpacity 
+            style={[styles.input, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]} 
+            onPress={openPicker}
+          >
+            <Text style={{ color: scheduledAt ? TEXT_D : "#94a3b8", fontSize: 14 }}>
+              {scheduledAt ? scheduledAt.replace("T", " ") : "Select date and time"}
+            </Text>
+            <Ionicons name="calendar-outline" size={20} color={PURPLE} />
+          </TouchableOpacity>
+        </View>
+
+        {showPicker && (
+          <DateTimePicker
+            value={dateObj}
+            mode={pickerMode}
+            is24Hour={false}
+            display="default"
+            onChange={handleDateChange}
+            minimumDate={new Date()}
+          />
+        )}
 
         {/* Payment Mode */}
         <Text style={styles.label}>Payment Mode</Text>

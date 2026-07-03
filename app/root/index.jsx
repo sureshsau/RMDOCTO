@@ -84,6 +84,18 @@ export default function UserDashboard() {
 <View style={styles.grid}>
 
   <DashboardCard
+    icon="medkit-outline"
+    label="Book Doctor"
+    onPress={() => router.push("/doctor-booking")}
+  />
+
+  <DashboardCard
+    icon="calendar-outline"
+    label="My Appointments"
+    onPress={() => router.push("/doctor-booking/my-appointments")}
+  />
+
+  <DashboardCard
     icon="storefront-outline"
     label="Medicine Store"
     onPress={() => router.push("/medicine-store")}
@@ -93,6 +105,12 @@ export default function UserDashboard() {
     icon="cube-outline"
     label="My Orders"
     onPress={() => router.push("/mymedicineorder")}
+  />
+
+  <DashboardCard
+    icon="flask-outline"
+    label="Lab Tests"
+    onPress={() => router.push("/lab")}
   />
 
   <DashboardCard

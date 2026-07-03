@@ -79,6 +79,7 @@ const ACTIONS_MAP = {
     { id: "rmcredit", label: "RM Credit", route: "/admin/rmcredit/details" },
     { id: "transfer-rmcoin", label: "Transfer RM Coins" },
     { id: "update-profile", label: "Update Avatar", route: "/admin/employee/:id/settings" },
+    { id: "view-kyc", label: "View KYC", icon: "shield-checkmark-outline" },
   ],
 
   default: [
@@ -105,6 +106,9 @@ export default function Employees() {
   const [transferModal, setTransferModal] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferLoading, setTransferLoading] = useState(false);
+  
+  const [kycModalVisible, setKycModalVisible] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
 
 
 
@@ -136,6 +140,13 @@ export default function Employees() {
     // ✅ OPEN TRANSFER MODAL
     if (action.id === "transfer-rmcoin") {
       setTransferModal(true);
+      setActionsModalVisible(false);
+      return;
+    }
+
+    // ✅ VIEW KYC
+    if (action.id === "view-kyc") {
+      setKycModalVisible(true);
       setActionsModalVisible(false);
       return;
     }
@@ -179,6 +190,48 @@ export default function Employees() {
     }
 
     setActionsModalVisible(false);
+  };
+
+  const toggleUserStatus = async () => {
+    if (!selectedUser) return;
+    try {
+      const res = await api.patch(`/user/${selectedUser._id}/toggle-status`);
+      if (res.data.success) {
+        Toast.show({
+          type: "success",
+          text1: "Status Updated",
+          text2: res.data.message,
+        });
+        setUsers(users.map(u =>
+          u._id === selectedUser._id ? { ...u, isActive: res.data.isActive } : u
+        ));
+      }
+    } catch (e) {
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: e.response?.data?.message || "Failed to update status",
+      });
+    } finally {
+      closeActions();
+    }
+  };
+
+  const updateKycStatus = async (status) => {
+    if (!selectedUser) return;
+    try {
+      setKycLoading(true);
+      const res = await api.patch(`/user/${selectedUser._id}/kyc/status`, { status });
+      if (res.data.success) {
+        Toast.show({ type: "success", text1: "KYC Status Updated", text2: res.data.message });
+        setKycModalVisible(false);
+        await loadUsers();
+      }
+    } catch (e) {
+      Toast.show({ type: "error", text1: "Error", text2: e.response?.data?.message || "Failed to update KYC status" });
+    } finally {
+      setKycLoading(false);
+    }
   };
 
 
@@ -280,6 +333,57 @@ export default function Employees() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Modal visible={kycModalVisible} transparent animationType="fade">
+        <TouchableWithoutFeedback onPress={() => setKycModalVisible(false)}>
+          <View style={styles.actionsOverlay}>
+            <TouchableWithoutFeedback onPress={() => { }}>
+              <View style={[styles.actionsBox, { width: "90%", maxHeight: "80%" }]}>
+                <Text style={styles.sectionText}>Agent KYC Document</Text>
+                <Text style={{ marginTop: 10, fontWeight: "600", marginBottom: 12 }}>
+                  {selectedUser?.name} • Status: {selectedUser?.kycStatus?.toUpperCase() || "NONE"}
+                </Text>
+                
+                <ScrollView contentContainerStyle={{ alignItems: "center" }} style={{ maxHeight: 300 }}>
+                  {selectedUser?.kycDocuments && selectedUser.kycDocuments.length > 0 ? (
+                    selectedUser.kycDocuments.map((doc, idx) => (
+                      <Image 
+                        key={idx}
+                        source={{ uri: doc.url }} 
+                        style={{ width: 280, height: 280, resizeMode: "contain", marginBottom: 10, borderRadius: 8, backgroundColor: "#f1f5f9" }} 
+                      />
+                    ))
+                  ) : (
+                    <Text style={{ color: "#94a3b8", paddingVertical: 40 }}>No Document Uploaded</Text>
+                  )}
+                </ScrollView>
+
+                <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: "#10b981", paddingVertical: 12, borderRadius: 10, alignItems: "center" }}
+                    onPress={() => updateKycStatus("verified")}
+                    disabled={kycLoading}
+                  >
+                    {kycLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "600" }}>Approve</Text>}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={{ flex: 1, backgroundColor: "#ef4444", paddingVertical: 12, borderRadius: 10, alignItems: "center" }}
+                    onPress={() => updateKycStatus("rejected")}
+                    disabled={kycLoading}
+                  >
+                     {kycLoading ? <ActivityIndicator color="#fff" /> : <Text style={{ color: "#fff", fontWeight: "600" }}>Reject</Text>}
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={{ marginTop: 16, alignItems: "center" }} onPress={() => setKycModalVisible(false)}>
+                  <Text style={{ color: "#6b6dbf" }}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
       <Modal visible={transferModal} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setTransferModal(false)}>
           <View style={styles.actionsOverlay}>
@@ -453,7 +557,18 @@ export default function Employees() {
                   ));
                 })()}
 
-                <TouchableOpacity style={[styles.actionItem, styles.actionCancel]} onPress={closeActions}>
+                {selectedUser && (
+                  <TouchableOpacity
+                    style={[styles.actionItem, { borderTopWidth: 1, borderTopColor: '#f1f5f9', marginTop: 8, paddingTop: 16 }]}
+                    onPress={toggleUserStatus}
+                  >
+                    <Text style={[styles.actionText, { color: selectedUser.isActive ? '#ef4444' : '#10b981', fontWeight: 'bold' }]}>
+                      {selectedUser.isActive ? "Deactivate User" : "Activate User"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                <TouchableOpacity style={[styles.actionItem, styles.actionCancel, { marginTop: 8 }]} onPress={closeActions}>
                   <Text style={[styles.actionText, { color: '#6b6dbf' }]}>Close</Text>
                 </TouchableOpacity>
               </View>
@@ -532,7 +647,15 @@ function EmployeeCard({ user, onOpenActions }) {
         )}
 
         <View style={{ flex: 1 }}>
-          <Text style={styles.name}>{user.name}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <Text style={styles.name}>{user.name}</Text>
+            {user.kycStatus === "verified" && (
+              <Ionicons name="checkmark-circle" size={16} color="#10b981" style={{ marginLeft: 4 }} />
+            )}
+            {user.kycStatus === "pending" && (
+              <Ionicons name="time" size={16} color="#f59e0b" style={{ marginLeft: 4 }} />
+            )}
+          </View>
           <Text style={styles.meta}>
             {role} • {user.dashboard}
           </Text>

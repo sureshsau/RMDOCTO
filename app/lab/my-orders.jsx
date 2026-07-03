@@ -14,44 +14,44 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import api from "../../services/axios";
 
 const PURPLE = "#6b6dbf";
-const BG     = "#f1f5f9";
-const CARD   = "#ffffff";
+const BG = "#f1f5f9";
+const CARD = "#ffffff";
 const TEXT_D = "#0f172a";
 const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
-const GREEN  = "#10b981";
-const RED    = "#ef4444";
-const AMBER  = "#f59e0b";
-const BLUE   = "#3b82f6";
+const GREEN = "#10b981";
+const RED = "#ef4444";
+const AMBER = "#f59e0b";
+const BLUE = "#3b82f6";
 
 const STATUS_CFG = {
-  INITIATED:        { color: TEXT_S, bg: "#f8fafc",  label: "Initiated"       },
-  CONFIRMED:        { color: BLUE,   bg: "#eff6ff",  label: "Confirmed"       },
-  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe",  label: "Sample Collected"},
-  REPORT_PENDING:   { color: AMBER,  bg: "#fffbeb",  label: "Report Pending"  },
-  REPORT_READY:     { color: GREEN,  bg: "#f0fdf4",  label: "Report Ready"    },
-  COMPLETED:        { color: GREEN,  bg: "#dcfce7",  label: "Completed"       },
-  CANCELLED:        { color: RED,    bg: "#fef2f2",  label: "Cancelled"       },
+  INITIATED: { color: TEXT_S, bg: "#f8fafc", label: "Initiated" },
+  CONFIRMED: { color: BLUE, bg: "#eff6ff", label: "Confirmed" },
+  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe", label: "Sample Collected" },
+  REPORT_PENDING: { color: AMBER, bg: "#fffbeb", label: "Report Pending" },
+  REPORT_READY: { color: GREEN, bg: "#f0fdf4", label: "Report Ready" },
+  COMPLETED: { color: GREEN, bg: "#dcfce7", label: "Completed" },
+  CANCELLED: { color: RED, bg: "#fef2f2", label: "Cancelled" },
 };
 
 const PAYMENT_CFG = {
-  PAID:    { color: GREEN, bg: "#f0fdf4" },
+  PAID: { color: GREEN, bg: "#f0fdf4" },
   PENDING: { color: AMBER, bg: "#fffbeb" },
-  FAILED:  { color: RED,   bg: "#fef2f2" },
+  FAILED: { color: RED, bg: "#fef2f2" },
 };
 
 const fmtMoney = (v) => `₹${(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
-const fmtDate  = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+const fmtDate = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function MyLabOrders() {
-  const [orders,     setOrders]     = useState([]);
-  const [page,       setPage]       = useState(1);
-  const [total,      setTotal]      = useState(0);
-  const [totalPaid,  setTotalPaid]  = useState(0);
-  const [loading,    setLoading]    = useState(true);
-  const [more,       setMore]       = useState(false);
+  const [orders, setOrders] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [totalPaid, setTotalPaid] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [more, setMore] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [error,      setError]      = useState(null);
+  const [error, setError] = useState(null);
 
   const LIMIT = 10;
 
@@ -142,7 +142,7 @@ export default function MyLabOrders() {
 }
 
 function OrderCard({ order }) {
-  const sCfg = STATUS_CFG[order.orderStatus]    || STATUS_CFG.INITIATED;
+  const sCfg = STATUS_CFG[order.orderStatus] || STATUS_CFG.INITIATED;
   const pCfg = PAYMENT_CFG[order.paymentStatus] || PAYMENT_CFG.PENDING;
 
   return (
@@ -191,14 +191,14 @@ function OrderCard({ order }) {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: BG },
+  safe: { flex: 1, backgroundColor: BG },
 
   summaryCard: {
     backgroundColor: PURPLE, borderRadius: 20, padding: 20, marginBottom: 20,
     flexDirection: "row", alignItems: "center", justifyContent: "space-around",
   },
-  summaryItem:   { alignItems: "center" },
-  summaryDivider:{ width: 1, height: 40, backgroundColor: "rgba(255,255,255,0.3)" },
+  summaryItem: { alignItems: "center" },
+  summaryDivider: { width: 1, height: 40, backgroundColor: "rgba(255,255,255,0.3)" },
   sumVal: { color: "#fff", fontSize: 22, fontWeight: "900" },
   sumLbl: { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
 
@@ -208,14 +208,14 @@ const styles = StyleSheet.create({
     backgroundColor: CARD, borderRadius: 16, padding: 14, elevation: 2,
     shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
   },
-  cardTop:   { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
-  orderId:   { fontSize: 14, fontWeight: "800", color: TEXT_D },
+  cardTop: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  orderId: { fontSize: 14, fontWeight: "800", color: TEXT_D },
   orderDate: { fontSize: 11, color: TEXT_S, marginTop: 2 },
-  badge:     { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
-  badgeTxt:  { fontSize: 11, fontWeight: "700" },
+  badge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeTxt: { fontSize: 11, fontWeight: "700" },
 
-  labRow:   { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
-  labName:  { fontSize: 12, color: TEXT_M },
+  labRow: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 3 },
+  labName: { fontSize: 12, color: TEXT_M },
   testName: { fontSize: 13, fontWeight: "600", color: TEXT_D, marginBottom: 8 },
 
   cardBottom: {
@@ -223,13 +223,13 @@ const styles = StyleSheet.create({
     borderTopWidth: 1, borderTopColor: "#f1f5f9", paddingTop: 10,
   },
   metaTxt: { flex: 1, fontSize: 12, color: TEXT_M },
-  amt:     { fontSize: 15, fontWeight: "900", color: TEXT_D, marginRight: 8 },
+  amt: { fontSize: 15, fontWeight: "900", color: TEXT_D, marginRight: 8 },
 
-  center:     { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
-  centerTxt:  { color: TEXT_M, fontSize: 14 },
-  errTxt:     { color: RED, fontSize: 14, textAlign: "center" },
-  retryBtn:   { backgroundColor: PURPLE, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12 },
-  retryTxt:   { color: "#fff", fontWeight: "700" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
+  centerTxt: { color: TEXT_M, fontSize: 14 },
+  errTxt: { color: RED, fontSize: 14, textAlign: "center" },
+  retryBtn: { backgroundColor: PURPLE, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12 },
+  retryTxt: { color: "#fff", fontWeight: "700" },
   emptyTitle: { fontSize: 16, fontWeight: "800", color: TEXT_D },
-  emptyTxt:   { fontSize: 13, color: TEXT_M, textAlign: "center" },
+  emptyTxt: { fontSize: 13, color: TEXT_M, textAlign: "center" },
 });

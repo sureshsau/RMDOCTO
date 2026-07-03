@@ -145,7 +145,7 @@ export default function AdminDashboard() {
           <QuickAction icon="flask" label="Lab Management" onPress={() => router.push("/admin/lab")} />
           <QuickAction icon="flask-outline" label="All Lab Tests" onPress={() => router.push("/admin/lab/tests-list")} />
           <QuickAction icon="receipt-outline" label="Lab Orders" onPress={() => router.push("/admin/lab/lab-orders")} />
-          <QuickAction icon="analytics" label="Reports & Analytics" />
+          <QuickAction icon="analytics" label="Reports & Analytics" onPress={() => router.push("/admin/analytics")} />
         </View>
 
         {/* RECENT ACTIVITY */}

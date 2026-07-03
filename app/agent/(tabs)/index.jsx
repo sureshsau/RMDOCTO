@@ -65,6 +65,20 @@ export default function Index() {
           />
 
           <ActionCard
+            icon="medkit-outline"
+            title="Book Doctor"
+            subtitle="Consultations"
+            onPress={() => router.push("/doctor-booking")}
+          />
+
+          <ActionCard
+            icon="calendar-outline"
+            title="Appointments"
+            subtitle="View bookings"
+            onPress={() => router.push("/doctor-booking/my-appointments")}
+          />
+
+          <ActionCard
             icon="person-add-outline"
             title="Register Agent"
             subtitle="Add new downline"

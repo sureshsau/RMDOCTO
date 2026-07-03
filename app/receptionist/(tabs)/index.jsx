@@ -84,8 +84,8 @@ export default function ReceptionistDashboard() {
 
             <DashboardCard
               icon="medkit-outline"
-              label="Doctors"
-              onPress={() => router.push("/receptionist/doctor")}
+              label="Book Doctor"
+              onPress={() => router.push("/doctor-booking")}
             />
 
             <DashboardCard
