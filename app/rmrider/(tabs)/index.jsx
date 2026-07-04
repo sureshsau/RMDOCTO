@@ -82,6 +82,17 @@ export default function RiderDashboard() {
           />
 
           <DashboardCard
+            icon="flask-outline"
+            label="Lab Tests"
+            onPress={() => router.push("/lab")}
+          />
+          <DashboardCard
+            icon="receipt-outline"
+            label="My Lab Orders"
+            onPress={() => router.push("/lab/my-orders")}
+          />
+
+          <DashboardCard
             icon="wallet-outline"
             label="RM Coins"
             onPress={() => router.push("/rmcoin")}

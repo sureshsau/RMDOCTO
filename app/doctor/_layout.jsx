@@ -32,22 +32,6 @@ export default function Layout() {
           options={{ headerShown: false }}
         />
 
-        {/* ATTENDANCE PAGE */}
-        <Stack.Screen
-          name="attendance"
-          options={{
-            title: "Attendance",
-          }}
-        />
-
-        {/* PROFILE PAGE */}
-        <Stack.Screen
-          name="profile"
-          options={{
-            title: "Profile",
-          }}
-        />
-
       </Stack>
     </>
   );

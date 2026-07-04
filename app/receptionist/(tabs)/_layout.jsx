@@ -1,7 +1,14 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
+import { useAuth } from "../../../context/AuthContext";
 
 export default function ReceptionistTabs() {
+  const { user } = useAuth();
+
+  if (user && user.kycStatus !== "verified") {
+    return <Redirect href="/receptionist/kyc" />;
+  }
+
   return (
     <Tabs
       safeAreaInsets={{ bottom: 0 }}

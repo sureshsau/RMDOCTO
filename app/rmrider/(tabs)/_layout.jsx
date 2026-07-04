@@ -1,9 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Tabs } from "expo-router";
+import { Tabs, Redirect } from "expo-router";
+import { useAuth } from "../../../context/AuthContext";
 
 const PRIMARY = "#14b8a6";
 
 export default function RiderTabsLayout() {
+  const { user } = useAuth();
+
+  if (user && user.kycStatus !== "verified") {
+    return <Redirect href="/rmrider/kyc" />;
+  }
+
   return (
     <Tabs
       safeAreaInsets={{ bottom: 0 }}

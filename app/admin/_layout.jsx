@@ -76,6 +76,12 @@ export default function _layout() {
         name="lab"
         options={{ headerShown: false }}
       />
+      
+      {/* KYC */}
+      <Stack.Screen
+        name="kyc/[id]"
+        options={{ headerShown: false }}
+      />
     </Stack>
   );
 }

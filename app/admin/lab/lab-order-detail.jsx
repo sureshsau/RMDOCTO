@@ -20,63 +20,63 @@ import { useUser } from "../../../context/UserContext";
 import api from "../../../services/axios";
 
 const PURPLE = "#6b6dbf";
-const TEAL   = "#14b8a6";
-const BG     = "#f8fafc";
-const CARD   = "#ffffff";
+const TEAL = "#14b8a6";
+const BG = "#f8fafc";
+const CARD = "#ffffff";
 const TEXT_D = "#0f172a";
 const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
-const GREEN  = "#10b981";
-const RED    = "#ef4444";
-const AMBER  = "#f59e0b";
-const BLUE   = "#3b82f6";
+const GREEN = "#10b981";
+const RED = "#ef4444";
+const AMBER = "#f59e0b";
+const BLUE = "#3b82f6";
 
 const STATUS_CFG = {
-  INITIATED:        { color: TEXT_S, bg: "#f8fafc",  label: "Initiated"       },
-  CONFIRMED:        { color: BLUE,   bg: "#eff6ff",  label: "Confirmed"       },
-  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe",  label: "Sample Collected"},
-  REPORT_PENDING:   { color: AMBER,  bg: "#fffbeb",  label: "Report Pending"  },
-  REPORT_READY:     { color: GREEN,  bg: "#f0fdf4",  label: "Report Ready"    },
-  COMPLETED:        { color: GREEN,  bg: "#dcfce7",  label: "Completed"       },
-  CANCELLED:        { color: RED,    bg: "#fef2f2",  label: "Cancelled"       },
+  INITIATED: { color: TEXT_S, bg: "#f8fafc", label: "Initiated" },
+  CONFIRMED: { color: BLUE, bg: "#eff6ff", label: "Confirmed" },
+  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe", label: "Sample Collected" },
+  REPORT_PENDING: { color: AMBER, bg: "#fffbeb", label: "Report Pending" },
+  REPORT_READY: { color: GREEN, bg: "#f0fdf4", label: "Report Ready" },
+  COMPLETED: { color: GREEN, bg: "#dcfce7", label: "Completed" },
+  CANCELLED: { color: RED, bg: "#fef2f2", label: "Cancelled" },
 };
 
 const VALID_TRANSITIONS = {
-  INITIATED:        ["CONFIRMED", "CANCELLED"],
-  CONFIRMED:        ["SAMPLE_COLLECTED", "CANCELLED"],
+  INITIATED: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["SAMPLE_COLLECTED", "CANCELLED"],
   SAMPLE_COLLECTED: ["REPORT_PENDING"],
-  REPORT_PENDING:   ["REPORT_READY"],
-  REPORT_READY:     ["COMPLETED"],
-  COMPLETED:        [],
-  CANCELLED:        [],
+  REPORT_PENDING: ["REPORT_READY"],
+  REPORT_READY: ["COMPLETED"],
+  COMPLETED: [],
+  CANCELLED: [],
 };
 
 const fmtMoney = (v) => `₹${(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
-const fmtDate  = (d) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtDate = (d) => d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
 
 export default function LabOrderDetail() {
-  const { orderId }    = useLocalSearchParams();
+  const { orderId } = useLocalSearchParams();
   const { getRMRiders } = useUser();
 
-  const [order,      setOrder]      = useState(null);
-  const [loading,    setLoading]    = useState(true);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   /* Status modal */
-  const [statusModal,    setStatusModal]    = useState(false);
+  const [statusModal, setStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [cancelReason,   setCancelReason]   = useState("");
-  const [statusLoading,  setStatusLoading]  = useState(false);
-  const [modalError,     setModalError]     = useState("");
+  const [cancelReason, setCancelReason] = useState("");
+  const [statusLoading, setStatusLoading] = useState(false);
+  const [modalError, setModalError] = useState("");
 
   /* Assign collector modal */
-  const [collectModal,    setCollectModal]    = useState(false);
-  const [riders,          setRiders]          = useState([]);
-  const [assignLoading,   setAssignLoading]   = useState(false);
+  const [collectModal, setCollectModal] = useState(false);
+  const [riders, setRiders] = useState([]);
+  const [assignLoading, setAssignLoading] = useState(false);
 
   /* OTP verify */
-  const [otpModal,   setOtpModal]   = useState(false);
-  const [otp,        setOtp]        = useState("");
+  const [otpModal, setOtpModal] = useState(false);
+  const [otp, setOtp] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
 
   const fetchOrder = useCallback(async (isRefresh = false) => {
@@ -184,9 +184,9 @@ export default function LabOrderDetail() {
   };
 
   if (loading) return <View style={styles.loader}><ActivityIndicator size="large" color={PURPLE} /></View>;
-  if (!order)  return null;
+  if (!order) return null;
 
-  const sCfg  = STATUS_CFG[order.orderStatus] || STATUS_CFG.INITIATED;
+  const sCfg = STATUS_CFG[order.orderStatus] || STATUS_CFG.INITIATED;
   const nextStatuses = VALID_TRANSITIONS[order.orderStatus] || [];
 
   return (
@@ -220,11 +220,11 @@ export default function LabOrderDetail() {
         {order.collectionAddress && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Collection Details</Text>
-            <Row icon="person-outline"   label={order.collectionAddress?.fullName ?? "—"} />
-            <Row icon="call-outline"     label={order.collectionAddress?.phone    ?? "—"} />
+            <Row icon="person-outline" label={order.collectionAddress?.fullName ?? "—"} />
+            <Row icon="call-outline" label={order.collectionAddress?.phone ?? "—"} />
             <Row icon="location-outline" label={order.collectionAddress?.addressLine1 ?? "—"} />
-            <Row icon="time-outline"     label={`Scheduled: ${fmtDate(order.scheduledAt)}`} />
-            <Row icon="car-outline"      label={`Collection: ${order.collectionType}`} />
+            <Row icon="time-outline" label={`Scheduled: ${fmtDate(order.scheduledAt)}`} />
+            <Row icon="car-outline" label={`Collection: ${order.collectionType}`} />
           </View>
         )}
 
@@ -246,8 +246,8 @@ export default function LabOrderDetail() {
         {/* ── Pricing ── */}
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Payment</Text>
-          <PriceRow label="Subtotal"          value={fmtMoney(order.pricing?.subtotal)} />
-          <PriceRow label="GST"               value={fmtMoney(order.pricing?.gstTotal)} />
+          <PriceRow label="Subtotal" value={fmtMoney(order.pricing?.subtotal)} />
+          <PriceRow label="GST" value={fmtMoney(order.pricing?.gstTotal)} />
           <PriceRow label="Collection Charge" value={fmtMoney(order.pricing?.homeCollectionCharge)} />
           <View style={styles.divider} />
           <PriceRow label="Total" value={fmtMoney(order.pricing?.payableAmount)} bold />
@@ -269,7 +269,7 @@ export default function LabOrderDetail() {
           {order.collectionAgent ? (
             <>
               <Row icon="person-circle-outline" label={order.collectionAgent.name} bold />
-              <Row icon="call-outline"          label={order.collectionAgent.phone} />
+              <Row icon="call-outline" label={order.collectionAgent.phone} />
             </>
           ) : (
             <Text style={styles.emptyNote}>No collector assigned</Text>
@@ -447,16 +447,16 @@ function PriceRow({ label, value, bold }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
-  loader:    { flex: 1, alignItems: "center", justifyContent: "center" },
+  loader: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   heroCard: {
     backgroundColor: CARD, margin: 16, padding: 20, borderRadius: 20,
     elevation: 3, flexDirection: "row", justifyContent: "space-between", alignItems: "center",
   },
-  orderId:    { fontSize: 18, fontWeight: "900", color: TEXT_D },
-  heroDate:   { fontSize: 12, color: TEXT_S, marginTop: 3 },
+  orderId: { fontSize: 18, fontWeight: "900", color: TEXT_D },
+  heroDate: { fontSize: 12, color: TEXT_S, marginTop: 3 },
   statusPill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 },
-  statusTxt:  { fontWeight: "800", fontSize: 13 },
+  statusTxt: { fontWeight: "800", fontSize: 13 },
 
   card: {
     backgroundColor: CARD, marginHorizontal: 16, marginBottom: 14,
@@ -464,30 +464,30 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
   },
   cardTitle: { fontSize: 14, fontWeight: "800", color: TEXT_D, marginBottom: 12 },
-  divider:   { height: 1, backgroundColor: "#f1f5f9", marginVertical: 8 },
+  divider: { height: 1, backgroundColor: "#f1f5f9", marginVertical: 8 },
   emptyNote: { fontSize: 13, color: TEXT_S, fontStyle: "italic" },
   metaSmall: { fontSize: 11, color: TEXT_S, marginTop: 4 },
-  otpHint:   { fontSize: 12, color: TEXT_M, marginBottom: 12 },
+  otpHint: { fontSize: 12, color: TEXT_M, marginBottom: 12 },
 
   testRow: {
     flexDirection: "row", alignItems: "flex-start",
     backgroundColor: "#f8fafc", borderRadius: 12, padding: 10, marginBottom: 8,
   },
-  testName:  { fontSize: 13, fontWeight: "700", color: TEXT_D },
-  testMeta:  { fontSize: 11, color: TEXT_S, marginTop: 2 },
+  testName: { fontSize: 13, fontWeight: "700", color: TEXT_D },
+  testMeta: { fontSize: 11, color: TEXT_S, marginTop: 2 },
   testTotal: { fontSize: 14, fontWeight: "800", color: PURPLE, marginLeft: 8 },
 
-  payBadge:    { backgroundColor: "#f1f5f9", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  payBadge: { backgroundColor: "#f1f5f9", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   payBadgeTxt: { fontSize: 12, fontWeight: "700", color: TEXT_M },
 
-  btnPrimary:    { backgroundColor: PURPLE, borderRadius: 12, padding: 13, alignItems: "center", marginTop: 12 },
+  btnPrimary: { backgroundColor: PURPLE, borderRadius: 12, padding: 13, alignItems: "center", marginTop: 12 },
   btnPrimaryTxt: { color: "#fff", fontWeight: "800", fontSize: 14 },
-  cancelBtn:     { backgroundColor: RED, borderRadius: 12, padding: 13, alignItems: "center", marginTop: 10 },
+  cancelBtn: { backgroundColor: RED, borderRadius: 12, padding: 13, alignItems: "center", marginTop: 10 },
 
-  overlay:    { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center" },
-  modalBox:   { backgroundColor: CARD, margin: 20, padding: 20, borderRadius: 20, maxHeight: "75%" },
+  overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center" },
+  modalBox: { backgroundColor: CARD, margin: 20, padding: 20, borderRadius: 20, maxHeight: "75%" },
   modalTitle: { fontSize: 16, fontWeight: "800", color: TEXT_D, marginBottom: 16 },
-  statusOpt:       { backgroundColor: "#f1f5f9", borderRadius: 10, padding: 12, marginBottom: 8 },
+  statusOpt: { backgroundColor: "#f1f5f9", borderRadius: 10, padding: 12, marginBottom: 8 },
   statusOptActive: { backgroundColor: PURPLE + "22", borderWidth: 1, borderColor: PURPLE },
   input: {
     borderWidth: 1, borderColor: "#e2e8f0", borderRadius: 12,

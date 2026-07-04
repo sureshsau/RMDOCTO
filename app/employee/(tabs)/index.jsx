@@ -170,6 +170,20 @@ export default function EmployeeDashboard() {
             onPress={() => router.push("/medicine-store")}
           />
           <DashboardCard
+            icon="flask-outline"
+            label="Lab Tests"
+            color="#6b21a8"
+            onPress={() => router.push("/lab")}
+            delay={600}
+          />
+          <DashboardCard
+            icon="receipt-outline"
+            label="My Lab Orders"
+            color="#db2777"
+            onPress={() => router.push("/lab/my-orders")}
+            delay={700}
+          />
+          <DashboardCard
             icon="cube-outline"
             label="My Orders"
             color="#8b5cf6"

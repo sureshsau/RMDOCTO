@@ -20,7 +20,7 @@ import { useRouter } from "expo-router";
 import KycPersonalDetails from "../../components/shared/KycPersonalDetails";
 import KycBankDetails from "../../components/shared/KycBankDetails";
 
-export default function AgentKycScreen() {
+export default function EmployeeKycScreen() {
   const { user, login, updateUser, logout } = useAuth();
   const router = useRouter();
 
@@ -282,7 +282,7 @@ export default function AgentKycScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Agent KYC</Text>
+          <Text style={styles.title}>Employee KYC</Text>
           <Text style={styles.subtitle}>
             Please provide your details, a live picture of yourself and a valid ID document (Aadhar/Voter/PAN).
           </Text>

@@ -32,102 +32,107 @@ export default function UserDashboard() {
 
       <ScrollView showsVerticalScrollIndicator={false}>
 
-{/* ================= HEADER ================= */}
+        {/* ================= HEADER ================= */}
 
-<View style={styles.header}>
-  <View style={styles.headerRow}>
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
 
-    {user?.profileImage ? (
-      <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-    ) : (
-      <View style={styles.avatarPlaceholder}>
-        <Ionicons name="person" size={26} color="#94A3B8" />
-      </View>
-    )}
+            {user?.profileImage ? (
+              <Image source={{ uri: user.profileImage }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Ionicons name="person" size={26} color="#94A3B8" />
+              </View>
+            )}
 
-    <View>
-      <Text style={styles.greeting}>Welcome Back 👋</Text>
-      <Text style={styles.name}>{user?.name || "User"}</Text>
-      <Text style={styles.date}>{formattedDate}</Text>
-    </View>
+            <View>
+              <Text style={styles.greeting}>Welcome Back 👋</Text>
+              <Text style={styles.name}>{user?.name || "User"}</Text>
+              <Text style={styles.date}>{formattedDate}</Text>
+            </View>
 
-  </View>
-</View>
+          </View>
+        </View>
 
-{/* ================= APPOINTMENT SECTION ================= */}
+        {/* ================= APPOINTMENT SECTION ================= */}
 
-<View style={styles.appointmentCard}>
+        <View style={styles.appointmentCard}>
 
-  <Ionicons name="calendar-outline" size={34} color="#94a3b8" />
+          <Ionicons name="calendar-outline" size={34} color="#94a3b8" />
 
-  <Text style={styles.appointmentTitle}>
-    No Upcoming Appointments
-  </Text>
+          <Text style={styles.appointmentTitle}>
+            No Upcoming Appointments
+          </Text>
 
-  <Text style={styles.appointmentSub}>
-    Book an appointment with a doctor
-  </Text>
+          <Text style={styles.appointmentSub}>
+            Book an appointment with a doctor
+          </Text>
 
-  <TouchableOpacity
-    style={styles.bookBtn}
-    
-  >
-    <Text style={styles.bookBtnText}>
-      Book Appointment
-    </Text>
-  </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.bookBtn}
 
-</View>
+          >
+            <Text style={styles.bookBtnText}>
+              Book Appointment
+            </Text>
+          </TouchableOpacity>
 
-{/* ================= DASHBOARD GRID ================= */}
+        </View>
 
-<View style={styles.grid}>
+        {/* ================= DASHBOARD GRID ================= */}
 
-  <DashboardCard
-    icon="medkit-outline"
-    label="Book Doctor"
-    onPress={() => router.push("/doctor-booking")}
-  />
+        <View style={styles.grid}>
 
-  <DashboardCard
-    icon="calendar-outline"
-    label="My Appointments"
-    onPress={() => router.push("/doctor-booking/my-appointments")}
-  />
+          <DashboardCard
+            icon="medkit-outline"
+            label="Book Doctor"
+            onPress={() => router.push("/doctor-booking")}
+          />
 
-  <DashboardCard
-    icon="storefront-outline"
-    label="Medicine Store"
-    onPress={() => router.push("/medicine-store")}
-  />
+          <DashboardCard
+            icon="calendar-outline"
+            label="My Appointments"
+            onPress={() => router.push("/doctor-booking/my-appointments")}
+          />
 
-  <DashboardCard
-    icon="cube-outline"
-    label="My Orders"
-    onPress={() => router.push("/mymedicineorder")}
-  />
+          <DashboardCard
+            icon="storefront-outline"
+            label="Medicine Store"
+            onPress={() => router.push("/medicine-store")}
+          />
 
-  <DashboardCard
-    icon="flask-outline"
-    label="Lab Tests"
-    onPress={() => router.push("/lab")}
-  />
+          <DashboardCard
+            icon="cube-outline"
+            label="My Orders"
+            onPress={() => router.push("/mymedicineorder")}
+          />
 
-  <DashboardCard
-    icon="wallet-outline"
-    label="RM Coins"
-    onPress={() => router.push("/rmcoin")}
-  />
+          <DashboardCard
+            icon="flask-outline"
+            label="Lab Tests"
+            onPress={() => router.push("/lab")}
+          />
+          <DashboardCard
+            icon="receipt-outline"
+            label="My Lab Orders"
+            onPress={() => router.push("/lab/my-orders")}
+          />
 
-  <DashboardCard
-    icon="person-circle-outline"
-    label="My Profile"
-    onPress={() => router.push("/root/profile")}
-  />
+          <DashboardCard
+            icon="wallet-outline"
+            label="RM Coins"
+            onPress={() => router.push("/rmcoin")}
+          />
 
-</View>
+          <DashboardCard
+            icon="person-circle-outline"
+            label="My Profile"
+            onPress={() => router.push("/root/profile")}
+          />
 
-<View style={{ height: 40 }} />
+        </View>
+
+        <View style={{ height: 40 }} />
 
       </ScrollView>
     </View>
@@ -156,135 +161,135 @@ function DashboardCard({ icon, label, onPress }) {
 
 const styles = StyleSheet.create({
 
-container: {
-  flex: 1,
-  backgroundColor: BG,
-},
+  container: {
+    flex: 1,
+    backgroundColor: BG,
+  },
 
-/* HEADER */
+  /* HEADER */
 
-header: {
-  backgroundColor: PRIMARY,
-  padding: 20,
-  borderBottomLeftRadius: 26,
-  borderBottomRightRadius: 26,
-  paddingTop: 50,
-},
+  header: {
+    backgroundColor: PRIMARY,
+    padding: 20,
+    borderBottomLeftRadius: 26,
+    borderBottomRightRadius: 26,
+    paddingTop: 50,
+  },
 
-headerRow: {
-  flexDirection: "row",
-  alignItems: "center",
-  gap: 14,
-},
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
 
-avatar: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-},
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+  },
 
-avatarPlaceholder: {
-  width: 60,
-  height: 60,
-  borderRadius: 30,
-  backgroundColor: "#F1F5F9",
-  justifyContent: "center",
-  alignItems: "center",
-},
+  avatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "#F1F5F9",
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
-greeting: {
-  fontSize: 12,
-  color: "#ccfbf1",
-},
+  greeting: {
+    fontSize: 12,
+    color: "#ccfbf1",
+  },
 
-name: {
-  fontSize: 18,
-  fontWeight: "800",
-  color: "#fff",
-},
+  name: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#fff",
+  },
 
-date: {
-  fontSize: 11,
-  color: "#ccfbf1",
-  marginTop: 2,
-},
+  date: {
+    fontSize: 11,
+    color: "#ccfbf1",
+    marginTop: 2,
+  },
 
-/* APPOINTMENT */
+  /* APPOINTMENT */
 
-appointmentCard: {
-  backgroundColor: "#ffffff",
-  marginHorizontal: 20,
-  marginTop: 20,
-  padding: 20,
-  borderRadius: 20,
-  alignItems: "center",
-  borderWidth: 1,
-  borderStyle: "dashed",
-  borderColor: "#cbd5e1",
-},
+  appointmentCard: {
+    backgroundColor: "#ffffff",
+    marginHorizontal: 20,
+    marginTop: 20,
+    padding: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    borderWidth: 1,
+    borderStyle: "dashed",
+    borderColor: "#cbd5e1",
+  },
 
-appointmentTitle: {
-  marginTop: 10,
-  fontSize: 14,
-  fontWeight: "700",
-  color: "#0f172a",
-},
+  appointmentTitle: {
+    marginTop: 10,
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
 
-appointmentSub: {
-  fontSize: 11,
-  color: "#64748b",
-  marginTop: 4,
-},
+  appointmentSub: {
+    fontSize: 11,
+    color: "#64748b",
+    marginTop: 4,
+  },
 
-bookBtn: {
-  backgroundColor: PRIMARY,
-  paddingHorizontal: 18,
-  paddingVertical: 8,
-  borderRadius: 12,
-  marginTop: 12,
-},
+  bookBtn: {
+    backgroundColor: PRIMARY,
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginTop: 12,
+  },
 
-bookBtnText: {
-  color: "#fff",
-  fontWeight: "700",
-  fontSize: 12,
-},
+  bookBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
+  },
 
-/* GRID */
+  /* GRID */
 
-grid: {
-  flexDirection: "row",
-  flexWrap: "wrap",
-  justifyContent: "space-between",
-  padding: 20,
-  marginTop: 10,
-},
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 20,
+    marginTop: 10,
+  },
 
-card: {
-  width: "48%",
-  backgroundColor: "#ffffff",
-  borderRadius: 18,
-  padding: 20,
-  alignItems: "center",
-  marginBottom: 14,
-  elevation: 3,
-},
+  card: {
+    width: "48%",
+    backgroundColor: "#ffffff",
+    borderRadius: 18,
+    padding: 20,
+    alignItems: "center",
+    marginBottom: 14,
+    elevation: 3,
+  },
 
-iconBox: {
-  width: 50,
-  height: 50,
-  borderRadius: 14,
-  backgroundColor: "#ecfeff",
-  justifyContent: "center",
-  alignItems: "center",
-  marginBottom: 10,
-},
+  iconBox: {
+    width: 50,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: "#ecfeff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
 
-cardLabel: {
-  fontSize: 13,
-  fontWeight: "600",
-  color: "#334155",
-  textAlign: "center",
-},
+  cardLabel: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#334155",
+    textAlign: "center",
+  },
 
 });

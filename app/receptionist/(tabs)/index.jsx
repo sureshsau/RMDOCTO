@@ -75,6 +75,16 @@ export default function ReceptionistDashboard() {
               label="Medicine Store"
               onPress={() => router.push("/medicine-store")}
             />
+            <DashboardCard
+              icon="flask-outline"
+              label="Lab Tests"
+              onPress={() => router.push("/lab")}
+            />
+            <DashboardCard
+              icon="receipt-outline"
+              label="My Lab Orders"
+              onPress={() => router.push("/lab/my-orders")}
+            />
 
             <DashboardCard
               icon="people-outline"

@@ -135,6 +135,18 @@ export default function DoctorDashboard() {
   />
 
   <DashboardCard
+    icon="flask-outline"
+    label="Lab Tests"
+    onPress={() => router.push("/lab")}
+  />
+
+  <DashboardCard
+    icon="receipt-outline"
+    label="My Lab Orders"
+    onPress={() => router.push("/lab/my-orders")}
+  />
+
+  <DashboardCard
     icon="scan-outline"
     label="Check-In"
     onPress={() => router.push("/doctor/face-verification")}

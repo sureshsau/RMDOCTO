@@ -16,42 +16,42 @@ import Toast from "react-native-toast-message";
 import api from "../../services/axios";
 
 const PURPLE = "#6b6dbf";
-const TEAL   = "#14b8a6";
-const BG     = "#f8fafc";
-const CARD   = "#ffffff";
+const TEAL = "#14b8a6";
+const BG = "#f8fafc";
+const CARD = "#ffffff";
 const TEXT_D = "#0f172a";
 const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
-const GREEN  = "#10b981";
-const RED    = "#ef4444";
-const AMBER  = "#f59e0b";
-const BLUE   = "#3b82f6";
+const GREEN = "#10b981";
+const RED = "#ef4444";
+const AMBER = "#f59e0b";
+const BLUE = "#3b82f6";
 
 const STATUS_CFG = {
-  INITIATED:        { color: TEXT_S, bg: "#f8fafc",  label: "Initiated"       },
-  CONFIRMED:        { color: BLUE,   bg: "#eff6ff",  label: "Confirmed"       },
-  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe",  label: "Sample Collected"},
-  REPORT_PENDING:   { color: AMBER,  bg: "#fffbeb",  label: "Report Pending"  },
-  REPORT_READY:     { color: GREEN,  bg: "#f0fdf4",  label: "Report Ready"    },
-  COMPLETED:        { color: GREEN,  bg: "#dcfce7",  label: "Completed"       },
-  CANCELLED:        { color: RED,    bg: "#fef2f2",  label: "Cancelled"       },
+  INITIATED: { color: TEXT_S, bg: "#f8fafc", label: "Initiated" },
+  CONFIRMED: { color: BLUE, bg: "#eff6ff", label: "Confirmed" },
+  SAMPLE_COLLECTED: { color: PURPLE, bg: "#ede9fe", label: "Sample Collected" },
+  REPORT_PENDING: { color: AMBER, bg: "#fffbeb", label: "Report Pending" },
+  REPORT_READY: { color: GREEN, bg: "#f0fdf4", label: "Report Ready" },
+  COMPLETED: { color: GREEN, bg: "#dcfce7", label: "Completed" },
+  CANCELLED: { color: RED, bg: "#fef2f2", label: "Cancelled" },
 };
 
 const fmtMoney = (v) => `₹${(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
-const fmtDate  = (d) =>
+const fmtDate = (d) =>
   d
     ? new Date(d).toLocaleString("en-IN", {
-        day: "2-digit", month: "short", year: "numeric",
-        hour: "2-digit", minute: "2-digit",
-      })
+      day: "2-digit", month: "short", year: "numeric",
+      hour: "2-digit", minute: "2-digit",
+    })
     : "—";
 
 export default function UserOrderDetail() {
   const { orderId } = useLocalSearchParams();
-  const [order,      setOrder]      = useState(null);
-  const [loading,    setLoading]    = useState(true);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [uploading,  setUploading]  = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const fetchOrder = useCallback(async (isRefresh = false) => {
     try {
@@ -96,7 +96,7 @@ export default function UserOrderDetail() {
   };
 
   if (loading) return <View style={styles.loader}><ActivityIndicator size="large" color={PURPLE} /></View>;
-  if (!order)  return null;
+  if (!order) return null;
 
   const sCfg = STATUS_CFG[order.orderStatus] || STATUS_CFG.INITIATED;
 
@@ -122,7 +122,7 @@ export default function UserOrderDetail() {
       {order.lab && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Lab</Text>
-          <Row icon="business-outline"  label={order.lab.name ?? "—"} bold />
+          <Row icon="business-outline" label={order.lab.name ?? "—"} bold />
           {order.lab.address?.city ? <Row icon="location-outline" label={order.lab.address.city} /> : null}
           {order.lab.phone ? <Row icon="call-outline" label={order.lab.phone} /> : null}
           <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
@@ -137,10 +137,10 @@ export default function UserOrderDetail() {
       {order.collectionAddress && (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Collection Details</Text>
-          <Row icon="person-outline"   label={order.collectionAddress?.fullName ?? "—"} />
-          <Row icon="call-outline"     label={order.collectionAddress?.phone    ?? "—"} />
+          <Row icon="person-outline" label={order.collectionAddress?.fullName ?? "—"} />
+          <Row icon="call-outline" label={order.collectionAddress?.phone ?? "—"} />
           <Row icon="location-outline" label={order.collectionAddress?.addressLine1 ?? "—"} />
-          <Row icon="time-outline"     label={`Scheduled: ${fmtDate(order.scheduledAt)}`} />
+          <Row icon="time-outline" label={`Scheduled: ${fmtDate(order.scheduledAt)}`} />
         </View>
       )}
 
@@ -175,8 +175,8 @@ export default function UserOrderDetail() {
       {/* Payment */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Payment</Text>
-        <PriceRow label="Subtotal"   value={fmtMoney(order.pricing?.subtotal)} />
-        <PriceRow label="GST"        value={fmtMoney(order.pricing?.gstTotal)} />
+        <PriceRow label="Subtotal" value={fmtMoney(order.pricing?.subtotal)} />
+        <PriceRow label="GST" value={fmtMoney(order.pricing?.gstTotal)} />
         <PriceRow label="Collection" value={fmtMoney(order.pricing?.homeCollectionCharge)} />
         <View style={styles.divider} />
         <PriceRow label="Total" value={fmtMoney(order.pricing?.payableAmount)} bold />
@@ -224,7 +224,7 @@ export default function UserOrderDetail() {
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Collection Agent</Text>
           <Row icon="person-circle-outline" label={order.collectionAgent.name} bold />
-          <Row icon="call-outline"          label={order.collectionAgent.phone} />
+          <Row icon="call-outline" label={order.collectionAgent.phone} />
         </View>
       )}
 
@@ -254,17 +254,17 @@ function PriceRow({ label, value, bold }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
-  loader:    { flex: 1, alignItems: "center", justifyContent: "center" },
+  loader: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   heroCard: {
     backgroundColor: CARD, margin: 16, padding: 20, borderRadius: 20,
     elevation: 3, flexDirection: "row", justifyContent: "space-between", alignItems: "center",
     shadowColor: "#000", shadowOpacity: 0.06, shadowOffset: { width: 0, height: 2 }, shadowRadius: 8,
   },
-  orderId:    { fontSize: 18, fontWeight: "900", color: TEXT_D },
-  heroDate:   { fontSize: 12, color: TEXT_S, marginTop: 3 },
+  orderId: { fontSize: 18, fontWeight: "900", color: TEXT_D },
+  heroDate: { fontSize: 12, color: TEXT_S, marginTop: 3 },
   statusPill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 999 },
-  statusTxt:  { fontWeight: "800", fontSize: 13 },
+  statusTxt: { fontWeight: "800", fontSize: 13 },
 
   card: {
     backgroundColor: CARD, marginHorizontal: 16, marginBottom: 14,
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     shadowColor: "#000", shadowOpacity: 0.04, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
   },
   cardTitle: { fontSize: 14, fontWeight: "800", color: TEXT_D, marginBottom: 12 },
-  divider:   { height: 1, backgroundColor: "#f1f5f9", marginVertical: 8 },
+  divider: { height: 1, backgroundColor: "#f1f5f9", marginVertical: 8 },
   metaSmall: { fontSize: 11, color: TEXT_S, marginTop: 4 },
   emptyNote: { fontSize: 13, color: TEXT_S, fontStyle: "italic" },
 
@@ -280,14 +280,14 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "flex-start",
     backgroundColor: "#f8fafc", borderRadius: 12, padding: 10, marginBottom: 8,
   },
-  testName:  { fontSize: 13, fontWeight: "700", color: TEXT_D },
-  testMeta:  { fontSize: 11, color: TEXT_S, marginTop: 2 },
+  testName: { fontSize: 13, fontWeight: "700", color: TEXT_D },
+  testMeta: { fontSize: 11, color: TEXT_S, marginTop: 2 },
   testTotal: { fontSize: 14, fontWeight: "800", color: PURPLE, marginLeft: 8 },
 
-  payBadge:    { backgroundColor: "#f1f5f9", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  payBadge: { backgroundColor: "#f1f5f9", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   payBadgeTxt: { fontSize: 12, fontWeight: "700", color: TEXT_M },
 
-  collBadge:    { backgroundColor: "#ede9fe", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  collBadge: { backgroundColor: "#ede9fe", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   collBadgeTxt: { fontSize: 12, fontWeight: "700", color: PURPLE },
 
   actionBtn: {
