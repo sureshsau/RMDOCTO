@@ -16,7 +16,7 @@ export default function UserRootLayout() {
         },
         headerShadowVisible: false,
         headerBackTitleVisible: false,
-        headerShown:false
+        headerShown: false
       }}
     >
 

@@ -8,7 +8,7 @@ import {
   Text,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "../../services/axios";
 
 const PURPLE = "#6b6dbf";
@@ -27,6 +27,7 @@ const STATUS_COLORS = {
 };
 
 export default function MyAppointments() {
+  const insets = useSafeAreaInsets();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -51,8 +52,8 @@ export default function MyAppointments() {
   }, [fetchAppointments]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      <View style={styles.header}>
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
         <Text style={styles.headerTitle}>My Appointments</Text>
       </View>
 
@@ -77,7 +78,7 @@ export default function MyAppointments() {
           renderItem={({ item }) => <AppointmentCard appointment={item} />}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -111,13 +112,13 @@ function AppointmentCard({ appointment }) {
 
       <View style={styles.patientRow}>
         <Text style={styles.patientName}>{appointment.patientName}</Text>
-        <Text style={styles.fee}>₹{appointment.consultationFee}</Text>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1, backgroundColor: BG },
   header: { padding: 20, backgroundColor: CARD, borderBottomWidth: 1, borderBottomColor: "#e2e8f0" },
   headerTitle: { fontSize: 20, fontWeight: "900", color: TEXT_D },

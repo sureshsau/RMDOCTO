@@ -50,7 +50,7 @@ export default function Layout() {
       <Stack.Screen
         name="login"
         options={{
-          title: "Login",
+          headerShown: false,
         }}
       />
     </Stack>

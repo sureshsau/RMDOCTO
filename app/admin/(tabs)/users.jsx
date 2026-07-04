@@ -115,9 +115,22 @@ export default function Employees() {
   const [transferModal, setTransferModal] = useState(false);
   const [transferAmount, setTransferAmount] = useState("");
   const [transferLoading, setTransferLoading] = useState(false);
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
+  const [specModalVisible, setSpecModalVisible] = useState(false);
+  const [assigningRole, setAssigningRole] = useState(false);
   
   const [kycModalVisible, setKycModalVisible] = useState(false);
   const [kycLoading, setKycLoading] = useState(false);
+
+  const DOCTOR_CATEGORIES = [
+    "Allergy & Immunology", "Cardiologist", "Dermatologist", "Dentist", 
+    "Dietitian & Nutritionist", "Endocrinologist", "ENT Specialist", 
+    "Fertility Specialist", "Gastroenterologist", "General Physician", 
+    "Gynecologist", "Hematologist", "Nephrologist", "Neurologist", 
+    "Oncologist", "Ophthalmologist (Eye Specialist)", "Orthopedic", 
+    "Pediatrician", "Physiotherapist", "Psychiatrist", "Psychologist", 
+    "Pulmonologist", "Rheumatologist", "Urologist"
+  ];
 
 
 
@@ -130,8 +143,36 @@ export default function Employees() {
     setSelectedUser(null);
     setActionsModalVisible(false);
   };
+  const handleAssignRole = async (roleKey, spec = null) => {
+    try {
+      setAssigningRole(true);
+      const res = await api.post("/role-assignments/assign", {
+        userId: selectedUser._id,
+        roles: [roleKey],
+        ...(spec && { specialization: spec }),
+      });
+      if (res.data.success) {
+        Toast.show({ type: "success", text1: "Role assigned successfully!" });
+        setRoleModalVisible(false);
+        setSpecModalVisible(false);
+        loadUsers();
+      }
+    } catch (e) {
+      console.log(e);
+      Toast.show({ type: "error", text1: e.response?.data?.message || "Failed to assign role" });
+    } finally {
+      setAssigningRole(false);
+    }
+  };
+
   const handleAction = (action) => {
     if (!selectedUser) return;
+
+    if (action.id === "give-role") {
+      setRoleModalVisible(true);
+      setActionsModalVisible(false);
+      return;
+    }
 
     // ✅ VIEW ORDERS
     if (action.id === "view-orders") {
@@ -364,6 +405,82 @@ export default function Employees() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* ROLE MODAL */}
+      <Modal visible={roleModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Assign Role</Text>
+              <TouchableOpacity onPress={() => setRoleModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ marginTop: 10 }}>
+              {["admin", "subadmin", "agent", "marketing_agent", "rmrider", "receptionist", "employee", "doctor"].map((roleKey) => (
+                <TouchableOpacity
+                  key={roleKey}
+                  style={{
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderColor: "#e2e8f0",
+                    flexDirection: "row",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
+                  onPress={() => {
+                    if (roleKey === "doctor") {
+                      setRoleModalVisible(false);
+                      setSpecModalVisible(true);
+                    } else {
+                      handleAssignRole(roleKey);
+                    }
+                  }}
+                  disabled={assigningRole}
+                >
+                  <Text style={{ fontSize: 16, color: "#0f172a", textTransform: "capitalize", fontWeight: "600" }}>
+                    {roleKey.replace("_", " ")}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color="#94a3b8" />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* SPECIALIZATION MODAL */}
+      <Modal visible={specModalVisible} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Select Category</Text>
+              <TouchableOpacity onPress={() => setSpecModalVisible(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ marginTop: 10 }}>
+              {DOCTOR_CATEGORIES.map((cat, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  style={{
+                    padding: 16,
+                    borderBottomWidth: 1,
+                    borderColor: "#e2e8f0",
+                  }}
+                  onPress={() => handleAssignRole("doctor", cat)}
+                  disabled={assigningRole}
+                >
+                  <Text style={{ fontSize: 16, color: "#0f172a", fontWeight: "500" }}>
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       <Modal visible={transferModal} transparent animationType="fade">
         <TouchableWithoutFeedback onPress={() => setTransferModal(false)}>
           <View style={styles.actionsOverlay}>
@@ -855,4 +972,9 @@ const styles = StyleSheet.create({
   },
   actionText: { fontSize: 16 },
   actionCancel: { borderBottomWidth: 0, marginTop: 8 },
+
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
+  modalContent: { width: '85%', backgroundColor: '#fff', borderRadius: 20, padding: 20 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#0f172a' },
 });

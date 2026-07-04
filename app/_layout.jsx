@@ -19,9 +19,9 @@ export default function RootLayout() {
   if (pathname?.startsWith("/admin")) bottomColor = "#6b6dbf";
   else if (pathname?.startsWith("/receptionist")) bottomColor = "#1BA6A6";
   else if (
-    pathname?.startsWith("/agent") || 
-    pathname?.startsWith("/doctor") || 
-    pathname?.startsWith("/employee") || 
+    pathname?.startsWith("/agent/") || 
+    pathname?.startsWith("/doctor/") || 
+    pathname?.startsWith("/employee/") || 
     pathname?.startsWith("/marketing_agent") || 
     pathname?.startsWith("/rmrider")
   ) {

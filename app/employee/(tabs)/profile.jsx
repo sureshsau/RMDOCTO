@@ -67,11 +67,20 @@ export default function Profile() {
 
           <ProfileNameEditor user={user} onNameUpdated={(newName) => updateUser({ name: newName })} />
 
-          <View style={styles.roleBadge}>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <View style={[styles.roleBadge, { marginTop: 0 }]}>
             <Text style={styles.roleText}>
               {user?.roles?.[0]?.toUpperCase() ||
                 "EMPLOYEE"}
             </Text>
+          </View>
+            {user?.kycStatus === "verified" && (
+              <View style={[styles.roleBadge, { marginTop: 0, backgroundColor: "#dcfce7" }]}>
+                <Text style={[styles.roleText, { color: "#166534" }]}>
+                  <Ionicons name="checkmark-circle" size={12} color="#166534" /> KYC VERIFIED
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

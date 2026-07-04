@@ -142,8 +142,19 @@ export default function DoctorBookingDetail() {
   const profile = doctor.profiles?.doctorId;
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ScrollView style={styles.safe} contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={TEXT_D} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Book Appointment</Text>
+          <View style={{ width: 24 }} />
+        </View>
+
+        <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         
         {/* Doctor Header */}
         <View style={styles.docHeader}>
@@ -158,7 +169,6 @@ export default function DoctorBookingDetail() {
             <Text style={styles.docName}>{doctor.name}</Text>
             <Text style={styles.docSpec}>{profile?.specialization || "General Physician"}</Text>
             {profile?.qualification ? <Text style={styles.docQual}>{profile.qualification}</Text> : null}
-            <Text style={styles.docFee}>Consultation Fee: ₹{profile?.consultationFee || 0}</Text>
           </View>
         </View>
 
@@ -222,6 +232,7 @@ export default function DoctorBookingDetail() {
 
       </ScrollView>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -243,6 +254,13 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
   errTxt: { color: "#ef4444", fontSize: 16 },
+
+  header: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 20, paddingVertical: 16, backgroundColor: BG,
+  },
+  headerTitle: { fontSize: 18, fontWeight: "800", color: TEXT_D },
+  backBtn: { padding: 4 },
 
   docHeader: {
     flexDirection: "row", alignItems: "center", gap: 16,

@@ -11,9 +11,9 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ProfileNameEditor from "../../components/shared/ProfileNameEditor";
-import ProfileAvatarUploader from "../../components/shared/ProfileAvatarUploader";
-import { useAuth } from "../../context/AuthContext";
+import ProfileNameEditor from "../../../components/shared/ProfileNameEditor";
+import ProfileAvatarUploader from "../../../components/shared/ProfileAvatarUploader";
+import { useAuth } from "../../../context/AuthContext";
 
 const PRIMARY = "#1BA6A6";
 
@@ -61,18 +61,27 @@ export default function Profile() {
       >
         {/* ================= HEADER CARD ================= */}
         <View style={styles.headerCard}>
-          <ProfileAvatarUploader 
-            user={user} 
-            onUploadSuccess={(newUrl) => updateUser({ profileImage: newUrl })} 
+          <ProfileAvatarUploader
+            user={user}
+            onUploadSuccess={(newUrl) => updateUser({ profileImage: newUrl })}
           />
 
           <ProfileNameEditor user={user} onNameUpdated={(newName) => updateUser({ name: newName })} />
 
-          <View style={styles.roleBadge}>
-            <Text style={styles.roleText}>
-              {user?.roles?.[0]?.toUpperCase() ||
-                "USER"}
-            </Text>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 8, flexWrap: "wrap", justifyContent: "center" }}>
+            <View style={[styles.roleBadge, { marginTop: 0 }]}>
+              <Text style={styles.roleText}>
+                {user?.roles?.[0]?.toUpperCase() ||
+                  "USER"}
+              </Text>
+            </View>
+            {user?.kycStatus === "verified" && (
+              <View style={[styles.roleBadge, { marginTop: 0, backgroundColor: "#dcfce7" }]}>
+                <Text style={[styles.roleText, { color: "#166534" }]}>
+                  <Ionicons name="checkmark-circle" size={12} color="#166534" /> KYC VERIFIED
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

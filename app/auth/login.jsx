@@ -11,6 +11,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  KeyboardAvoidingView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
@@ -160,214 +161,266 @@ export default function LoginScreen() {
   /* ================= UI ================= */
 
   return (
-    <ImageBackground
-      source={{
-        uri: "https://i.pinimg.com/1200x/5d/74/2f/5d742f39c9a8e5be99d622e98c00de72.jpg",
-      }}
-      resizeMode="cover"
-      style={styles.container}
-    >
+    <View style={styles.container}>
+      <View style={styles.topBackground}>
+         {/* Decorative circles for modern look */}
+         <View style={styles.circle1} />
+         <View style={styles.circle2} />
+      </View>
+
       <SafeAreaView style={styles.safe}>
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={styles.scroll}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1 }}
         >
-          <View style={styles.card}>
-            <Text style={styles.logo}>
-              Health<Text style={{ color: PRIMARY }}>Care</Text>
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Login with OTP
-            </Text>
-
-            {/* PHONE INPUT */}
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="call-outline"
-                size={22}
-                color={ICON}
-              />
-              <TextInput
-                placeholder="Mobile Number"
-                keyboardType="phone-pad"
-                placeholderTextColor={PLACEHOLDER}
-                style={styles.input}
-                value={phone}
-                editable={!otpSent}
-                onChangeText={(text) =>
-                  setPhone(sanitizePhone(text))
-                }
-              />
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={styles.scroll}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.headerContainer}>
+              <Text style={styles.logo}>
+                RM<Text style={{ color: "#fff", fontWeight: "300" }}>DOCTO</Text>
+              </Text>
+              <Text style={styles.tagline}>Your Health, Our Priority</Text>
             </View>
 
-            {/* OTP INPUT */}
-            {otpSent && (
-              <View style={styles.inputWrapper}>
-                <Ionicons
-                  name="key-outline"
-                  size={22}
-                  color={ICON}
-                />
+            <View style={styles.card}>
+              <Text style={styles.welcomeText}>Welcome Back!</Text>
+              <Text style={styles.subtitle}>
+                {otpSent ? "Enter the verification code sent to your number" : "Login or create a new account with your mobile number"}
+              </Text>
+
+              {/* PHONE INPUT */}
+              <View style={[styles.inputWrapper, otpSent && { opacity: 0.6 }]}>
+                <Ionicons name="call-outline" size={20} color="#64748b" />
+                <View style={styles.prefixContainer}>
+                  <Text style={styles.prefixText}>+91</Text>
+                </View>
                 <TextInput
-                  placeholder="Enter OTP"
-                  keyboardType="number-pad"
-                  placeholderTextColor={PLACEHOLDER}
+                  placeholder="Mobile Number"
+                  keyboardType="phone-pad"
+                  placeholderTextColor="#94a3b8"
                   style={styles.input}
-                  value={otp}
-                  onChangeText={(text) =>
-                    setOtp(
-                      text.replace(/\D/g, "").slice(0, 6)
-                    )
-                  }
+                  value={phone}
+                  editable={!otpSent}
+                  onChangeText={(text) => setPhone(sanitizePhone(text))}
+                  maxLength={10}
                 />
               </View>
-            )}
 
-            {/* TIMER + ACTIONS */}
-            {otpSent && (
-              <View style={styles.otpActions}>
-                {timer > 0 ? (
-                  <Text style={styles.timerText}>
-                    Resend OTP in {timer}s
-                  </Text>
-                ) : (
-                  <TouchableOpacity
-                    onPress={handleSendOtp}
-                  >
-                    <Text style={styles.resendText}>
-                      Resend OTP
-                    </Text>
-                  </TouchableOpacity>
-                )}
-
-                <TouchableOpacity
-                  onPress={() => {
-                    setOtpSent(false);
-                    setOtp("");
-                    setTimer(0);
-                  }}
-                >
-                  <Text style={styles.changeNumberText}>
-                    Change Number
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* BUTTON */}
-            <TouchableOpacity
-              style={[
-                styles.button,
-                loading && { opacity: 0.7 },
-              ]}
-              onPress={
-                otpSent
-                  ? handleVerifyOtp
-                  : handleSendOtp
-              }
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonText}>
-                  {otpSent
-                    ? "Verify OTP"
-                    : "Send OTP"}
-                </Text>
+              {/* OTP INPUT */}
+              {otpSent && (
+                <View style={styles.inputWrapper}>
+                  <Ionicons name="keypad-outline" size={20} color="#64748b" />
+                  <TextInput
+                    placeholder="Enter 6-digit OTP"
+                    keyboardType="number-pad"
+                    placeholderTextColor="#94a3b8"
+                    style={[styles.input, { paddingLeft: 12 }]}
+                    value={otp}
+                    onChangeText={(text) => setOtp(text.replace(/\D/g, "").slice(0, 6))}
+                    maxLength={6}
+                    autoFocus
+                  />
+                </View>
               )}
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
+
+              {/* BUTTON */}
+              <TouchableOpacity
+                style={[
+                  styles.button,
+                  (loading || (otpSent ? otp.length !== 6 : phone.length !== 10)) && { opacity: 0.7 }
+                ]}
+                onPress={otpSent ? handleVerifyOtp : handleSendOtp}
+                disabled={loading || (otpSent ? otp.length !== 6 : phone.length !== 10)}
+                activeOpacity={0.8}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>
+                    {otpSent ? "Verify OTP" : "Continue"}
+                  </Text>
+                )}
+              </TouchableOpacity>
+
+              {/* TIMER + ACTIONS */}
+              {otpSent && (
+                <View style={styles.otpActions}>
+                  {timer > 0 ? (
+                    <Text style={styles.timerText}>
+                      Resend code in <Text style={{ fontWeight: "700", color: PRIMARY }}>00:{timer < 10 ? `0${timer}` : timer}</Text>
+                    </Text>
+                  ) : (
+                    <TouchableOpacity onPress={handleSendOtp}>
+                      <Text style={styles.resendText}>Resend OTP</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <TouchableOpacity
+                    style={{ marginTop: 16 }}
+                    onPress={() => {
+                      setOtpSent(false);
+                      setOtp("");
+                      setTimer(0);
+                    }}
+                  >
+                    <Text style={styles.changeNumberText}>Change Mobile Number</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
-    </ImageBackground>
+    </View>
   );
 }
 
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#F8FAFC" },
+  topBackground: {
+    position: "absolute",
+    top: 0,
+    width: "100%",
+    height: "45%",
+    backgroundColor: PRIMARY,
+    borderBottomLeftRadius: 60,
+    borderBottomRightRadius: 60,
+    overflow: "hidden",
+  },
+  circle1: {
+    position: "absolute",
+    top: -50,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(255,255,255,0.15)",
+  },
+  circle2: {
+    position: "absolute",
+    top: 100,
+    left: -40,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "rgba(255,255,255,0.1)",
+  },
   safe: { flex: 1 },
   scroll: {
     flexGrow: 1,
-    justifyContent: "center",
     paddingHorizontal: 24,
+    paddingTop: 40,
+    paddingBottom: 40,
+    justifyContent: "center",
   },
-
+  headerContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  logo: {
+    fontSize: 46,
+    fontWeight: "900",
+    color: "#ffffff",
+    letterSpacing: 1,
+  },
+  tagline: {
+    fontSize: 15,
+    color: "rgba(255,255,255,0.9)",
+    marginTop: 8,
+    fontWeight: "500",
+  },
   card: {
+    backgroundColor: "#ffffff",
     borderRadius: 24,
     padding: 32,
+    shadowColor: "#0f172a",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 8,
   },
-
-  logo: {
-    fontSize: 34,
-    fontWeight: "700",
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#0f172a",
+    marginBottom: 8,
     textAlign: "center",
-    color: "#fff",
   },
-
   subtitle: {
+    fontSize: 14,
+    color: "#64748b",
     textAlign: "center",
-    marginTop: 12,
     marginBottom: 32,
-    fontSize: 16,
-    color: "rgba(255,255,255,0.85)",
+    lineHeight: 20,
   },
-
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
+    backgroundColor: "#F1F5F9",
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 20,
-    backgroundColor: INPUT_BG,
-    borderWidth: 1.5,
-    borderColor: PRIMARY,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
   },
-
+  prefixContainer: {
+    marginLeft: 12,
+    paddingRight: 12,
+    borderRightWidth: 1,
+    borderRightColor: "#CBD5E1",
+  },
+  prefixText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#334155",
+  },
   input: {
     flex: 1,
-    paddingVertical: 16,
+    paddingVertical: 18,
     paddingHorizontal: 12,
     fontSize: 16,
-    color: "#fff",
-  },
-
-  otpActions: {
-    alignItems: "center",
-    marginBottom: 20,
-  },
-
-  timerText: {
-    color: "#fff",
-    fontSize: 14,
-  },
-
-  resendText: {
-    color: PRIMARY,
-    fontSize: 14,
+    color: "#0f172a",
     fontWeight: "600",
   },
-
-  changeNumberText: {
-    color: "#fff",
-    marginTop: 10,
-    fontSize: 13,
-    textDecorationLine: "underline",
-  },
-
   button: {
     backgroundColor: PRIMARY,
     paddingVertical: 18,
     borderRadius: 16,
     alignItems: "center",
+    marginTop: 10,
+    shadowColor: PRIMARY,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
   },
-
   buttonText: {
     color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    fontSize: 16,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+  },
+  otpActions: {
+    alignItems: "center",
+    marginTop: 24,
+  },
+  timerText: {
+    color: "#64748b",
+    fontSize: 14,
+  },
+  resendText: {
+    color: PRIMARY,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+  changeNumberText: {
+    color: "#94a3b8",
+    fontSize: 13,
+    textDecorationLine: "underline",
   },
 });

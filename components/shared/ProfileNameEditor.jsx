@@ -28,7 +28,7 @@ export default function ProfileNameEditor({ user, onNameUpdated }) {
 
     setLoading(true);
     try {
-      const res = await api.patch(`/user/${userId}/name`, { name: name.trim() });
+      const res = await api.patch(`/user/${userId}/details`, { name: name.trim() });
       if (res.data?.success) {
         Toast.show({ type: "success", text1: "Name updated successfully!" });
         setShowEditor(false);

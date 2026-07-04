@@ -75,8 +75,13 @@ export default function OrderDetails() {
     router.push({
       pathname: "/rmrider/medicine/order/track",
       params: {
-        destLat: String(coords[1]),
-        destLng: String(coords[0])
+        orderId: order._id,
+        customerName: order.user?.name || "Customer",
+        customerPhone: order.user?.phone || "",
+        orderStatus: order.status,
+        deliveryAddress: `${order.deliveryAddress?.street || ''}, ${order.deliveryAddress?.city || ''}`,
+        deliveryLat: String(coords[1]),
+        deliveryLng: String(coords[0])
       }
     });
   }

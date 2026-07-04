@@ -179,9 +179,9 @@ function OrderCard({ order }) {
       )}
 
       <View style={styles.cardBottom}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 5 }}>
+        <View style={{ flex: 1, flexDirection: "row", alignItems: "center", gap: 5 }}>
           <Ionicons name="card-outline" size={12} color={TEXT_S} />
-          <Text style={styles.metaTxt}>{order.paymentMode}</Text>
+          <Text style={styles.metaTxt}>{order.paymentMode || "COD"}</Text>
         </View>
         <Text style={styles.amt}>{fmtMoney(order.payableAmount)}</Text>
         <Ionicons name="chevron-forward" size={16} color={TEXT_S} />

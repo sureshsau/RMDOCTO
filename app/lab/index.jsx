@@ -11,26 +11,27 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import api from "../../services/axios";
 
 const PURPLE = "#6b6dbf";
-const TEAL   = "#14b8a6";
-const BG     = "#f1f5f9";
-const CARD   = "#ffffff";
+const TEAL = "#14b8a6";
+const BG = "#f1f5f9";
+const CARD = "#ffffff";
 const TEXT_D = "#0f172a";
 const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
 
 export default function LabBrowse() {
-  const [labs,      setLabs]      = useState([]);
-  const [page,      setPage]      = useState(1);
-  const [total,     setTotal]     = useState(0);
-  const [search,    setSearch]    = useState("");
-  const [loading,   setLoading]   = useState(true);
-  const [more,      setMore]      = useState(false);
-  const [refreshing,setRefreshing]= useState(false);
-  const [error,     setError]     = useState(null);
+  const insets = useSafeAreaInsets();
+  const [labs, setLabs] = useState([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [more, setMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
   const LIMIT = 15;
 
@@ -57,13 +58,13 @@ export default function LabBrowse() {
   useEffect(() => { load(1); }, []);
 
   const onSearch = (txt) => { setSearch(txt); load(1, txt); };
-  const loadMore  = () => { if (more || labs.length >= total) return; load(page + 1); };
+  const loadMore = () => { if (more || labs.length >= total) return; load(page + 1); };
 
   return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+    <View style={styles.container}>
 
       {/* Hero */}
-      <View style={styles.hero}>
+      <View style={[styles.hero, { paddingTop: Math.max(insets.top, 16) }]}>
         <View style={styles.heroIcon}>
           <Ionicons name="flask" size={28} color="#fff" />
         </View>
@@ -128,7 +129,7 @@ export default function LabBrowse() {
           renderItem={({ item }) => <LabCard lab={item} />}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -168,6 +169,7 @@ function LabCard({ lab }) {
 }
 
 const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: BG },
   safe: { flex: 1, backgroundColor: BG },
 
   hero: {
@@ -179,7 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center",
   },
   heroTitle: { color: "#fff", fontSize: 18, fontWeight: "800" },
-  heroSub:   { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
+  heroSub: { color: "rgba(255,255,255,0.75)", fontSize: 12, marginTop: 2 },
   ordersBtn: {
     backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 8,
     alignItems: "center", gap: 4,
@@ -202,22 +204,22 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
   },
-  cardLeft:  { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  cardLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   labAvatar: {
     width: 48, height: 48, borderRadius: 14,
     backgroundColor: PURPLE + "18", alignItems: "center", justifyContent: "center",
   },
-  labName:    { fontSize: 15, fontWeight: "800", color: TEXT_D },
-  labBrand:   { fontSize: 12, color: TEXT_M, marginTop: 1 },
-  labCity:    { fontSize: 12, color: TEXT_S },
-  homeBadge:  { backgroundColor: "#d1fae5", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  labName: { fontSize: 15, fontWeight: "800", color: TEXT_D },
+  labBrand: { fontSize: 12, color: TEXT_M, marginTop: 1 },
+  labCity: { fontSize: 12, color: TEXT_S },
+  homeBadge: { backgroundColor: "#d1fae5", borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   homeBadgeTxt: { fontSize: 11, fontWeight: "700", color: "#065f46" },
 
-  center:     { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
-  centerTxt:  { color: TEXT_M, fontSize: 14 },
-  errTxt:     { color: "#ef4444", fontSize: 14, textAlign: "center" },
-  retryBtn:   { backgroundColor: PURPLE, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12 },
-  retryTxt:   { color: "#fff", fontWeight: "700" },
+  center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, padding: 32 },
+  centerTxt: { color: TEXT_M, fontSize: 14 },
+  errTxt: { color: "#ef4444", fontSize: 14, textAlign: "center" },
+  retryBtn: { backgroundColor: PURPLE, paddingHorizontal: 28, paddingVertical: 12, borderRadius: 12 },
+  retryTxt: { color: "#fff", fontWeight: "700" },
   emptyTitle: { fontSize: 16, fontWeight: "800", color: TEXT_D },
-  emptyTxt:   { fontSize: 13, color: TEXT_M, textAlign: "center" },
+  emptyTxt: { fontSize: 13, color: TEXT_M, textAlign: "center" },
 });

@@ -18,19 +18,19 @@ import api from "../../services/axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 const PURPLE = "#6b6dbf";
-const TEAL   = "#14b8a6";
-const BG     = "#f1f5f9";
-const CARD   = "#ffffff";
+const TEAL = "#14b8a6";
+const BG = "#f1f5f9";
+const CARD = "#ffffff";
 const TEXT_D = "#0f172a";
 const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
-const GREEN  = "#10b981";
+const GREEN = "#10b981";
 
 const PAYMENT_MODES = [
-  { key: "COD",       label: "Cash on Delivery", icon: "cash-outline"   },
-  { key: "ONLINE",    label: "Online (Razorpay)", icon: "card-outline"   },
-  { key: "RM_CREDIT", label: "RM Credit",         icon: "wallet-outline" },
-  { key: "RM_COIN",   label: "RM Coin",           icon: "logo-bitcoin"   },
+  { key: "COD", label: "Cash on Delivery", icon: "cash-outline" },
+  { key: "ONLINE", label: "Online (Razorpay)", icon: "card-outline" },
+  { key: "RM_CREDIT", label: "RM Credit", icon: "wallet-outline" },
+  { key: "RM_COIN", label: "RM Coin", icon: "logo-bitcoin" },
 ];
 
 const fmtMoney = (v) => `₹${(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
@@ -40,17 +40,17 @@ export default function BookLab() {
   const items = JSON.parse(rawItems || "[]");
 
   const [collectionType, setCollectionType] = useState("HOME");
-  const [paymentMode,    setPaymentMode]    = useState("COD");
-  const [scheduledAt,    setScheduledAt]    = useState("");
-  const [showPicker,     setShowPicker]     = useState(false);
-  const [pickerMode,     setPickerMode]     = useState("date");
-  const [dateObj,        setDateObj]        = useState(new Date());
+  const [paymentMode, setPaymentMode] = useState("COD");
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+  const [pickerMode, setPickerMode] = useState("date");
+  const [dateObj, setDateObj] = useState(new Date());
 
   const handleDateChange = (event, selectedDate) => {
     if (Platform.OS === "android") {
       setShowPicker(false);
     }
-    
+
     if (event.type === "dismissed") return;
 
     if (selectedDate) {
@@ -79,11 +79,11 @@ export default function BookLab() {
     setShowPicker(true);
   };
   const [address, setAddress] = useState({
-    fullName:     "",
-    phone:        "",
+    fullName: "",
+    phone: "",
     addressLine1: "",
-    city:         "",
-    pincode:      "",
+    city: "",
+    pincode: "",
   });
   const [booking, setBooking] = useState(false);
 
@@ -91,8 +91,8 @@ export default function BookLab() {
 
   const handleBook = async () => {
     if (collectionType === "HOME") {
-      if (!address.fullName.trim())     return Toast.show({ type: "error", text1: "Full name required" });
-      if (!address.phone.trim())        return Toast.show({ type: "error", text1: "Phone required" });
+      if (!address.fullName.trim()) return Toast.show({ type: "error", text1: "Full name required" });
+      if (!address.phone.trim()) return Toast.show({ type: "error", text1: "Phone required" });
       if (!address.addressLine1.trim()) return Toast.show({ type: "error", text1: "Address required" });
     }
     if (!scheduledAt.trim()) return Toast.show({ type: "error", text1: "Schedule date/time required" });
@@ -175,19 +175,19 @@ export default function BookLab() {
         {collectionType === "HOME" && (
           <>
             <Text style={styles.label}>Delivery Address</Text>
-            <Field label="Full Name *"    value={address.fullName}     onChange={(v) => setAddr("fullName", v)}     placeholder="Your full name" />
-            <Field label="Phone *"        value={address.phone}        onChange={(v) => setAddr("phone", v)}        placeholder="+91 XXXXXXXXXX" keyboardType="phone-pad" />
+            <Field label="Full Name *" value={address.fullName} onChange={(v) => setAddr("fullName", v)} placeholder="Your full name" />
+            <Field label="Phone *" value={address.phone} onChange={(v) => setAddr("phone", v)} placeholder="+91 XXXXXXXXXX" keyboardType="phone-pad" />
             <Field label="Address Line *" value={address.addressLine1} onChange={(v) => setAddr("addressLine1", v)} placeholder="Street, Area" />
-            <Field label="City"           value={address.city}         onChange={(v) => setAddr("city", v)}         placeholder="Mumbai" />
-            <Field label="Pincode"        value={address.pincode}      onChange={(v) => setAddr("pincode", v)}      placeholder="400001" keyboardType="number-pad" />
+            <Field label="City" value={address.city} onChange={(v) => setAddr("city", v)} placeholder="Mumbai" />
+            <Field label="Pincode" value={address.pincode} onChange={(v) => setAddr("pincode", v)} placeholder="400001" keyboardType="number-pad" />
           </>
         )}
 
         {/* Schedule */}
         <View style={styles.fieldWrap}>
           <Text style={styles.fieldLabel}>Scheduled Date & Time *</Text>
-          <TouchableOpacity 
-            style={[styles.input, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]} 
+          <TouchableOpacity
+            style={[styles.input, { flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
             onPress={openPicker}
           >
             <Text style={{ color: scheduledAt ? TEXT_D : "#94a3b8", fontSize: 14 }}>
@@ -252,7 +252,7 @@ function Field({ label, value, onChange, placeholder, keyboardType }) {
 }
 
 const styles = StyleSheet.create({
-  safe:   { flex: 1, backgroundColor: BG },
+  safe: { flex: 1, backgroundColor: BG },
   scroll: { padding: 20 },
 
   labBanner: {
@@ -264,7 +264,7 @@ const styles = StyleSheet.create({
 
   card: { backgroundColor: CARD, borderRadius: 16, padding: 16, marginBottom: 16, elevation: 2 },
   sectionTitle: { fontSize: 13, fontWeight: "800", color: TEXT_D, marginBottom: 10 },
-  itemRow:      { fontSize: 13, color: TEXT_M, marginBottom: 4 },
+  itemRow: { fontSize: 13, color: TEXT_M, marginBottom: 4 },
 
   label: { fontSize: 12, fontWeight: "700", color: TEXT_M, letterSpacing: 0.5, textTransform: "uppercase", marginBottom: 10, marginTop: 8 },
 
@@ -277,7 +277,7 @@ const styles = StyleSheet.create({
   typeBtnActive: { backgroundColor: PURPLE, borderColor: PURPLE },
   typeTxt: { fontSize: 13, fontWeight: "700", color: PURPLE },
 
-  fieldWrap:  { marginBottom: 14 },
+  fieldWrap: { marginBottom: 14 },
   fieldLabel: { fontSize: 12, fontWeight: "600", color: TEXT_M, marginBottom: 6 },
   input: {
     backgroundColor: CARD, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12,
