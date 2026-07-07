@@ -12,6 +12,8 @@ export const MedicineCartProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [pendingOrderId, setPendingOrderId] = useState(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [discountAmount, setDiscountAmount] = useState(0);
 
   /* ================= CART ================= */
 
@@ -50,6 +52,8 @@ export const MedicineCartProvider = ({ children }) => {
     setDeliveryAddress(null);
     setError(null);
     setPendingOrderId(null);
+    setPromoCode("");
+    setDiscountAmount(0);
   };
 
   /* ================= GST + AGENT PRICE ================= */
@@ -79,13 +83,14 @@ export const MedicineCartProvider = ({ children }) => {
     const deliveryCharge = 0;
     subtotal = Number(subtotal.toFixed(2));
     gstTotal = Number(gstTotal.toFixed(2));
-    const payableAmount = Number((subtotal + gstTotal + deliveryCharge).toFixed(2));
+    const payableAmount = Number((subtotal + gstTotal + deliveryCharge - discountAmount).toFixed(2));
 
     return {
       subtotal,
       gstTotal,
       deliveryCharge,
-      payableAmount
+      discountAmount,
+      payableAmount: payableAmount > 0 ? payableAmount : 0
     };
   };
 
@@ -124,6 +129,7 @@ export const MedicineCartProvider = ({ children }) => {
         },
         pricing,
         paymentMode,
+        promoCode: promoCode || undefined,
         allowSpecialPrice: !!isAgent
       };
 
@@ -221,6 +227,10 @@ export const MedicineCartProvider = ({ children }) => {
         totalItems,
         deliveryAddress,
         setDeliveryAddress,
+        promoCode,
+        setPromoCode,
+        discountAmount,
+        setDiscountAmount,
         loading,
         error,
         addMedicine,

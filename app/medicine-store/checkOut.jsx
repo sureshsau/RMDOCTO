@@ -8,10 +8,14 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from "react-native";
+import Toast from "react-native-toast-message";
+import api from "../../services/axios";
 import { useMedicineCart } from "../../context/MedicineCartContext";
 import { useAuth } from "../../context/AuthContext";
 import UserInfo from "../../components/shared/medicine/checkout/UserInfo";
+import { useState, useEffect } from "react";
 
 export default function CartScreen() {
   const {
@@ -19,6 +23,10 @@ export default function CartScreen() {
     updateQuantity,
     removeMedicine,
     calculatePricing,
+    promoCode,
+    setPromoCode,
+    discountAmount,
+    setDiscountAmount,
   } = useMedicineCart();
 
   const { user } = useAuth();
@@ -26,8 +34,58 @@ export default function CartScreen() {
 
   const { subtotal, gstTotal, payableAmount } = useMemo(
     () => calculatePricing(isAgent),
-    [items, isAgent]
+    [items, isAgent, discountAmount] // Added discountAmount as dependency
   );
+
+  const [inputCode, setInputCode] = useState(promoCode);
+  const [applying, setApplying] = useState(false);
+  const [suggestion, setSuggestion] = useState(null);
+
+  // When cart changes, re-validate promo code implicitly (if applied), or clear it
+  // For simplicity, we just clear it if cart total goes below minOrder (backend handles this)
+  useEffect(() => {
+    if (promoCode) {
+      handleApplyPromo(promoCode, true);
+    }
+  }, [subtotal]);
+
+  const handleApplyPromo = async (codeToApply = inputCode, isSilent = false) => {
+    if (!codeToApply) return;
+    try {
+      if (!isSilent) setApplying(true);
+      const res = await api.post("/offers/validate", {
+        code: codeToApply,
+        cartValue: subtotal + gstTotal,
+      });
+      if (res.data.success) {
+        setPromoCode(codeToApply.toUpperCase());
+        setDiscountAmount(res.data.discountAmount);
+        setSuggestion(null);
+        if (!isSilent) Toast.show({ type: "success", text1: "Promo Code Applied!" });
+      }
+    } catch (err) {
+      if (err.response?.data) {
+        const data = err.response.data;
+        if (data.difference) {
+          setSuggestion(`Add ₹${data.difference} more for grab the order like that.`);
+        } else {
+          setSuggestion(data.message || "Invalid Promo Code");
+        }
+      }
+      setPromoCode("");
+      setDiscountAmount(0);
+      if (!isSilent) Toast.show({ type: "error", text1: err.response?.data?.message || "Invalid Code" });
+    } finally {
+      if (!isSilent) setApplying(false);
+    }
+  };
+
+  const removePromo = () => {
+    setPromoCode("");
+    setInputCode("");
+    setDiscountAmount(0);
+    setSuggestion(null);
+  };
 
   /* ===================== CHECKS ===================== */
   if (items.length === 0) {
@@ -87,7 +145,40 @@ export default function CartScreen() {
           <View style={styles.gstBox}>
             <Text style={styles.gstBoxText}>Subtotal: ₹{subtotal}</Text>
             <Text style={styles.gstBoxText}>GST: ₹{gstTotal}</Text>
+            {discountAmount > 0 && (
+              <Text style={[styles.gstBoxText, { color: "#16a34a" }]}>Discount: -₹{discountAmount}</Text>
+            )}
           </View>
+
+          {/* PROMO CODE SECTION (Hidden for agents if you strictly wanted only non-agents, but let's allow or show message based on backend rules) */}
+          {!isAgent && (
+            <View style={styles.promoContainer}>
+              <Text style={styles.promoTitle}>Apply Promo Code</Text>
+              <View style={styles.promoRow}>
+                <TextInput
+                  style={styles.promoInput}
+                  placeholder="Enter Code"
+                  value={inputCode}
+                  onChangeText={setInputCode}
+                  autoCapitalize="characters"
+                  editable={!promoCode}
+                />
+                {!promoCode ? (
+                  <TouchableOpacity style={styles.applyBtn} onPress={() => handleApplyPromo(inputCode)} disabled={applying || !inputCode}>
+                    {applying ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.applyBtnText}>Apply</Text>}
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity style={[styles.applyBtn, { backgroundColor: "#ef4444" }]} onPress={removePromo}>
+                    <Text style={styles.applyBtnText}>Remove</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+              {suggestion && (
+                <Text style={styles.suggestionText}>{suggestion}</Text>
+              )}
+            </View>
+          )}
+
         </View>
       </ScrollView>
 
@@ -135,4 +226,13 @@ const styles = StyleSheet.create({
   
   emptyState: { alignItems: "center", marginTop: 100 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#64748b" },
+  
+  /* Promo Code */
+  promoContainer: { marginTop: 16, backgroundColor: "#f8fafc", padding: 12, borderRadius: 12, borderWidth: 1, borderColor: "#e2e8f0" },
+  promoTitle: { fontSize: 14, fontWeight: "600", color: "#334155", marginBottom: 8 },
+  promoRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  promoInput: { flex: 1, backgroundColor: "#fff", borderWidth: 1, borderColor: "#cbd5e1", borderRadius: 8, paddingHorizontal: 12, height: 40, fontSize: 14, fontWeight: "600" },
+  applyBtn: { backgroundColor: "#14b8a6", paddingHorizontal: 16, height: 40, justifyContent: "center", alignItems: "center", borderRadius: 8 },
+  applyBtnText: { color: "#fff", fontWeight: "700", fontSize: 13 },
+  suggestionText: { color: "#ca8a04", fontSize: 12, fontWeight: "600", marginTop: 6 },
 });

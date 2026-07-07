@@ -65,9 +65,9 @@ export default function LabBrowse() {
 
       {/* Hero */}
       <View style={[styles.hero, { paddingTop: Math.max(insets.top, 16) }]}>
-        <View style={styles.heroIcon}>
-          <Ionicons name="flask" size={28} color="#fff" />
-        </View>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginRight: 8, padding: 4 }}>
+          <Ionicons name="arrow-back" size={26} color="#fff" />
+        </TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={styles.heroTitle}>Diagnostic Labs</Text>
           <Text style={styles.heroSub}>Book lab tests at home or at center</Text>

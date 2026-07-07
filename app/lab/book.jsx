@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import * as Location from "expo-location";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -81,11 +82,59 @@ export default function BookLab() {
   const [address, setAddress] = useState({
     fullName: "",
     phone: "",
-    addressLine1: "",
+    addressLine1: "Current Location",
     city: "",
     pincode: "",
+    location: null
   });
   const [booking, setBooking] = useState(false);
+  const [fetchingLoc, setFetchingLoc] = useState(false);
+
+  useEffect(() => {
+    if (collectionType === "HOME") {
+      fetchLocation();
+    }
+  }, [collectionType]);
+
+  const fetchLocation = async () => {
+    try {
+      setFetchingLoc(true);
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Toast.show({ type: "error", text1: "Permission denied", text2: "Cannot fetch location for home collection" });
+        return;
+      }
+      let loc = await Location.getCurrentPositionAsync({});
+
+      let addressString = "Current Location";
+      try {
+        let geocode = await Location.reverseGeocodeAsync({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude
+        });
+        if (geocode && geocode.length > 0) {
+          const p = geocode[0];
+          addressString = [p.name, p.street, p.city, p.region, p.postalCode].filter(Boolean).join(", ");
+        }
+      } catch (err) {
+        console.log("Geocode error", err);
+      }
+
+      setAddress((a) => ({
+        ...a,
+        location: {
+          type: "Point",
+          coordinates: [loc.coords.longitude, loc.coords.latitude]
+        },
+        addressLine1: addressString
+      }));
+    } catch (e) {
+      console.log(e);
+      Toast.show({ type: "error", text1: "Error fetching location" });
+    } finally {
+      setFetchingLoc(false);
+    }
+  };
 
   const setAddr = (key, val) => setAddress((a) => ({ ...a, [key]: val }));
 
@@ -93,7 +142,7 @@ export default function BookLab() {
     if (collectionType === "HOME") {
       if (!address.fullName.trim()) return Toast.show({ type: "error", text1: "Full name required" });
       if (!address.phone.trim()) return Toast.show({ type: "error", text1: "Phone required" });
-      if (!address.addressLine1.trim()) return Toast.show({ type: "error", text1: "Address required" });
+      if (!address.location) return Toast.show({ type: "error", text1: "Waiting for location..." });
     }
     if (!scheduledAt.trim()) return Toast.show({ type: "error", text1: "Schedule date/time required" });
 
@@ -174,12 +223,19 @@ export default function BookLab() {
         {/* Address (Home only) */}
         {collectionType === "HOME" && (
           <>
-            <Text style={styles.label}>Delivery Address</Text>
+            <Text style={styles.label}>Delivery Details</Text>
             <Field label="Full Name *" value={address.fullName} onChange={(v) => setAddr("fullName", v)} placeholder="Your full name" />
             <Field label="Phone *" value={address.phone} onChange={(v) => setAddr("phone", v)} placeholder="+91 XXXXXXXXXX" keyboardType="phone-pad" />
-            <Field label="Address Line *" value={address.addressLine1} onChange={(v) => setAddr("addressLine1", v)} placeholder="Street, Area" />
-            <Field label="City" value={address.city} onChange={(v) => setAddr("city", v)} placeholder="Mumbai" />
-            <Field label="Pincode" value={address.pincode} onChange={(v) => setAddr("pincode", v)} placeholder="400001" keyboardType="number-pad" />
+
+            <Field
+              label="Location Address"
+              value={fetchingLoc ? "Fetching location..." : address.addressLine1}
+              onChange={() => { }}
+              placeholder="Address"
+              editable={false}
+              rightLabel={fetchingLoc ? "Fetching..." : "Click For Current Location"}
+              onRightPress={fetchingLoc ? undefined : fetchLocation}
+            />
           </>
         )}
 
@@ -235,17 +291,25 @@ export default function BookLab() {
   );
 }
 
-function Field({ label, value, onChange, placeholder, keyboardType }) {
+function Field({ label, value, onChange, placeholder, keyboardType, editable, rightLabel, onRightPress }) {
   return (
     <View style={styles.fieldWrap}>
-      <Text style={styles.fieldLabel}>{label}</Text>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 6 }}>
+        <Text style={[styles.fieldLabel, { marginBottom: 0 }]}>{label}</Text>
+        {rightLabel && (
+          <TouchableOpacity onPress={onRightPress} disabled={!onRightPress}>
+            <Text style={{ color: PURPLE, fontSize: 12, fontWeight: "700" }}>{rightLabel}</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       <TextInput
-        style={styles.input}
+        style={[styles.input, editable === false && { backgroundColor: "#f8fafc", color: "#64748b" }]}
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
         placeholderTextColor="#94a3b8"
         keyboardType={keyboardType || "default"}
+        editable={editable}
       />
     </View>
   );

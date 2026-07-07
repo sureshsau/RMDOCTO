@@ -9,7 +9,7 @@ export default function LabLayout() {
         headerTitleStyle: { fontWeight: "700" },
       }}
     >
-      <Stack.Screen name="index"        options={{ title: "Book a Lab Test" }} />
+      <Stack.Screen name="index"        options={{ title: "Book a Lab Test", headerShown: false }} />
       <Stack.Screen name="[labId]"      options={{ title: "Lab Details" }} />
       <Stack.Screen name="book"         options={{ title: "Book Tests" }} />
       <Stack.Screen name="my-orders"    options={{ title: "My Lab Orders" }} />

@@ -204,6 +204,13 @@ export default function EmployeeDashboard() {
             delay={350}
             onPress={() => router.push("/employee/(tabs)/profile")}
           />
+          <DashboardCard
+            icon="pricetags-outline"
+            label="Special Offers"
+            color="#ef4444"
+            delay={400}
+            onPress={() => router.push("/offers")}
+          />
         </View>
 
         <View style={{ height: 40 }} />

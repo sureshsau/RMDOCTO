@@ -99,6 +99,12 @@ export default function RiderDashboard() {
             onPress={() => router.push("/rmrider/face-verification")}
           />
 
+          <DashboardCard
+            icon="pricetags-outline"
+            label="Special Offers"
+            onPress={() => router.push("/offers")}
+          />
+
         </View>
 
       </ScrollView>

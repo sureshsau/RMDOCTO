@@ -104,6 +104,12 @@ export default function MarketingAgentDashboard() {
               onPress={() => router.push("/lab/my-orders")}
             />
 
+            <DashboardCard
+              icon="pricetags-outline"
+              label="Special Offers"
+              onPress={() => router.push("/offers")}
+            />
+
           </View>
 
         </ScrollView>

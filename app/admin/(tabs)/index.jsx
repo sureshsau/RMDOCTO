@@ -99,6 +99,18 @@ export default function AdminDashboard() {
             />
 
             <StatCard
+              icon="pricetag-outline"
+              label="Promo Offers"
+              onPress={() => router.push("/admin/manage-offers")}
+            />
+
+            <StatCard
+              icon="trophy-outline"
+              label="Agent Targets"
+              onPress={() => router.push("/admin/manage-targets")}
+            />
+
+            <StatCard
               icon="medkit-outline"
               label="Medicine Store"
               onPress={() => router.push("/medicine-store")}

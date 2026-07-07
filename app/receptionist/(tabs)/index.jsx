@@ -122,6 +122,12 @@ export default function ReceptionistDashboard() {
               onPress={() => router.push("/receptionist/medicine")}
             />
 
+            <DashboardCard
+              icon="pricetags-outline"
+              label="Special Offers"
+              onPress={() => router.push("/offers")}
+            />
+
           </View>
 
         </ScrollView>

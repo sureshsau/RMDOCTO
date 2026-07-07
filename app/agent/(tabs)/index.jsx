@@ -107,10 +107,17 @@ export default function Index() {
           />
 
           <ActionCard
-            icon="document-text-outline"
-            title="Lab Orders"
-            subtitle="Test reports & status"
-            onPress={() => router.push("/lab/my-orders")}
+            icon="trophy-outline"
+            title="My Targets"
+            subtitle="Rewards & Progress"
+            onPress={() => router.push("/agent/targets")}
+          />
+
+          <ActionCard
+            icon="pricetags-outline"
+            title="Special Offers"
+            subtitle="Active promos"
+            onPress={() => router.push("/offers")}
           />
 
         </View>

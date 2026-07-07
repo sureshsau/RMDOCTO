@@ -152,6 +152,12 @@ export default function DoctorDashboard() {
     onPress={() => router.push("/doctor/face-verification")}
   />
 
+  <DashboardCard
+    icon="pricetags-outline"
+    label="Special Offers"
+    onPress={() => router.push("/offers")}
+  />
+
 </View>
 
         {/* ================= TODAY PATIENTS ================= */}
