@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { unregisterDeviceWithBackend } from "../services/push";
 import {
   clearAuth,
   getPermissions,
@@ -56,6 +57,15 @@ export const AuthProvider = ({ children }) => {
   // ---------------- LOGOUT ----------------
 
   const logout = async () => {
+    // Detach this device from the account FIRST — the request needs the auth
+    // token that clearSession() is about to delete. Never let a failure here
+    // block the logout itself.
+    try {
+      await unregisterDeviceWithBackend();
+    } catch {
+      // Ignored: worst case the token is pruned on its next failed delivery.
+    }
+
     await clearSession();
   };
 

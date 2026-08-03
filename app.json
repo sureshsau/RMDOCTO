@@ -15,9 +15,13 @@
       "package": "com.sureshsau2004.RMDOCTO",
       "versionCode": 13,
       "usesCleartextTraffic": true,
+      "googleServicesFile": "./google-services.json",
       "permissions": [
         "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION"
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE"
       ],
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",
@@ -57,7 +61,15 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/icon.png",
+          "color": "#6b6dbf",
+          "defaultChannel": "rmdocto-default"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

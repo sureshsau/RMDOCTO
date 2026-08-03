@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "885570882440",
+    "project_id": "rmdocto-dd025",
+    "storage_bucket": "rmdocto-dd025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:885570882440:android:2b957659f30347a782083d",
+        "android_client_info": {
+          "package_name": "com.sureshsau2004.RMDOCTO"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAsQLeUDVR3m0F_l65XuBBRSj6vrzYjY64"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

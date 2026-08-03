@@ -57,6 +57,12 @@ export default function _layout() {
         }}
       />
       <Stack.Screen
+        name="agent-alerts"
+        options={{
+          title: "Agent Alerts",
+        }}
+      />
+      <Stack.Screen
         name="rmcoin/index"
         options={{
           title: "RM Coin",
@@ -80,6 +86,12 @@ export default function _layout() {
       {/* KYC */}
       <Stack.Screen
         name="kyc/[id]"
+        options={{ headerShown: false }}
+      />
+
+      {/* NOTIFICATIONS */}
+      <Stack.Screen
+        name="notifications"
         options={{ headerShown: false }}
       />
     </Stack>

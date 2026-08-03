@@ -18,6 +18,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import api from "../../services/axios";
+import PrescriptionPicker from "../../components/shared/appointment/PrescriptionPicker";
+import { bookAppointment } from "../../utils/appointmentApi";
 
 export default function ReceptionistDashboard() {
   const [doctors, setDoctors] = useState([]);
@@ -44,6 +46,9 @@ export default function ReceptionistDashboard() {
   };
 
   const [form, setForm] = useState(initialForm);
+
+  // Optional prescription image / PDF attached to the booking
+  const [prescription, setPrescription] = useState(null);
 
   /* ================= LOAD DOCTORS ================= */
 
@@ -93,6 +98,7 @@ export default function ReceptionistDashboard() {
     setBookingModal(false);
     setSelectedDoctor(null);
     setForm(initialForm);
+    setPrescription(null);
   };
 
   /* ================= BOOK ================= */
@@ -103,15 +109,18 @@ export default function ReceptionistDashboard() {
     try {
       setBookingLoading(true);
 
-      await api.post("/appointment", {
-        doctorId: selectedDoctor._id,
-        ...form,
-      });
+      const result = await bookAppointment(
+        {
+          doctorId: selectedDoctor._id,
+          ...form,
+        },
+        prescription
+      );
 
       Toast.show({
-        type: "success",
+        type: result?.warning ? "info" : "success",
         text1: "Appointment Booked",
-        text2: `Booked with Dr. ${selectedDoctor.name}`,
+        text2: result?.warning || `Booked with Dr. ${selectedDoctor.name}`,
       });
 
       closeModal();
@@ -323,6 +332,13 @@ export default function ReceptionistDashboard() {
                   setForm({ ...form, consultationFee: t })
                 }
                 style={styles.input}
+              />
+
+              {/* PRESCRIPTION (OPTIONAL) */}
+              <PrescriptionPicker
+                value={prescription}
+                onChange={setPrescription}
+                disabled={bookingLoading}
               />
 
               {/* CONFIRM BUTTON */}

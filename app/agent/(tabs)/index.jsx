@@ -1,278 +1,239 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
+import TargetOfferBanner from "../../../components/shared/agent/TargetOfferBanner";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+  ActionGrid,
+  BG,
+  DashboardHeader,
+  EmptyState,
+  ListRow,
+  Loader,
+  MetricRow,
+  Panel,
+  PRIMARY,
+  PRIMARY_DARK,
+  SectionTitle,
+  StatCard,
+  StatStrip,
+  money,
+  shortDate,
+} from "../../../components/shared/dashboard/DashboardKit";
+import { useAuth } from "../../../context/AuthContext";
+import { useRMCredit } from "../../../context/RMCreditContext";
+import api from "../../../services/axios";
 
-const PRIMARY = "#14b8a6";
-const BG = "#f1f5f9";
+const ACTIONS = [
+  { icon: "person-add-outline", tint: "#6366f1", title: "Register Agent", subtitle: "Grow downline", route: "/agent/register" },
+  { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Team tree", route: "/agent/(tabs)/network" },
+  { icon: "trophy-outline", tint: "#f59e0b", title: "My Targets", subtitle: "Rewards", route: "/agent/targets" },
+  { icon: "pricetags-outline", tint: "#ec4899", title: "Offers", subtitle: "Active promos", route: "/offers" },
+  { icon: "storefront-outline", tint: "#14b8a6", title: "Medicine Store", subtitle: "Buy medicines", route: "/medicine-store" },
+  { icon: "cube-outline", tint: "#8b5cf6", title: "My Orders", subtitle: "Track orders", route: "/mymedicineorder" },
+  { icon: "medkit-outline", tint: "#ef4444", title: "Book Doctor", subtitle: "Consultations", route: "/doctor-booking" },
+  { icon: "calendar-outline", tint: "#0891b2", title: "Appointments", subtitle: "My bookings", route: "/doctor-booking/my-appointments" },
+  { icon: "flask-outline", tint: "#10b981", title: "Book Lab", subtitle: "Diagnostics", route: "/lab" },
+  { icon: "receipt-outline", tint: "#64748b", title: "Lab Orders", subtitle: "My tests", route: "/lab/my-orders" },
+];
 
-export default function Index() {
+export default function AgentDashboard() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { wallet, refreshRMCredit } = useRMCredit();
+
+  const alive = useRef(true);
+
+  const [profile, setProfile] = useState(null); // fresh copy from /user/me
+  const [coinBalance, setCoinBalance] = useState(user?.rmCoinsBalance ?? 0);
+  const [stats, setStats] = useState(null);
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  /* ================= FETCH ================= */
+
+  const load = useCallback(async () => {
+    // Independent panels — one failing endpoint must not blank the dashboard
+    const [me, downline, orders] = await Promise.allSettled([
+      api.get("/user/me"),
+      api.get("/medicine/order/stats/agent/downline", {
+        params: { range: "month" },
+      }),
+      api.get("/medicine/order", { params: { limit: 3 } }),
+    ]);
+
+    if (!alive.current) return;
+
+    if (me.status === "fulfilled") {
+      const fresh = me.value.data?.data;
+      setProfile(fresh || null);
+      setCoinBalance(fresh?.rmCoinsBalance ?? 0);
+    }
+
+    if (downline.status === "fulfilled") {
+      setStats({
+        downlineSize: downline.value.data?.downlineSize ?? 0,
+        ...(downline.value.data?.summary || {}),
+      });
+    }
+
+    if (orders.status === "fulfilled") {
+      setRecentOrders(orders.value.data?.orders?.slice(0, 3) || []);
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      alive.current = true;
+      load().finally(() => alive.current && setLoading(false));
+      return () => {
+        alive.current = false;
+      };
+    }, [load])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([load(), refreshRMCredit?.()]);
+    setRefreshing(false);
+  };
+
+  /* ================= DERIVED ================= */
+
+  const displayName = profile?.name || user?.name || "Agent";
+  const avatarUrl = profile?.faceImage?.url || user?.faceImage?.url || null;
+
+  const creditExpiring = (() => {
+    if (!wallet?.expiryDate) return null;
+    const days = Math.ceil((new Date(wallet.expiryDate) - Date.now()) / 86400000);
+    return days >= 0 && days <= 7 ? days : null;
+  })();
 
   return (
-    <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-
-        {/* ================= HEADER ================= */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>
-            Agent Dashboard
-          </Text>
-          <Text style={styles.headerSub}>
-            Manage Orders • Wallet • Network
-          </Text>
-        </View>
-
-        {/* ================= QUICK STATS ================= */}
-        {/* <View style={styles.statsWrapper}>
-          <StatCard
-            icon="wallet-outline"
-            label="Wallet Balance"
-            value="₹ 2,450"
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={PRIMARY}
           />
+        }
+      >
+        <DashboardHeader
+          name={displayName}
+          role="AGENT"
+          avatarUrl={avatarUrl}
+          onAvatarPress={() => router.push("/agent/(tabs)/profile")}
+          alert={
+            creditExpiring !== null
+              ? {
+                  icon: "time-outline",
+                  text: `RM Credit expires in ${creditExpiring} day${creditExpiring === 1 ? "" : "s"}`,
+                  onPress: () => router.push("/agent/rmcredit"),
+                }
+              : null
+          }
+        />
 
+        {/* ═════════════ WALLETS ═════════════ */}
+
+        <StatStrip>
           <StatCard
-            icon="cube-outline"
-            label="Active Orders"
-            value="12"
-          />
-        </View> */}
-
-        {/* ================= ACTION GRID ================= */}
-        <Text style={styles.sectionTitle}>
-          Quick Actions
-        </Text>
-
-        <View style={styles.grid}>
-
-          <ActionCard
             icon="cash-outline"
-            title="RM Credit"
-            subtitle="View balance & history"
+            tint={PRIMARY_DARK}
+            label="RM Credit"
+            value={money(wallet?.balance)}
+            meta={
+              wallet?.usedCredit
+                ? `${money(wallet.usedCredit)} used`
+                : "Tap for history"
+            }
             onPress={() => router.push("/agent/rmcredit")}
           />
-
-          <ActionCard
+          <StatCard
             icon="logo-bitcoin"
-            title="RM Coin"
-            subtitle="Wallet transactions"
+            tint="#d97706"
+            label="RM Coin"
+            value={money(coinBalance)}
+            meta="Tap for transactions"
             onPress={() => router.push("/rmcoin")}
           />
+        </StatStrip>
 
-          <ActionCard
-            icon="medkit-outline"
-            title="Book Doctor"
-            subtitle="Consultations"
-            onPress={() => router.push("/doctor-booking")}
-          />
+        {/* ═════════════ TARGETS BANNER ═════════════ */}
 
-          <ActionCard
-            icon="calendar-outline"
-            title="Appointments"
-            subtitle="View bookings"
-            onPress={() => router.push("/doctor-booking/my-appointments")}
-          />
+        <TargetOfferBanner />
 
-          <ActionCard
-            icon="person-add-outline"
-            title="Register Agent"
-            subtitle="Add new downline"
-            onPress={() => router.push("/agent/register")}
-          />
+        {/* ═════════════ THIS MONTH ═════════════ */}
 
-          <ActionCard
-            icon="medkit-outline"
-            title="Medicine Orders"
-            subtitle="Customer orders"
-            onPress={() => router.push("/mymedicineorder")}
-          />
+        <Panel
+          title="This Month"
+          linkLabel="Network"
+          onLink={() => router.push("/agent/(tabs)/network")}
+        >
+          {loading ? (
+            <Loader />
+          ) : (
+            <MetricRow
+              items={[
+                { label: "Orders", value: stats?.totalOrders ?? 0 },
+                {
+                  label: "Sales",
+                  value: money(stats?.totalRevenue),
+                  tone: PRIMARY_DARK,
+                },
+                { label: "Team", value: stats?.downlineSize ?? 0 },
+                { label: "Pending", value: stats?.pending ?? 0, tone: "#b45309" },
+              ]}
+            />
+          )}
+        </Panel>
 
-          <ActionCard
-            icon="storefront-outline"
-            title="Medicine Store"
-            subtitle="Buy medicines"
-            onPress={() => router.push("/medicine-store")}
-          />
+        {/* ═════════════ QUICK ACTIONS ═════════════ */}
 
-          <ActionCard
-            icon="flask-outline"
-            title="Book Lab"
-            subtitle="Diagnostic tests"
-            onPress={() => router.push("/lab")}
-          />
+        <SectionTitle>Quick Actions</SectionTitle>
 
-          <ActionCard
-            icon="trophy-outline"
-            title="My Targets"
-            subtitle="Rewards & Progress"
-            onPress={() => router.push("/agent/targets")}
-          />
+        <ActionGrid items={ACTIONS} onPress={(a) => router.push(a.route)} />
 
-          <ActionCard
-            icon="pricetags-outline"
-            title="Special Offers"
-            subtitle="Active promos"
-            onPress={() => router.push("/offers")}
-          />
+        {/* ═════════════ RECENT ORDERS ═════════════ */}
 
-        </View>
+        <SectionTitle
+          linkLabel={recentOrders.length > 0 ? "View all" : null}
+          onLink={() => router.push("/mymedicineorder")}
+        >
+          Recent Orders
+        </SectionTitle>
 
+        <Panel flush style={{ marginTop: 0 }}>
+          {loading ? (
+            <Loader />
+          ) : recentOrders.length === 0 ? (
+            <EmptyState
+              icon="cube-outline"
+              title="No orders yet"
+              actionLabel="Browse the medicine store"
+              onPress={() => router.push("/medicine-store")}
+            />
+          ) : (
+            recentOrders.map((o, i) => (
+              <ListRow
+                key={String(o.orderId)}
+                image={o.medicine?.image || null}
+                icon="medkit-outline"
+                title={o.medicine?.name || "Medicine order"}
+                subtitle={`${shortDate(o.createdAt)} • ${o.paymentMode || "-"}`}
+                amount={money(o.payableAmount)}
+                badge={o.orderStatus}
+                last={i === recentOrders.length - 1}
+                onPress={() => router.push("/mymedicineorder")}
+              />
+            ))
+          )}
+        </Panel>
       </ScrollView>
     </View>
   );
 }
-
-/* ================= COMPONENTS ================= */
-
-function StatCard({ icon, label, value }) {
-  return (
-    <View style={styles.statCard}>
-      <View style={styles.statIcon}>
-        <Ionicons name={icon} size={22} color={PRIMARY} />
-      </View>
-
-      <View>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statLabel}>{label}</Text>
-      </View>
-    </View>
-  );
-}
-
-function ActionCard({ icon, title, subtitle, onPress }) {
-  return (
-    <TouchableOpacity
-      style={styles.actionCard}
-      activeOpacity={0.85}
-      onPress={onPress}
-    >
-      <View style={styles.actionIcon}>
-        <Ionicons name={icon} size={22} color="#fff" />
-      </View>
-
-      <Text style={styles.cardTitle}>{title}</Text>
-      <Text style={styles.cardSub}>{subtitle}</Text>
-    </TouchableOpacity>
-  );
-}
-
-/* ================= STYLES ================= */
-
-const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-    backgroundColor: BG,
-    paddingTop: 0
-  },
-
-  header: {
-    backgroundColor: PRIMARY,
-    padding: 24,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    marginBottom: 20,
-    paddingTop: 50
-  },
-
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "900",
-    color: "#fff",
-  },
-
-  headerSub: {
-    color: "#ccfbf1",
-    marginTop: 4,
-    fontSize: 13,
-  },
-
-  statsWrapper: {
-    flexDirection: "row",
-    gap: 12,
-    paddingHorizontal: 16,
-    marginBottom: 22,
-  },
-
-  statCard: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 16,
-    elevation: 3,
-    alignItems: "center",
-  },
-
-  statIcon: {
-    backgroundColor: "#ecfeff",
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginRight: 12,
-  },
-
-  statValue: {
-    fontSize: 16,
-    fontWeight: "900",
-    color: "#0f172a",
-  },
-
-  statLabel: {
-    fontSize: 11,
-    color: "#64748b",
-    marginTop: 2,
-  },
-
-  sectionTitle: {
-    paddingHorizontal: 16,
-    fontWeight: "800",
-    color: "#0f172a",
-    marginBottom: 12,
-  },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 14,
-    paddingHorizontal: 16,
-  },
-
-  actionCard: {
-    width: "48%",
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 18,
-    elevation: 4,
-  },
-
-  actionIcon: {
-    backgroundColor: PRIMARY,
-    width: 42,
-    height: 42,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
-  },
-
-  cardTitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#0f172a",
-  },
-
-  cardSub: {
-    fontSize: 11,
-    color: "#64748b",
-    marginTop: 2,
-  },
-
-});

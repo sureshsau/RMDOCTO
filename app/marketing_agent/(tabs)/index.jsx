@@ -1,234 +1,293 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import {
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+  ActionGrid,
+  BG,
+  DashboardHeader,
+  EmptyState,
+  ListRow,
+  Loader,
+  MetricRow,
+  Panel,
+  PRIMARY,
+  PRIMARY_DARK,
+  SectionTitle,
+  StatCard,
+  StatStrip,
+  money,
+  moneyShort,
+  monthRange,
+  parseAttendance,
+} from "../../../components/shared/dashboard/DashboardKit";
 import { useAuth } from "../../../context/AuthContext.jsx";
+import api from "../../../services/axios";
 
-const PRIMARY = "#14b8a6";
-const BG = "#f8fafc";
+const ACTIONS = [
+  { icon: "person-add-outline", tint: "#6366f1", title: "Register Agent", subtitle: "Grow network", route: "/marketing_agent/register-agent" },
+  { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Assigned agents", route: "/marketing_agent/(tabs)/network" },
+  { icon: "notifications-outline", tint: "#ef4444", title: "Agent Alerts", subtitle: "Follow-up list", route: "/marketing_agent/agent-alerts" },
+  { icon: "scan-outline", tint: "#8b5cf6", title: "Check-In", subtitle: "Mark attendance", route: "/marketing_agent/face-verification" },
+  { icon: "storefront-outline", tint: "#14b8a6", title: "Medicine Store", subtitle: "Buy medicines", route: "/medicine-store" },
+  { icon: "cube-outline", tint: "#0891b2", title: "My Orders", subtitle: "Track orders", route: "/mymedicineorder" },
+  { icon: "flask-outline", tint: "#10b981", title: "Lab Tests", subtitle: "Book diagnostics", route: "/lab" },
+  { icon: "receipt-outline", tint: "#64748b", title: "My Lab Orders", subtitle: "Test reports", route: "/lab/my-orders" },
+  { icon: "wallet-outline", tint: "#d97706", title: "RM Coins", subtitle: "Balance & history", route: "/rmcoin" },
+  { icon: "pricetags-outline", tint: "#ec4899", title: "Special Offers", subtitle: "Active promos", route: "/offers" },
+];
 
 export default function MarketingAgentDashboard() {
-
   const router = useRouter();
   const { user } = useAuth();
 
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+  const alive = useRef(true);
+
+  const [profile, setProfile] = useState(null);
+  const [network, setNetwork] = useState(null);
+  const [alerts, setAlerts] = useState(null);
+  const [attendance, setAttendance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  /* ================= FETCH ================= */
+
+  const load = useCallback(async () => {
+    const { from, to } = monthRange();
+
+    // Independent panels — one failing endpoint must not blank the dashboard
+    const [me, net, alert, att] = await Promise.allSettled([
+      api.get("/user/me"),
+      api.get("/medicine/order/stats/marketing-agent/network", {
+        params: { range: "month" },
+      }),
+      api.get("/medicine/order/stats/agent-alerts", {
+        params: { range: "month" },
+      }),
+      api.get("/attendance/log/me", { params: { from, to, page: 1, limit: 31 } }),
+    ]);
+
+    if (!alive.current) return;
+
+    if (me.status === "fulfilled") setProfile(me.value.data?.data || null);
+
+    if (net.status === "fulfilled") {
+      setNetwork({
+        networkSize: net.value.data?.networkSize ?? 0,
+        summary: net.value.data?.summary || {},
+        agentBreakdown: net.value.data?.agentBreakdown || [],
+      });
+    }
+
+    if (alert.status === "fulfilled") {
+      setAlerts({
+        summary: alert.value.data?.summary || {},
+        agents: alert.value.data?.agents || [],
+      });
+    }
+
+    if (att.status === "fulfilled") {
+      setAttendance(parseAttendance(att.value.data));
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      alive.current = true;
+      load().finally(() => alive.current && setLoading(false));
+      return () => {
+        alive.current = false;
+      };
+    }, [load])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  /* ================= DERIVED ================= */
+
+  const displayName = profile?.name || user?.name || "Agent";
+  const avatarUrl = profile?.faceImage?.url || user?.faceImage?.url || null;
+
+  const summary = network?.summary || {};
+
+  // The service already sorts worst-first: no orders → low value → active
+  const followUps = (alerts?.agents || [])
+    .filter((a) => a.alertLevel !== "ACTIVE")
+    .slice(0, 3);
+
+  const topAgents = [...(network?.agentBreakdown || [])]
+    .sort((a, b) => b.totalRevenue - a.totalRevenue)
+    .slice(0, 3);
+
+  const needsFollowUp =
+    (alerts?.summary?.noOrderAgents || 0) + (alerts?.summary?.lowAgents || 0);
+
+  const headerAlert = (() => {
+    if (attendance && !attendance.checkedInToday) {
+      return {
+        icon: "scan-outline",
+        text: "You haven't checked in today",
+        onPress: () => router.push("/marketing_agent/face-verification"),
+      };
+    }
+    if (needsFollowUp > 0) {
+      return {
+        icon: "call-outline",
+        text: `${needsFollowUp} agent${needsFollowUp === 1 ? "" : "s"} need a follow-up call`,
+        onPress: () => router.push("/marketing_agent/agent-alerts"),
+      };
+    }
+    return null;
+  })();
 
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor={PRIMARY} barStyle="light-content" />
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={PRIMARY}
+          />
+        }
+      >
+        <DashboardHeader
+          name={displayName}
+          role="MARKETING AGENT"
+          avatarUrl={avatarUrl}
+          onAvatarPress={() => router.push("/marketing_agent/(tabs)/profile")}
+          alert={headerAlert}
+        />
 
-      <View style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <StatStrip>
+          <StatCard
+            icon="git-network-outline"
+            tint="#0ea5e9"
+            label="Network"
+            value={network?.networkSize ?? 0}
+            meta="agents assigned"
+            onPress={() => router.push("/marketing_agent/(tabs)/network")}
+          />
+          <StatCard
+            icon="cube-outline"
+            tint={PRIMARY_DARK}
+            label="Orders"
+            value={summary.totalOrders ?? 0}
+            meta="this month"
+          />
+          <StatCard
+            icon="trending-up-outline"
+            tint="#d97706"
+            label="Sales"
+            value={moneyShort(summary.totalRevenue)}
+            meta="this month"
+          />
+        </StatStrip>
 
-          {/* ================= HEADER ================= */}
+        {/* ================= THIS MONTH ================= */}
 
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
+        <Panel
+          title="This Month"
+          linkLabel="Network"
+          onLink={() => router.push("/marketing_agent/(tabs)/network")}
+        >
+          {loading ? (
+            <Loader />
+          ) : (
+            <MetricRow
+              items={[
+                { label: "Delivered", value: summary.delivered ?? 0, tone: "#15803d" },
+                { label: "Pending", value: summary.pending ?? 0, tone: "#b45309" },
+                { label: "Cancelled", value: summary.cancelled ?? 0, tone: "#b91c1c" },
+                {
+                  label: "Present",
+                  value: attendance?.presentDays ?? 0,
+                  tone: PRIMARY_DARK,
+                },
+              ]}
+            />
+          )}
+        </Panel>
 
-              {user?.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={26} color="#94A3B8" />
-                </View>
-              )}
+        {/* ================= FOLLOW-UPS ================= */}
 
-              <View>
-                <Text style={styles.greeting}>Welcome Back 👋</Text>
-                <Text style={styles.name}>{user?.name || "Agent"}</Text>
+        <SectionTitle
+          linkLabel="All alerts"
+          onLink={() => router.push("/marketing_agent/agent-alerts")}
+        >
+          Needs Follow-up
+        </SectionTitle>
 
-                <Text style={styles.role}>
-                  {user?.roles?.[0]?.toUpperCase() || "MARKETING AGENT"}
-                </Text>
+        <Panel flush style={{ marginTop: 0 }}>
+          {loading ? (
+            <Loader />
+          ) : followUps.length === 0 ? (
+            <EmptyState
+              icon="checkmark-circle-outline"
+              title="Every agent is ordering"
+              actionLabel="Open alerts"
+              onPress={() => router.push("/marketing_agent/agent-alerts")}
+            />
+          ) : (
+            followUps.map((a, i) => (
+              <ListRow
+                key={String(a.userId)}
+                icon="person-outline"
+                iconTint="#ef4444"
+                title={a.name}
+                subtitle={[a.phone, `${a.orderCount} orders`]
+                  .filter(Boolean)
+                  .join(" • ")}
+                amount={money(a.totalOrderValue)}
+                badge={a.alertLevel}
+                last={i === followUps.length - 1}
+                onPress={() => router.push("/marketing_agent/agent-alerts")}
+              />
+            ))
+          )}
+        </Panel>
 
-                <Text style={styles.date}>{formattedDate}</Text>
-              </View>
+        {/* ================= TOP PERFORMERS ================= */}
 
-            </View>
-          </View>
+        <SectionTitle>Top Performers</SectionTitle>
 
-          {/* ================= DASHBOARD GRID ================= */}
-
-          <View style={styles.grid}>
-
-            <DashboardCard
-              icon="person-add-outline"
-              label="Register Agent"
+        <Panel flush style={{ marginTop: 0 }}>
+          {loading ? (
+            <Loader />
+          ) : topAgents.length === 0 ? (
+            <EmptyState
+              icon="trophy-outline"
+              title="No orders from your network yet"
+              actionLabel="Register an agent"
               onPress={() => router.push("/marketing_agent/register-agent")}
             />
+          ) : (
+            topAgents.map((a, i) => (
+              <ListRow
+                key={String(a.userId)}
+                icon="trophy-outline"
+                iconTint="#d97706"
+                title={a.name}
+                subtitle={`${a.orderCount} order${a.orderCount === 1 ? "" : "s"} • ${a.phone || "no phone"}`}
+                amount={money(a.totalRevenue)}
+                last={i === topAgents.length - 1}
+                onPress={() => router.push("/marketing_agent/(tabs)/network")}
+              />
+            ))
+          )}
+        </Panel>
 
-            <DashboardCard
-              icon="git-network-outline"
-              label="My Network"
-              onPress={() => router.push("/marketing_agent/(tabs)/network")}
-            />
+        {/* ================= QUICK ACTIONS ================= */}
 
-            <DashboardCard
-              icon="wallet-outline"
-              label="RM Coins"
-              onPress={() => router.push("/rmcoin")}
-            />
+        <SectionTitle>Quick Actions</SectionTitle>
 
-            <DashboardCard
-              icon="medkit-outline"
-              label="My Medicine Orders"
-              onPress={() => router.push("/mymedicineorder")}
-            />
-
-            <DashboardCard
-              icon="storefront-outline"
-              label="Medicine Store"
-              onPress={() => router.push("/medicine-store")}
-            />
-            <DashboardCard
-              icon="flask-outline"
-              label="Lab Tests"
-              onPress={() => router.push("/lab")}
-            />
-            <DashboardCard
-              icon="receipt-outline"
-              label="My Lab Orders"
-              onPress={() => router.push("/lab/my-orders")}
-            />
-
-            <DashboardCard
-              icon="pricetags-outline"
-              label="Special Offers"
-              onPress={() => router.push("/offers")}
-            />
-
-          </View>
-
-        </ScrollView>
-      </View>
+        <ActionGrid items={ACTIONS} onPress={(a) => router.push(a.route)} />
+      </ScrollView>
     </View>
   );
 }
-
-/* ================= CARD ================= */
-
-function DashboardCard({ icon, label, onPress }) {
-  return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.iconBox}>
-        <Ionicons name={icon} size={22} color={PRIMARY} />
-      </View>
-
-      <Text style={styles.cardLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-/* ================= STYLES ================= */
-
-const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-    backgroundColor: BG,
-  },
-
-  header: {
-    backgroundColor: PRIMARY,
-    padding: 20,
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
-    paddingTop: 50
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-
-  avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  greeting: {
-    fontSize: 12,
-    color: "#ccfbf1",
-  },
-
-  name: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#fff",
-  },
-
-  role: {
-    fontSize: 11,
-    color: "#e0fdfa",
-  },
-
-  date: {
-    fontSize: 11,
-    color: "#ccfbf1",
-    marginTop: 2,
-  },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    padding: 20,
-    marginTop: 10,
-  },
-
-  card: {
-    width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 18,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 14,
-    elevation: 3,
-  },
-
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "#ecfeff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  cardLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#334155",
-    textAlign: "center",
-  },
-
-});

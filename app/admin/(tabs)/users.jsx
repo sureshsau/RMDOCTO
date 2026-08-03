@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import * as Clipboard from "expo-clipboard";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import { router } from "expo-router";
@@ -97,10 +98,23 @@ const ACTIONS_MAP = {
   ],
 };
 
+/* Roles an admin can hand out. "admin" is deliberately absent — the server
+   rejects assigning it (assignRoleService). */
+const ASSIGNABLE_ROLES = [
+  { key: "doctor", label: "Doctor", icon: "medkit-outline" },
+  { key: "receptionist", label: "Receptionist", icon: "desktop-outline" },
+  { key: "rmrider", label: "RM Rider", icon: "bicycle-outline" },
+  { key: "agent", label: "Agent", icon: "people-outline" },
+  { key: "marketing_agent", label: "Marketing Agent", icon: "megaphone-outline" },
+  { key: "employee", label: "Employee", icon: "briefcase-outline" },
+  { key: "subadmin", label: "Sub Admin", icon: "shield-outline" },
+  { key: "user", label: "Customer", icon: "person-outline" },
+];
+
 /* ================= MAIN ================= */
 
 export default function Employees() {
-  const { getUsers } = useUser();
+  const { getUsers, createUser } = useUser();
   const { fetchRoles } = useRBAC();
   const kycScrollRef = useRef(null);
   const [currentKycIndex, setCurrentKycIndex] = useState(0);
@@ -121,6 +135,12 @@ export default function Employees() {
   
   const [kycModalVisible, setKycModalVisible] = useState(false);
   const [kycLoading, setKycLoading] = useState(false);
+
+  /* Quick add: name + 10-digit phone + role, nothing else */
+  const [addModal, setAddModal] = useState(false);
+  const [addForm, setAddForm] = useState({ name: "", phone: "", role: null });
+  const [addLoading, setAddLoading] = useState(false);
+  const [created, setCreated] = useState(null); // { name, phone, role, tempPassword }
 
   const DOCTOR_CATEGORIES = [
     "Allergy & Immunology", "Cardiologist", "Dermatologist", "Dentist", 
@@ -340,6 +360,88 @@ export default function Employees() {
     });
   }, [users, search, filter]);
 
+  /* ================= QUICK ADD USER ================= */
+
+  const openAddModal = () => {
+    setAddForm({ name: "", phone: "", role: null });
+    setCreated(null);
+    setAddModal(true);
+  };
+
+  const handleAddUser = async () => {
+    const name = addForm.name.trim();
+    const phone = addForm.phone.trim();
+
+    if (name.length < 2) {
+      return Toast.show({ type: "error", text1: "Enter the user's name" });
+    }
+    if (!/^\d{10}$/.test(phone)) {
+      return Toast.show({
+        type: "error",
+        text1: "Invalid phone",
+        text2: "Enter exactly 10 digits",
+      });
+    }
+    if (!addForm.role) {
+      return Toast.show({ type: "error", text1: "Pick a role" });
+    }
+
+    try {
+      setAddLoading(true);
+
+      // Dashboard is intentionally omitted — the server maps it from the role
+      const res = await createUser({
+        name,
+        phone,
+        roles: [addForm.role.key],
+      });
+
+      if (!res.success) {
+        return Toast.show({
+          type: "error",
+          text1: "Could not add user",
+          text2: res.error,
+        });
+      }
+
+      if (res.data?.tempPassword) {
+        // Shown once — it cannot be retrieved again
+        setCreated({
+          name,
+          phone,
+          role: addForm.role.label,
+          tempPassword: res.data.tempPassword,
+        });
+      } else if (res.data?.isNew) {
+        // Created, but no password came back — an older server build
+        Toast.show({
+          type: "error",
+          text1: "User created without a password",
+          text2: "They cannot log in yet — restart the API server and re-add",
+        });
+        setAddModal(false);
+      } else {
+        // Phone already belonged to someone: the role was added to that account
+        Toast.show({
+          type: "success",
+          text1: "Existing user updated",
+          text2: `${addForm.role.label} role added to ${phone}`,
+        });
+        setAddModal(false);
+      }
+
+      await loadUsers();
+    } finally {
+      setAddLoading(false);
+    }
+  };
+
+  const copyPassword = async () => {
+    if (!created?.tempPassword) return;
+    await Clipboard.setStringAsync(created.tempPassword);
+    Toast.show({ type: "success", text1: "Password copied" });
+  };
+
   const handleTransferSubmit = async () => {
     if (!transferAmount) {
       Toast.show({
@@ -539,6 +641,142 @@ export default function Employees() {
         </TouchableWithoutFeedback>
       </Modal>
 
+      {/* ================= QUICK ADD USER ================= */}
+      <Modal visible={addModal} transparent animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: "85%" }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {created ? "User created" : "Add user"}
+              </Text>
+              <TouchableOpacity onPress={() => setAddModal(false)}>
+                <Ionicons name="close" size={24} color="#64748b" />
+              </TouchableOpacity>
+            </View>
+
+            {created ? (
+              /* ===== CREDENTIALS HANDOVER ===== */
+              <ScrollView style={{ marginTop: 14 }}>
+                <Text style={styles.addHint}>
+                  Share these details with {created.name}. The password is shown
+                  only once and cannot be viewed again.
+                </Text>
+
+                <View style={styles.credBox}>
+                  <CredLine label="Name" value={created.name} />
+                  <CredLine label="Role" value={created.role} />
+                  <CredLine label="Login phone" value={created.phone} />
+
+                  <View style={styles.credPwRow}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.credLabel}>Temporary password</Text>
+                      <Text style={styles.credPw}>{created.tempPassword}</Text>
+                    </View>
+
+                    <TouchableOpacity style={styles.copyBtn} onPress={copyPassword}>
+                      <Ionicons name="copy-outline" size={16} color="#fff" />
+                      <Text style={styles.copyTxt}>Copy</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                <View style={styles.noteBox}>
+                  <Ionicons name="shield-checkmark-outline" size={15} color="#b45309" />
+                  <Text style={styles.noteTxt}>
+                    On first login they land on the {created.role} dashboard and
+                    must complete KYC before they can use it.
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={styles.primaryBtn}
+                  onPress={() => setAddModal(false)}
+                >
+                  <Text style={styles.primaryTxt}>Done</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            ) : (
+              /* ===== FORM ===== */
+              <ScrollView style={{ marginTop: 14 }} keyboardShouldPersistTaps="handled">
+                <Text style={styles.addLabel}>Full name</Text>
+                <TextInput
+                  style={styles.addInput}
+                  placeholder="e.g. Rahul Das"
+                  placeholderTextColor="#94a3b8"
+                  value={addForm.name}
+                  onChangeText={(v) => setAddForm((f) => ({ ...f, name: v }))}
+                />
+
+                <Text style={styles.addLabel}>Mobile number</Text>
+                <TextInput
+                  style={styles.addInput}
+                  placeholder="10-digit number"
+                  placeholderTextColor="#94a3b8"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={addForm.phone}
+                  onChangeText={(v) =>
+                    setAddForm((f) => ({ ...f, phone: v.replace(/[^\d]/g, "") }))
+                  }
+                />
+                <Text style={styles.addHelp}>
+                  This is the number they sign in with
+                </Text>
+
+                <Text style={styles.addLabel}>Role</Text>
+                <View style={styles.roleGrid}>
+                  {ASSIGNABLE_ROLES.map((r) => {
+                    const active = addForm.role?.key === r.key;
+                    return (
+                      <TouchableOpacity
+                        key={r.key}
+                        style={[styles.roleOpt, active && styles.roleOptActive]}
+                        onPress={() => setAddForm((f) => ({ ...f, role: r }))}
+                      >
+                        <Ionicons
+                          name={r.icon}
+                          size={14}
+                          color={active ? "#fff" : "#6b6dbf"}
+                        />
+                        <Text
+                          style={[styles.roleOptTxt, active && { color: "#fff" }]}
+                        >
+                          {r.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.primaryBtn, addLoading && { opacity: 0.6 }]}
+                  onPress={handleAddUser}
+                  disabled={addLoading}
+                >
+                  {addLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.primaryTxt}>Create user</Text>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.advancedLink}
+                  onPress={() => {
+                    setAddModal(false);
+                    router.push("/admin/employee/add");
+                  }}
+                >
+                  <Text style={styles.advancedTxt}>
+                    Need custom permissions? Use the full form →
+                  </Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
       {/* SEARCH + ADD USER */}
       <View style={styles.searchWrapper}>
         <View style={styles.searchBox}>
@@ -553,10 +791,7 @@ export default function Employees() {
         </View>
 
         <View style={{ flexDirection: 'row', gap: 8 }}>
-          <TouchableOpacity
-            onPress={() => router.push("/admin/employee/add")}
-            style={styles.addBtn}
-          >
+          <TouchableOpacity onPress={openAddModal} style={styles.addBtn}>
             <Ionicons name="person-add" size={20} color="#fff" />
           </TouchableOpacity>
           <TouchableOpacity
@@ -683,6 +918,15 @@ export default function Employees() {
 }
 
 /* ================= COMPONENTS ================= */
+
+function CredLine({ label, value }) {
+  return (
+    <View>
+      <Text style={styles.credLabel}>{label}</Text>
+      <Text style={styles.credValue}>{value}</Text>
+    </View>
+  );
+}
 
 function Section({ title }) {
   return (
@@ -972,6 +1216,94 @@ const styles = StyleSheet.create({
   },
   actionText: { fontSize: 16 },
   actionCancel: { borderBottomWidth: 0, marginTop: 8 },
+
+  /* QUICK ADD USER */
+  addLabel: { fontSize: 12, fontWeight: "700", color: "#475569", marginBottom: 6 },
+  addInput: {
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
+    color: "#0f172a",
+    marginBottom: 12,
+  },
+  addHelp: { fontSize: 11, color: "#94a3b8", marginTop: -8, marginBottom: 14 },
+  addHint: { fontSize: 12, color: "#475569", lineHeight: 17, marginBottom: 14 },
+
+  roleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 18 },
+  roleOpt: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    backgroundColor: "#f8fafc",
+  },
+  roleOptActive: { backgroundColor: "#6b6dbf", borderColor: "#6b6dbf" },
+  roleOptTxt: { fontSize: 12, fontWeight: "700", color: "#475569" },
+
+  primaryBtn: {
+    backgroundColor: "#6b6dbf",
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  primaryTxt: { color: "#fff", fontWeight: "800", fontSize: 14 },
+
+  advancedLink: { alignItems: "center", paddingVertical: 14 },
+  advancedTxt: { fontSize: 12, color: "#6b6dbf", fontWeight: "600" },
+
+  credBox: {
+    backgroundColor: "#f8fafc",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    borderRadius: 14,
+    padding: 14,
+    gap: 10,
+  },
+  credLabel: { fontSize: 11, color: "#94a3b8", fontWeight: "700" },
+  credValue: { fontSize: 14, color: "#0f172a", fontWeight: "700", marginTop: 2 },
+  credPwRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0",
+    paddingTop: 10,
+  },
+  credPw: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#6b6dbf",
+    letterSpacing: 2,
+    marginTop: 2,
+  },
+  copyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#6b6dbf",
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  copyTxt: { color: "#fff", fontWeight: "800", fontSize: 12 },
+
+  noteBox: {
+    flexDirection: "row",
+    gap: 7,
+    backgroundColor: "#fffbeb",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  noteTxt: { flex: 1, fontSize: 11.5, color: "#92400e", lineHeight: 16 },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
   modalContent: { width: '85%', backgroundColor: '#fff', borderRadius: 20, padding: 20 },

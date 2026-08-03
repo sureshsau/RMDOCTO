@@ -166,6 +166,14 @@ export default function OrderDetails() {
           <Text>📞 {order.deliveryAddress.phone}</Text>
           <Text style={styles.meta}>📍 {order.deliveryAddress.addressLine1}</Text>
 
+          {/* Counter order — placed by staff on the customer's behalf */}
+          {order.placedBy && (
+            <Text style={styles.meta}>
+              🏪 Placed by {order.placedBy.name || "staff"}
+              {order.placedBy.phone ? ` (${order.placedBy.phone})` : ""}
+            </Text>
+          )}
+
           <TouchableOpacity style={styles.trackBtn} onPress={openTracker}>
             <Text style={styles.btnPrimaryText}>Track Order</Text>
           </TouchableOpacity>

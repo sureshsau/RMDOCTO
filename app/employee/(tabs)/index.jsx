@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import NotificationBell from "../../../components/shared/NotificationBell";
 import { useAuth } from "../../../context/AuthContext";
 
 /* ─── Theme ─── */
@@ -120,6 +121,12 @@ export default function EmployeeDashboard() {
               <Text style={styles.name}>{user?.name || "Employee"}</Text>
               <Text style={styles.date}>{formattedDate}</Text>
             </View>
+
+            <NotificationBell
+              color="#ffffff"
+              bgColor="rgba(255,255,255,0.2)"
+              size={22}
+            />
 
             <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
               <Ionicons name="log-out-outline" size={22} color="#fff" />

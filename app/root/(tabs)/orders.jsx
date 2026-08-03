@@ -37,30 +37,35 @@ export default function OrdersTab() {
   );
 
   const renderItem = ({ item }) => {
-    const sc = STATUS_COLOR[item.status] || STATUS_COLOR.PENDING;
+    const status = item.orderStatus || "PENDING";
+    const sc = STATUS_COLOR[status] || STATUS_COLOR.PENDING;
     return (
-      <View style={styles.card}>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        style={styles.card}
+        onPress={() => router.push({ pathname: "/mymedicineorder/historyDetails", params: { orderId: item.orderId } })}
+      >
         <View style={styles.cardTop}>
           <View style={styles.cardLeft}>
             <View style={styles.iconWrap}>
               <Ionicons name="cube-outline" size={22} color={PRIMARY} />
             </View>
             <View>
-              <Text style={styles.orderTitle}>Order #{item._id?.slice(-6).toUpperCase()}</Text>
-              <Text style={styles.orderDate}>{new Date(item.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}</Text>
+              <Text style={styles.orderTitle}>Order #{item.orderId?.slice(-6).toUpperCase() || "------"}</Text>
+              <Text style={styles.orderDate}>{item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }) : "-"}</Text>
             </View>
           </View>
           <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
             <Ionicons name={sc.icon} size={12} color={sc.text} />
-            <Text style={[styles.statusText, { color: sc.text }]}>{item.status}</Text>
+            <Text style={[styles.statusText, { color: sc.text }]}>{status}</Text>
           </View>
         </View>
         <View style={styles.divider} />
         <View style={styles.cardBottom}>
-          <Text style={styles.itemCount}>{item.items?.length || 0} item(s)</Text>
-          <Text style={styles.amount}>₹{item.payableAmount || item.totalAmount}</Text>
+          <Text style={styles.itemCount} numberOfLines={1}>{item.medicine?.name || "Medicine"}</Text>
+          <Text style={styles.amount}>₹{item.payableAmount ?? 0}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -74,7 +79,7 @@ export default function OrdersTab() {
       ) : (
         <FlatList
           data={orders}
-          keyExtractor={(item) => item._id}
+          keyExtractor={(item, index) => String(item?.orderId ?? index)}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 16 }}
           ListEmptyComponent={
@@ -109,7 +114,7 @@ const styles = StyleSheet.create({
   statusText: { fontSize: 11, fontWeight: "800" },
   divider: { height: 1, backgroundColor: "#f1f5f9", marginBottom: 10 },
   cardBottom: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  itemCount: { fontSize: 13, color: "#64748b", fontWeight: "600" },
+  itemCount: { flex: 1, marginRight: 10, fontSize: 13, color: "#64748b", fontWeight: "600" },
   amount: { fontSize: 16, fontWeight: "900", color: PRIMARY },
 
   empty: { alignItems: "center", paddingTop: 80, gap: 10 },

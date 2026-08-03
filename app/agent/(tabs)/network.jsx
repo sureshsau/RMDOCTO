@@ -103,6 +103,7 @@ export default function AgentNetwork() {
           />
         }
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
       >
         {/* ===== HEADER ===== */}
         <Text style={styles.title}>My Network</Text>

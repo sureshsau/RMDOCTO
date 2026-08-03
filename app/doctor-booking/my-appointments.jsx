@@ -9,6 +9,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import AppointmentPrescriptionRow from "../../components/shared/appointment/AppointmentPrescriptionRow";
 import api from "../../services/axios";
 
 const PURPLE = "#6b6dbf";
@@ -113,6 +114,9 @@ function AppointmentCard({ appointment }) {
       <View style={styles.patientRow}>
         <Text style={styles.patientName}>{appointment.patientName}</Text>
       </View>
+
+      {/* Optional prescription — the booker can attach or replace it here */}
+      <AppointmentPrescriptionRow appointment={appointment} editable />
     </View>
   );
 }

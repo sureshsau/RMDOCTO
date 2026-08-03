@@ -32,6 +32,12 @@ export default function Layout() {
           options={{ headerShown: false }}
         />
 
+        {/* APPOINTMENTS */}
+        <Stack.Screen
+          name="appointments"
+          options={{ title: "Appointments" }}
+        />
+
       </Stack>
     </>
   );

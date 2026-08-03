@@ -1,253 +1,297 @@
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
+import { useCallback, useRef, useState } from "react";
+import { RefreshControl, ScrollView, View } from "react-native";
 import {
-  Image,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+  ActionGrid,
+  BG,
+  DashboardHeader,
+  EmptyState,
+  ListRow,
+  Loader,
+  MetricRow,
+  Panel,
+  PRIMARY,
+  PRIMARY_DARK,
+  SectionTitle,
+  StatCard,
+  StatStrip,
+  money,
+  monthRange,
+  parseAttendance,
+  shortDate,
+} from "../../../components/shared/dashboard/DashboardKit";
 import { useAuth } from "../../../context/AuthContext.jsx";
+import api from "../../../services/axios";
 
-const PRIMARY = "#1BA6A6";
-const BG = "#f8fafc";
+const ACTIONS = [
+  { icon: "cart-outline", tint: "#6366f1", title: "Order for Customer", subtitle: "Place an order", route: "/receptionist/create-order" },
+  { icon: "receipt-outline", tint: "#0ea5e9", title: "Medicine Orders", subtitle: "All orders", route: "/receptionist/(tabs)/medicineorder" },
+  { icon: "people-outline", tint: "#0891b2", title: "Patients", subtitle: "Appointments", route: "/receptionist/appointments" },
+  { icon: "medkit-outline", tint: "#ef4444", title: "Book Doctor", subtitle: "New appointment", route: "/doctor-booking" },
+  { icon: "cube-outline", tint: "#8b5cf6", title: "Medicine Stock", subtitle: "Manage catalogue", route: "/receptionist/medicine" },
+  { icon: "scan-outline", tint: "#a855f7", title: "Check-In", subtitle: "Mark attendance", route: "/receptionist/face-verification" },
+  { icon: "storefront-outline", tint: "#14b8a6", title: "Medicine Store", subtitle: "Buy medicines", route: "/medicine-store" },
+  { icon: "bag-outline", tint: "#0d9488", title: "My Orders", subtitle: "Track orders", route: "/mymedicineorder" },
+  { icon: "flask-outline", tint: "#10b981", title: "Lab Tests", subtitle: "Book diagnostics", route: "/lab" },
+  { icon: "document-text-outline", tint: "#64748b", title: "My Lab Orders", subtitle: "Test reports", route: "/lab/my-orders" },
+  { icon: "wallet-outline", tint: "#d97706", title: "RM Coins", subtitle: "Balance & history", route: "/rmcoin" },
+  { icon: "pricetags-outline", tint: "#ec4899", title: "Special Offers", subtitle: "Active promos", route: "/offers" },
+];
 
 export default function ReceptionistDashboard() {
-
   const router = useRouter();
   const { user } = useAuth();
 
-  const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
+  const alive = useRef(true);
+
+  const [profile, setProfile] = useState(null);
+  const [orders, setOrders] = useState({ recent: [], total: 0 });
+  const [awaiting, setAwaiting] = useState(0);
+  const [appointments, setAppointments] = useState({ today: [], total: 0 });
+  const [attendance, setAttendance] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const todayLabel = new Date().toLocaleDateString("en-IN", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 
+  /* ================= FETCH ================= */
+
+  const load = useCallback(async () => {
+    const { from, to } = monthRange();
+
+    // Independent panels — one failing endpoint must not blank the dashboard.
+    // Counts come from the server's totalRecords rather than a page length, so
+    // they stay accurate beyond the first page.
+    const [me, recent, confirmed, today, att] = await Promise.allSettled([
+      api.get("/user/me"),
+      api.get("/medicine/order/view/all", { params: { page: 1, limit: 5 } }),
+      api.get("/medicine/order/view/all", {
+        params: { page: 1, limit: 1, orderStatus: "CONFIRMED" },
+      }),
+      api.get("/appointment/bookings", {
+        params: { page: 1, limit: 5, type: "today" },
+      }),
+      api.get("/attendance/log/me", { params: { from, to, page: 1, limit: 31 } }),
+    ]);
+
+    if (!alive.current) return;
+
+    if (me.status === "fulfilled") setProfile(me.value.data?.data || null);
+
+    if (recent.status === "fulfilled") {
+      setOrders({
+        recent: recent.value.data?.data || [],
+        total: recent.value.data?.totalRecords ?? 0,
+      });
+    }
+
+    if (confirmed.status === "fulfilled") {
+      setAwaiting(confirmed.value.data?.totalRecords ?? 0);
+    }
+
+    if (today.status === "fulfilled") {
+      setAppointments({
+        today: today.value.data?.data || [],
+        total: today.value.data?.pagination?.totalRecords ?? 0,
+      });
+    }
+
+    if (att.status === "fulfilled") {
+      setAttendance(parseAttendance(att.value.data));
+    }
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      alive.current = true;
+      load().finally(() => alive.current && setLoading(false));
+      return () => {
+        alive.current = false;
+      };
+    }, [load])
+  );
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
+
+  /* ================= DERIVED ================= */
+
+  const displayName = profile?.name || user?.name || "Receptionist";
+  const avatarUrl = profile?.faceImage?.url || user?.faceImage?.url || null;
+
   return (
-    <View style={styles.container}>
-      <StatusBar backgroundColor={PRIMARY} barStyle="light-content" />
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={PRIMARY}
+          />
+        }
+      >
+        <DashboardHeader
+          name={displayName}
+          role="RECEPTIONIST"
+          avatarUrl={avatarUrl}
+          meta={todayLabel}
+          onAvatarPress={() => router.push("/receptionist/(tabs)/profile")}
+          alert={
+            attendance && !attendance.checkedInToday
+              ? {
+                  icon: "scan-outline",
+                  text: "You haven't checked in today",
+                  onPress: () => router.push("/receptionist/face-verification"),
+                }
+              : null
+          }
+        />
 
-      <View style={{ flex: 1 }}>
-        <ScrollView showsVerticalScrollIndicator={false}>
+        <StatStrip>
+          <StatCard
+            icon="calendar-outline"
+            tint="#0891b2"
+            label="Today"
+            value={appointments.total}
+            meta="appointments"
+            onPress={() => router.push("/receptionist/appointments")}
+          />
+          <StatCard
+            icon="time-outline"
+            tint="#b45309"
+            label="Awaiting"
+            value={awaiting}
+            meta="to dispatch"
+            onPress={() => router.push("/receptionist/(tabs)/medicineorder")}
+          />
+          <StatCard
+            icon="cube-outline"
+            tint={PRIMARY_DARK}
+            label="Orders"
+            value={orders.total}
+            meta="all time"
+            onPress={() => router.push("/receptionist/(tabs)/medicineorder")}
+          />
+        </StatStrip>
 
-          {/* ================= HEADER ================= */}
+        {/* ================= TODAY ================= */}
 
-          <View style={styles.header}>
-            <View style={styles.headerRow}>
+        <Panel title="Front Desk Today">
+          {loading ? (
+            <Loader />
+          ) : (
+            <MetricRow
+              items={[
+                { label: "Appointments", value: appointments.total },
+                { label: "To dispatch", value: awaiting, tone: "#b45309" },
+                {
+                  label: "Present",
+                  value: attendance?.presentDays ?? 0,
+                  tone: PRIMARY_DARK,
+                },
+                {
+                  label: "Check-in",
+                  value: attendance?.checkedInToday ? "Done" : "Due",
+                  tone: attendance?.checkedInToday ? "#15803d" : "#b45309",
+                },
+              ]}
+            />
+          )}
+        </Panel>
 
-              {user?.profileImage ? (
-                <Image source={{ uri: user.profileImage }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Ionicons name="person" size={26} color="#94A3B8" />
-                </View>
-              )}
+        {/* ================= LATEST ORDERS ================= */}
 
-              <View>
-                <Text style={styles.greeting}>Welcome Back 👋</Text>
-                <Text style={styles.name}>{user?.name || "Receptionist"}</Text>
+        <SectionTitle
+          linkLabel="View all"
+          onLink={() => router.push("/receptionist/(tabs)/medicineorder")}
+        >
+          Latest Orders
+        </SectionTitle>
 
-                <Text style={styles.role}>
-                  {user?.roles?.[0]?.toUpperCase() || "RECEPTIONIST"}
-                </Text>
-
-                <Text style={styles.date}>{formattedDate}</Text>
-              </View>
-
-            </View>
-          </View>
-
-          {/* ================= DASHBOARD GRID ================= */}
-
-          <View style={styles.grid}>
-
-            <DashboardCard
+        <Panel flush style={{ marginTop: 0 }}>
+          {loading ? (
+            <Loader />
+          ) : orders.recent.length === 0 ? (
+            <EmptyState
               icon="cube-outline"
-              label="My Medicine Orders"
-              onPress={() => router.push("/mymedicineorder")}
+              title="No orders yet"
+              actionLabel="Place an order for a customer"
+              onPress={() => router.push("/receptionist/create-order")}
             />
+          ) : (
+            orders.recent.slice(0, 4).map((o, i) => (
+              <ListRow
+                key={String(o.orderId)}
+                image={o.medicine?.image || null}
+                icon="medkit-outline"
+                title={o.customer?.name || "Customer"}
+                subtitle={`${o.medicine?.name || "Medicine"} • ${shortDate(o.createdAt)}`}
+                amount={money(o.payableAmount)}
+                badge={o.orderStatus}
+                last={i === Math.min(orders.recent.length, 4) - 1}
+                onPress={() =>
+                  router.push({
+                    pathname: "/receptionist/(tabs)/medicineorder/[orderId]",
+                    params: { orderId: o.orderId },
+                  })
+                }
+              />
+            ))
+          )}
+        </Panel>
 
-            <DashboardCard
-              icon="storefront-outline"
-              label="Medicine Store"
-              onPress={() => router.push("/medicine-store")}
-            />
-            <DashboardCard
-              icon="flask-outline"
-              label="Lab Tests"
-              onPress={() => router.push("/lab")}
-            />
-            <DashboardCard
-              icon="receipt-outline"
-              label="My Lab Orders"
-              onPress={() => router.push("/lab/my-orders")}
-            />
+        {/* ================= TODAY'S APPOINTMENTS ================= */}
 
-            <DashboardCard
-              icon="people-outline"
-              label="Patients"
-              onPress={() => router.push("/receptionist/appointments")}
-            />
+        <SectionTitle
+          linkLabel="View all"
+          onLink={() => router.push("/receptionist/appointments")}
+        >
+          Today’s Appointments
+        </SectionTitle>
 
-            <DashboardCard
-              icon="medkit-outline"
-              label="Book Doctor"
+        <Panel flush style={{ marginTop: 0 }}>
+          {loading ? (
+            <Loader />
+          ) : appointments.today.length === 0 ? (
+            <EmptyState
+              icon="calendar-outline"
+              title="No appointments today"
+              actionLabel="Book a doctor"
               onPress={() => router.push("/doctor-booking")}
             />
+          ) : (
+            appointments.today.slice(0, 4).map((a, i) => (
+              <ListRow
+                key={String(a._id)}
+                icon="person-outline"
+                iconTint={PRIMARY}
+                title={a.patientName || "Patient"}
+                subtitle={[a.doctorId?.name && `Dr. ${a.doctorId.name}`, a.patientPhone]
+                  .filter(Boolean)
+                  .join(" • ")}
+                amount={a.appointmentTime || "-"}
+                last={i === Math.min(appointments.today.length, 4) - 1}
+                onPress={() => router.push("/receptionist/appointments")}
+              />
+            ))
+          )}
+        </Panel>
 
-            <DashboardCard
-              icon="wallet-outline"
-              label="RM Coins"
-              onPress={() => router.push("/rmcoin")}
-            />
+        {/* ================= QUICK ACTIONS ================= */}
 
-            <DashboardCard
-              icon="scan-outline"
-              label="Check-In"
-              onPress={() => router.push("/receptionist/face-verification")}
-            />
+        <SectionTitle>Quick Actions</SectionTitle>
 
-            <DashboardCard
-              icon="receipt-outline"
-              label="Medicine Orders"
-              onPress={() => router.push("/receptionist/(tabs)/medicineorder")}
-            />
-
-            <DashboardCard
-              icon="medkit-outline"
-              label="Medicine Management"
-              onPress={() => router.push("/receptionist/medicine")}
-            />
-
-            <DashboardCard
-              icon="pricetags-outline"
-              label="Special Offers"
-              onPress={() => router.push("/offers")}
-            />
-
-          </View>
-
-        </ScrollView>
-      </View>
+        <ActionGrid items={ACTIONS} onPress={(a) => router.push(a.route)} />
+      </ScrollView>
     </View>
   );
 }
-
-/* ================= CARD ================= */
-
-function DashboardCard({ icon, label, onPress }) {
-  return (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={onPress}
-      activeOpacity={0.85}
-    >
-      <View style={styles.iconBox}>
-        <Ionicons name={icon} size={22} color={PRIMARY} />
-      </View>
-
-      <Text style={styles.cardLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
-}
-
-/* ================= STYLES ================= */
-
-const styles = StyleSheet.create({
-
-  container: {
-    flex: 1,
-    backgroundColor: BG,
-
-  },
-
-  header: {
-    backgroundColor: PRIMARY,
-    padding: 20,
-    borderBottomLeftRadius: 26,
-    borderBottomRightRadius: 26,
-    paddingTop: 50,
-  },
-
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 14,
-  },
-
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-
-  avatarPlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: "#F1F5F9",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  greeting: {
-    fontSize: 12,
-    color: "#ccfbf1",
-  },
-
-  name: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#fff",
-  },
-
-  role: {
-    fontSize: 11,
-    color: "#e0fdfa",
-  },
-
-  date: {
-    fontSize: 11,
-    color: "#ccfbf1",
-    marginTop: 2,
-  },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-    padding: 20,
-    marginTop: 10,
-  },
-
-  card: {
-    width: "48%",
-    backgroundColor: "#ffffff",
-    borderRadius: 18,
-    padding: 20,
-    alignItems: "center",
-    marginBottom: 14,
-    elevation: 3,
-  },
-
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 14,
-    backgroundColor: "#ecfeff",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-
-  cardLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#334155",
-    textAlign: "center",
-  },
-
-});

@@ -18,6 +18,8 @@ import Toast from "react-native-toast-message";
 import api from "../../services/axios";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useAuth } from "../../context/AuthContext";
+import PrescriptionPicker from "../../components/shared/appointment/PrescriptionPicker";
+import { bookAppointment } from "../../utils/appointmentApi";
 
 const PURPLE = "#6b6dbf";
 const TEAL   = "#14b8a6";
@@ -44,6 +46,9 @@ export default function DoctorBookingDetail() {
     symptoms: "",
     notes: ""
   });
+
+  // Optional prescription image / PDF attached to this booking
+  const [prescription, setPrescription] = useState(null);
 
   const [dateObj, setDateObj] = useState(new Date());
   const [appointmentDate, setAppointmentDate] = useState("");
@@ -113,8 +118,14 @@ export default function DoctorBookingDetail() {
 
     try {
       setBooking(true);
-      await api.post("/appointment", payload);
-      Toast.show({ type: "success", text1: "Appointment Booked!" });
+      const result = await bookAppointment(payload, prescription);
+
+      Toast.show({
+        type: result?.warning ? "info" : "success",
+        text1: "Appointment Booked!",
+        text2: result?.warning || undefined,
+      });
+
       router.replace("/doctor-booking/my-appointments");
     } catch (e) {
       Toast.show({ type: "error", text1: e?.response?.data?.message || "Booking failed" });
@@ -224,7 +235,13 @@ export default function DoctorBookingDetail() {
         </View>
 
         <Field label="Symptoms (Optional)" value={form.symptoms} onChange={(v) => setForm({ ...form, symptoms: v })} />
-        
+
+        <PrescriptionPicker
+          value={prescription}
+          onChange={setPrescription}
+          disabled={booking}
+        />
+
         <TouchableOpacity style={styles.bookBtn} onPress={handleBook} disabled={booking}>
           <Text style={styles.bookBtnTxt}>{booking ? "Booking..." : "Confirm Appointment"}</Text>
           <Ionicons name="arrow-forward" size={18} color="#fff" />

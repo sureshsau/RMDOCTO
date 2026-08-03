@@ -265,6 +265,16 @@ function OrderCard({ order }) {
         </View>
       )}
 
+      {/* Placed at the counter by staff, not by the customer */}
+      {order.placedBy && (
+        <View style={styles.infoRow}>
+          <Ionicons name="storefront-outline" size={14} color="#64748B" />
+          <Text style={styles.metaText}>
+            Placed by {order.placedBy.name || "staff"}
+          </Text>
+        </View>
+      )}
+
       {/* ===== FOOTER ===== */}
       <View style={styles.footerRow}>
         <Text style={styles.date}>

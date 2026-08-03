@@ -23,6 +23,14 @@ export default function MedicineLayout() {
         }}
       />
 
+      {/* AGENT ALERTS */}
+      <Stack.Screen
+        name="agent-alerts"
+        options={{
+          title: "My Agent Alerts",
+        }}
+      />
+
       {/* MEDICINE LIST */}
       <Stack.Screen
         name="medicine-list"
