@@ -17,15 +17,21 @@ import { useUser } from "../../../context/UserContext";
 
 /* ================= CONSTANTS ================= */
 
-const DASHBOARDS = [
-  { key: "admin", label: "Admin Dashboard" },
-  { key: "doctor", label: "Doctor Dashboard" },
-  { key: "employee", label: "Employee Dashboard" },
-  { key: "marketing_agent", label: "Marketing Dashboard" },
-  { key: "agent", label: "Agent Dashboard" },
-  { key: "receptionist", label: "Reception Dashboard" },
-  { key: "rmrider", label: "rmrider Dashboard" },
-];
+/**
+ * Mirrors ROLE_DASHBOARD_MAP in the backend's roleAssignments.service — the
+ * server derives the dashboard from the role and ignores anything else we
+ * send, so this is display only. Picking one by hand was just a way to get
+ * the two out of sync (and to trip the "dashboard is required" error).
+ */
+const ROLE_DASHBOARD = {
+  subadmin: "Admin Dashboard",
+  doctor: "Doctor Dashboard",
+  employee: "Employee Dashboard",
+  agent: "RM Member Dashboard",
+  marketing_agent: "Marketing Dashboard",
+  receptionist: "Reception Dashboard",
+  rmrider: "RM Rider Dashboard",
+};
 
 /* ================= MAIN ================= */
 
@@ -36,15 +42,15 @@ export default function AddEmployee() {
 
   const [roles, setRoles] = useState([]);
   const [role, setRole] = useState(null);
-  const [showPermission, setShowPermission] = useState(false);
-  const [dashboard, setDashboard] = useState(null);
 
   const [form, setForm] = useState({
     name: "",
     phone: "",
   });
 
-  const [permissions, setPermissions] = useState({});
+  // Both come from the role — shown so the admin can see what they're granting
+  const dashboardLabel = role ? ROLE_DASHBOARD[role.key] || "User Dashboard" : null;
+  const rolePermissions = role?.permissions || [];
 
   /* ================= LOAD ROLES ================= */
 
@@ -59,52 +65,42 @@ export default function AddEmployee() {
         });
         return;
       }
-      setRoles(res.data);
+      // The server refuses to assign the admin role, so offering it as a chip
+      // only produces a "Create Failed" toast.
+      setRoles((res.data || []).filter((r) => r.key !== "admin"));
     })();
   }, []);
 
   /* ================= ROLE SELECT ================= */
 
-  const selectRole = (r) => {
-    setRole(r);
-    setShowPermission(true);
-
-    const map = {};
-    r.permissions.forEach((p) => (map[p] = true));
-    setPermissions(map);
-
-    if (!dashboard) {
-      setDashboard(r.key);
-    }
-  };
-
-  const togglePermission = (key) => {
-    setPermissions((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
+  const selectRole = (r) => setRole(r);
 
   /* ================= SAVE ================= */
 
   const handleSave = async () => {
-    if (!form.name || !form.phone || !role || !dashboard) {
+    if (!form.name.trim() || !form.phone.trim() || !role) {
       Toast.show({
         type: "error",
         text1: "Validation Error",
-        text2: "Name, phone, role and dashboard are required",
+        text2: "Name, phone and role are required",
       });
       return;
     }
 
+    if (!/^\d{10}$/.test(form.phone.trim())) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid phone",
+        text2: "Enter exactly 10 digits",
+      });
+      return;
+    }
+
+    // Permissions and dashboard both come from the role on the server
     const payload = {
-      name: form.name,
-      phone: form.phone,
+      name: form.name.trim(),
+      phone: form.phone.trim(),
       roles: [role.key],
-      permissions: Object.keys(permissions).filter(
-        (p) => permissions[p]
-      ),
-      dashboard,
       isActive: true,
     };
 
@@ -171,40 +167,41 @@ export default function AddEmployee() {
             ))}
           </View>
 
-          {showPermission && role && (
+          {role && (
             <View style={styles.permissionBox}>
               <Text style={styles.permissionTitle}>
-                {role.name} Permissions
+                Granted automatically
               </Text>
 
-              {role.permissions.map((p) => (
-                <PermissionItem
-                  key={p}
-                  label={p}
-                  value={permissions[p]}
-                  onToggle={() => togglePermission(p)}
-                />
-              ))}
+              <View style={styles.grantRow}>
+                <Text style={styles.grantLabel}>Dashboard</Text>
+                <Text style={styles.grantValue}>{dashboardLabel}</Text>
+              </View>
+
+              <Text style={styles.grantLabel}>
+                Permissions ({rolePermissions.length})
+              </Text>
+
+              {rolePermissions.length === 0 ? (
+                <Text style={styles.dashboardNote}>
+                  This role carries no extra permissions.
+                </Text>
+              ) : (
+                <View style={styles.permTagWrap}>
+                  {rolePermissions.map((p) => (
+                    <Text key={p} style={styles.permTag}>
+                      {p}
+                    </Text>
+                  ))}
+                </View>
+              )}
+
+              <Text style={styles.dashboardNote}>
+                The {role.name} role decides both. They apply as soon as the
+                user is created.
+              </Text>
             </View>
           )}
-
-          {/* DASHBOARD */}
-          <Section title="Dashboard Access" />
-
-          <View style={styles.roleWrap}>
-            {DASHBOARDS.map((d) => (
-              <RoleChip
-                key={d.key}
-                label={d.label}
-                selected={dashboard === d.key}
-                onPress={() => setDashboard(d.key)}
-              />
-            ))}
-          </View>
-
-          <Text style={styles.dashboardNote}>
-            This decides which dashboard UI the user can access
-          </Text>
 
           {/* SAVE */}
           <TouchableOpacity
@@ -266,30 +263,6 @@ function RoleChip({ label, selected, onPress }) {
   );
 }
 
-function PermissionItem({ label, value, onToggle }) {
-  return (
-    <TouchableOpacity
-      style={styles.permissionRow}
-      onPress={onToggle}
-    >
-      <Text style={styles.permissionLabel}>{label}</Text>
-      <View
-        style={[
-          styles.switch,
-          value && styles.switchActive,
-        ]}
-      >
-        <View
-          style={[
-            styles.knob,
-            value && { alignSelf: "flex-end" },
-          ]}
-        />
-      </View>
-    </TouchableOpacity>
-  );
-}
-
 /* ================= STYLES ================= */
 
 const styles = StyleSheet.create({
@@ -347,28 +320,32 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
     marginBottom: 12,
   },
-  permissionTitle: { fontWeight: "800", marginBottom: 10 },
+  permissionTitle: { fontWeight: "800", marginBottom: 12 },
 
-  permissionRow: {
+  grantRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingVertical: 10,
+    alignItems: "center",
+    marginBottom: 14,
   },
-  permissionLabel: { fontWeight: "600", color: "#334155" },
+  grantLabel: { fontSize: 12, fontWeight: "700", color: "#64748b" },
+  grantValue: { fontSize: 13, fontWeight: "800", color: "#6b6dbf" },
 
-  switch: {
-    width: 42,
-    height: 22,
-    backgroundColor: "#cbd5e1",
-    borderRadius: 20,
-    padding: 3,
+  permTagWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 8,
   },
-  switchActive: { backgroundColor: "#6b6dbf" },
-  knob: {
-    width: 16,
-    height: 16,
-    backgroundColor: "#fff",
-    borderRadius: 10,
+  permTag: {
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#6b6dbf",
+    backgroundColor: "#eef2ff",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    overflow: "hidden",
   },
 
   dashboardNote: {

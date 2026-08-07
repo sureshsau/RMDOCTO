@@ -239,7 +239,7 @@ export default function ManageTargets() {
       </TouchableOpacity>
 
       <View style={styles.statRow}>
-        <Stat label="Agents" value={stats.agents} />
+        <Stat label="RM Members" value={stats.agents} />
         <Stat label="Sales" value={moneyShort(stats.totalSales)} tone={TEAL_DARK} />
         <Stat label="Targets" value={stats.targets} />
         <Stat label="Achieved" value={stats.achieved} tone="#15803d" />
@@ -302,7 +302,7 @@ export default function ManageTargets() {
 
       {/* LEADERBOARD HEAD */}
       <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>Agent leaderboard</Text>
+        <Text style={styles.sectionTitle}>RM Member leaderboard</Text>
         <Text style={styles.sectionCount}>
           {search.trim() ? `${visible.length} of ${ranked.length}` : `${ranked.length}`}
         </Text>
@@ -313,7 +313,7 @@ export default function ManageTargets() {
           <Ionicons name="search" size={16} color={TEXT_S} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search agent or phone"
+            placeholder="Search RM Member or phone"
             placeholderTextColor={TEXT_S}
             value={search}
             onChangeText={setSearch}
@@ -342,7 +342,7 @@ export default function ManageTargets() {
         </TouchableOpacity>
 
         <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Agent Targets</Text>
+          <Text style={styles.headerTitle}>RM Member Targets</Text>
           <Text style={styles.headerSub}>Monthly sales goals & rewards</Text>
         </View>
 
@@ -384,8 +384,8 @@ export default function ManageTargets() {
               <Ionicons name="people-outline" size={40} color="#cbd5e1" />
               <Text style={styles.emptyTxt}>
                 {search.trim()
-                  ? "No agent matches your search"
-                  : "No agent sales recorded this month"}
+                  ? "No RM Member matches your search"
+                  : "No RM Member sales recorded this month"}
               </Text>
             </View>
           )

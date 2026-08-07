@@ -37,6 +37,14 @@ export default function MedicineLayout() {
         }}
       />
 
+      {/* EDIT MEDICINE */}
+      <Stack.Screen
+        name="edit"
+        options={{
+          title: "Edit Medicine",
+        }}
+      />
+
       {/* UPLOAD MEDICINE */}
       <Stack.Screen
         name="upload"

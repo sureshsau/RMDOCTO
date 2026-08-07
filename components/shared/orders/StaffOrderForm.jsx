@@ -70,6 +70,21 @@ function unitPricing(medicine, isAgent) {
   };
 }
 
+/**
+ * Delivery address built from the address a user gave when they registered.
+ * Agents register with GPS, so this is normally complete; the staff can still
+ * edit every field before placing the order.
+ */
+const addressFromRegistration = (person) => ({
+  fullName: person.name || "",
+  phone: person.phone || "",
+  addressLine1: person.address || "",
+  addressLine2: [person.landmark, person.city, person.state]
+    .filter(Boolean)
+    .join(", "),
+  pincode: person.pincode || "",
+});
+
 const emptyCustomer = { name: "", phone: "" };
 const emptyAddress = {
   fullName: "",
@@ -85,13 +100,25 @@ const emptyAddress = {
  * customer's own account (created on the fly if the number is new).
  */
 export default function StaffOrderForm({ ordersHref }) {
+  /* ================= MODE ================= */
+  // "customer" bills standard price, "agent" bills specialPrice. Agent mode
+  // requires picking a registered agent account — the server decides the tier
+  // from that user's role, so a free-typed number would quietly bill standard.
+  const [mode, setMode] = useState("customer");
+
   /* ================= CUSTOMER ================= */
   const [customer, setCustomer] = useState(emptyCustomer);
   const [lookup, setLookup] = useState(null); // { exists, isAgent, customer }
   const [lookingUp, setLookingUp] = useState(false);
 
+  /* ================= AGENT ================= */
+  const [agentSearch, setAgentSearch] = useState("");
+  const [agentResults, setAgentResults] = useState([]);
+  const [agentSearching, setAgentSearching] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState(null);
+
   // Agents are billed specialPrice — the quoted price must follow the tier
-  const customerIsAgent = !!lookup?.isAgent;
+  const customerIsAgent = mode === "agent" ? !!selectedAgent : !!lookup?.isAgent;
 
   /* ================= ITEMS ================= */
   const [search, setSearch] = useState("");
@@ -111,7 +138,8 @@ export default function StaffOrderForm({ ordersHref }) {
   useEffect(() => {
     const phone = customer.phone.trim();
 
-    if (!/^\d{10,15}$/.test(phone)) {
+    // Agent mode identifies the buyer through the picker, not a typed number
+    if (mode === "agent" || !/^\d{10,15}$/.test(phone)) {
       setLookup(null);
       return;
     }
@@ -131,6 +159,19 @@ export default function StaffOrderForm({ ordersHref }) {
         if (res.data?.exists && res.data.customer?.name) {
           setCustomer((c) => ({ ...c, name: c.name || res.data.customer.name }));
         }
+
+        // A typed number that belongs to an agent should fill the delivery
+        // address too — only when nothing has been entered yet, so this can
+        // never wipe out something the staff already typed.
+        const person = res.data?.customer;
+        if (person?.address) {
+          setAddress((prev) =>
+            prev.addressLine1.trim() ? prev : addressFromRegistration(person)
+          );
+          if (person.coordinates) {
+            setCoords((prev) => prev || person.coordinates);
+          }
+        }
       } catch {
         if (!cancelled) setLookup(null);
       } finally {
@@ -142,7 +183,79 @@ export default function StaffOrderForm({ ordersHref }) {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [customer.phone]);
+  }, [customer.phone, mode]);
+
+  /* ================= AGENT SEARCH ================= */
+
+  useEffect(() => {
+    if (mode !== "agent" || selectedAgent) {
+      setAgentResults([]);
+      return;
+    }
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        setAgentSearching(true);
+        const res = await api.get("/medicine/order/for-customer/agents", {
+          params: { search: agentSearch.trim(), limit: 20 },
+        });
+        if (!cancelled) setAgentResults(res.data?.data || []);
+      } catch {
+        if (!cancelled) setAgentResults([]);
+      } finally {
+        if (!cancelled) setAgentSearching(false);
+      }
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [agentSearch, mode, selectedAgent]);
+
+  /* ================= MODE SWITCH ================= */
+
+  const switchMode = (next) => {
+    if (next === mode) return;
+
+    // The buyer changes, so the price tier and the prefilled address do too
+    setMode(next);
+    setCustomer(emptyCustomer);
+    setLookup(null);
+    setSelectedAgent(null);
+    setAgentSearch("");
+    setAgentResults([]);
+    setAddress(emptyAddress);
+    setCoords(null);
+  };
+
+  const chooseAgent = (agent) => {
+    setSelectedAgent(agent);
+    setCustomer({ name: agent.name, phone: agent.phone });
+    setAgentResults([]);
+    setAgentSearch("");
+
+    // Deliver to the address captured when the agent registered. Picking an
+    // agent is explicit, so this overwrites whatever was there.
+    setAddress(addressFromRegistration(agent));
+
+    if (agent.coordinates) {
+      setCoords(agent.coordinates); // already [lng, lat]
+      Toast.show({
+        type: "success",
+        text1: "RM Member address loaded",
+        text2: "From their registration — edit it if needed",
+      });
+    } else {
+      setCoords(null);
+      Toast.show({
+        type: "info",
+        text1: "No saved location for this RM Member",
+        text2: "Capture the delivery location below",
+      });
+    }
+  };
 
   /* ================= MEDICINE SEARCH ================= */
 
@@ -292,9 +405,14 @@ export default function StaffOrderForm({ ordersHref }) {
   const phoneOk = /^\d{10,15}$/.test(customer.phone.trim());
   const deliveryPhone = (address.phone || customer.phone).trim();
 
+  // An agent order is only valid against a picked agent account
+  const buyerOk =
+    mode === "agent"
+      ? !!selectedAgent
+      : phoneOk && customer.name.trim().length >= 2;
+
   const isValid =
-    phoneOk &&
-    customer.name.trim().length >= 2 &&
+    buyerOk &&
     cart.length > 0 &&
     address.addressLine1.trim().length > 0 &&
     address.pincode.trim().length > 0 &&
@@ -342,6 +460,8 @@ export default function StaffOrderForm({ ordersHref }) {
       setCart([]);
       setCoords(null);
       setLookup(null);
+      setSelectedAgent(null);
+      setAgentSearch("");
 
       if (ordersHref) router.push(ordersHref);
     } catch (e) {
@@ -368,46 +488,168 @@ export default function StaffOrderForm({ ordersHref }) {
           contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
           keyboardShouldPersistTaps="handled"
         >
-          {/* ============ CUSTOMER ============ */}
-          <Text style={styles.section}>CUSTOMER</Text>
-          <View style={styles.card}>
-            <Field
-              label="Phone number *"
-              value={customer.phone}
-              onChangeText={(t) =>
-                setCustomer({ ...customer, phone: t.replace(/[^\d]/g, "") })
-              }
-              keyboardType="number-pad"
-              placeholder="10-digit mobile number"
-            />
+          {/* ============ ORDER FOR ============ */}
+          <Text style={styles.section}>ORDER FOR</Text>
+          <View style={styles.toggleRow}>
+            <TouchableOpacity
+              style={[styles.toggleBtn, mode === "customer" && styles.toggleActive]}
+              onPress={() => switchMode("customer")}
+            >
+              <Text
+                style={[
+                  styles.toggleTxt,
+                  mode === "customer" && styles.toggleTxtActive,
+                ]}
+              >
+                Customer
+              </Text>
+            </TouchableOpacity>
 
-            {lookingUp && <Text style={styles.hint}>Checking…</Text>}
-
-            {!lookingUp && lookup?.exists && (
-              <View style={[styles.banner, styles.bannerKnown]}>
-                <Ionicons name="person-circle-outline" size={16} color="#0F766E" />
-                <Text style={styles.bannerTxt}>
-                  Existing customer: {lookup.customer?.name || "Unnamed"}
-                </Text>
-              </View>
-            )}
-
-            {!lookingUp && lookup && !lookup.exists && (
-              <View style={[styles.banner, styles.bannerNew]}>
-                <Ionicons name="person-add-outline" size={16} color="#B45309" />
-                <Text style={[styles.bannerTxt, { color: "#B45309" }]}>
-                  New number — a customer record will be created
-                </Text>
-              </View>
-            )}
-
-            <Field
-              label="Customer name *"
-              value={customer.name}
-              onChangeText={(t) => setCustomer({ ...customer, name: t })}
-              placeholder="Full name"
-            />
+            <TouchableOpacity
+              style={[styles.toggleBtn, mode === "agent" && styles.toggleActive]}
+              onPress={() => switchMode("agent")}
+            >
+              <Text
+                style={[
+                  styles.toggleTxt,
+                  mode === "agent" && styles.toggleTxtActive,
+                ]}
+              >
+                RM Member
+              </Text>
+            </TouchableOpacity>
           </View>
+
+          {mode === "agent" ? (
+            /* ============ AGENT PICKER ============ */
+            <View style={styles.card}>
+              {selectedAgent ? (
+                <View style={styles.agentPicked}>
+                  <Ionicons name="briefcase" size={18} color="#7c3aed" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.agentPickedName}>
+                      {selectedAgent.name}
+                    </Text>
+                    <Text style={styles.agentPickedMeta}>
+                      {selectedAgent.phone}
+                      {selectedAgent.city ? ` • ${selectedAgent.city}` : ""}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      // Clear the prefilled address with them
+                      setSelectedAgent(null);
+                      setCustomer(emptyCustomer);
+                      setAddress(emptyAddress);
+                      setCoords(null);
+                    }}
+                    hitSlop={8}
+                  >
+                    <Ionicons name="close-circle" size={22} color={TEXT_S} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <>
+                  <View style={styles.searchBox}>
+                    <Ionicons name="search" size={18} color={TEXT_S} />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Search RM Member by name or phone"
+                      placeholderTextColor={TEXT_S}
+                      value={agentSearch}
+                      onChangeText={setAgentSearch}
+                    />
+                    {agentSearching && (
+                      <ActivityIndicator size="small" color={TEAL} />
+                    )}
+                  </View>
+
+                  {agentResults.map((a) => (
+                    <TouchableOpacity
+                      key={a.id}
+                      style={styles.resultRow}
+                      onPress={() => chooseAgent(a)}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.resultName}>{a.name}</Text>
+                        <Text style={styles.resultMeta}>
+                          {a.phone}
+                          {a.city ? ` • ${a.city}` : ""}
+                        </Text>
+                      </View>
+                      <Text style={styles.agentTag}>RM MEMBER</Text>
+                    </TouchableOpacity>
+                  ))}
+
+                  {!agentSearching && agentResults.length === 0 && (
+                    <Text style={styles.hint}>
+                      {agentSearch.trim()
+                        ? "No RM Member matched"
+                        : "Start typing to find an RM Member"}
+                    </Text>
+                  )}
+                </>
+              )}
+            </View>
+          ) : (
+            /* ============ CUSTOMER ============ */
+            <View style={styles.card}>
+              <Field
+                label="Phone number *"
+                value={customer.phone}
+                onChangeText={(t) =>
+                  setCustomer({ ...customer, phone: t.replace(/[^\d]/g, "") })
+                }
+                keyboardType="number-pad"
+                placeholder="10-digit mobile number"
+              />
+
+              {lookingUp && <Text style={styles.hint}>Checking…</Text>}
+
+              {!lookingUp && lookup?.exists && (
+                <View style={[styles.banner, styles.bannerKnown]}>
+                  <Ionicons
+                    name="person-circle-outline"
+                    size={16}
+                    color="#0F766E"
+                  />
+                  <Text style={styles.bannerTxt}>
+                    Existing customer: {lookup.customer?.name || "Unnamed"}
+                  </Text>
+                </View>
+              )}
+
+              {!lookingUp && lookup && !lookup.exists && (
+                <View style={[styles.banner, styles.bannerNew]}>
+                  <Ionicons name="person-add-outline" size={16} color="#B45309" />
+                  <Text style={[styles.bannerTxt, { color: "#B45309" }]}>
+                    New number — a customer record will be created
+                  </Text>
+                </View>
+              )}
+
+              {/* This number already belongs to an agent, so agent pricing
+                  applies whichever mode the staff started in */}
+              {!lookingUp && lookup?.isAgent && (
+                <View style={[styles.banner, styles.bannerAgent]}>
+                  <Ionicons name="briefcase-outline" size={16} color="#7c3aed" />
+                  <Text style={[styles.bannerTxt, { color: "#7c3aed" }]}>
+                    Registered RM Member — RM Member pricing applied
+                    {lookup.customer?.address
+                      ? ", delivery address filled from their registration"
+                      : ""}
+                  </Text>
+                </View>
+              )}
+
+              <Field
+                label="Customer name *"
+                value={customer.name}
+                onChangeText={(t) => setCustomer({ ...customer, name: t })}
+                placeholder="Full name"
+              />
+            </View>
+          )}
 
           {/* ============ MEDICINES ============ */}
           <Text style={styles.section}>MEDICINES</Text>
@@ -452,7 +694,7 @@ export default function StaffOrderForm({ ordersHref }) {
                     </Text>
 
                     {pr.isSpecial ? (
-                      <Text style={styles.priceTag}>Agent price</Text>
+                      <Text style={styles.priceTag}>RM Member price</Text>
                     ) : pr.mrp && pr.mrp > pr.base ? (
                       <Text style={styles.priceMrp}>MRP {money(pr.mrp)}</Text>
                     ) : null}
@@ -501,7 +743,7 @@ export default function StaffOrderForm({ ordersHref }) {
                   <TotalLine label="Subtotal" value={money(estimate.subtotal)} />
                   <TotalLine label="GST" value={money(estimate.gst)} />
                   {customerIsAgent && (
-                    <Text style={styles.tierNote}>Agent pricing applied</Text>
+                    <Text style={styles.tierNote}>RM Member pricing applied</Text>
                   )}
                 </View>
 
@@ -670,7 +912,54 @@ const styles = StyleSheet.create({
   },
   bannerKnown: { backgroundColor: "#CCFBF1" },
   bannerNew: { backgroundColor: "#FEF3C7" },
+  bannerAgent: { backgroundColor: "#EDE9FE" },
   bannerTxt: { fontSize: 12, fontWeight: "700", color: "#0F766E", flex: 1 },
+
+  toggleRow: {
+    flexDirection: "row",
+    backgroundColor: "#E2E8F0",
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 12,
+  },
+  toggleBtn: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 9,
+    borderRadius: 9,
+  },
+  toggleActive: {
+    backgroundColor: CARD,
+    shadowColor: "#0F172A",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
+  },
+  toggleTxt: { fontSize: 13, fontWeight: "700", color: TEXT_M },
+  toggleTxtActive: { color: TEXT_D },
+
+  agentPicked: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#F5F3FF",
+    borderRadius: 10,
+    padding: 12,
+  },
+  agentPickedName: { fontSize: 14, fontWeight: "800", color: TEXT_D },
+  agentPickedMeta: { fontSize: 11, color: TEXT_M, marginTop: 2 },
+
+  agentTag: {
+    fontSize: 9,
+    fontWeight: "900",
+    color: "#7c3aed",
+    backgroundColor: "#EDE9FE",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    overflow: "hidden",
+  },
 
   searchBox: {
     flexDirection: "row",

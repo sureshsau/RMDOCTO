@@ -18,7 +18,7 @@ import Toast from "react-native-toast-message";
 import api from "../../../services/axios.js";
 
 export default function RMCreditAdmin() {
-  const { id, name = "Agent", phone = "-", role = "-" } =
+  const { id, name = "RM Member", phone = "-", role = "-" } =
     useLocalSearchParams();
 
   const [wallet, setWallet] = useState({

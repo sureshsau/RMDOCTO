@@ -19,7 +19,7 @@ export default function PricingSection({ data, onChange }) {
       />
 
       <InputField
-        label="special price for Agent(₹)"
+        label="special price for RM Member(₹)"
         keyboard="numeric"
         value={data.marketingAgentPrice}
         onChangeText={(v) => onChange("marketingAgentPrice", v)}

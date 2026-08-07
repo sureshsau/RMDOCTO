@@ -13,6 +13,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ProfileNameEditor from "../../../components/shared/ProfileNameEditor";
 import ProfileAvatarUploader from "../../../components/shared/ProfileAvatarUploader";
 import { useAuth } from "../../../context/AuthContext";
+import { roleLabel } from "../../../utils/roleLabels";
 
 const PRIMARY = "#14b8a6";
 
@@ -78,7 +79,7 @@ export default function Profile() {
               
               <View style={styles.badgesRow}>
                 <View style={styles.roleBadge}>
-                  <Text style={styles.roleText}>{user?.roles?.[0]?.toUpperCase() || "USER"}</Text>
+                  <Text style={styles.roleText}>{roleLabel(user?.roles?.[0], "User").toUpperCase()}</Text>
                 </View>
                 {user?.kycStatus === "verified" && (
                   <View style={[styles.roleBadge, { backgroundColor: "#dcfce7" }]}>

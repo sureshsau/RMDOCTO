@@ -214,7 +214,7 @@ export default function AdminDashboard() {
 
             <StatCard
               icon="trophy-outline"
-              label="Agent Targets"
+              label="RM Member Targets"
               onPress={() => router.push("/admin/manage-targets")}
             />
 
@@ -261,7 +261,7 @@ export default function AdminDashboard() {
           <QuickAction icon="cart" label="Order for Customer" onPress={() => router.push("/admin/orders/create")} />
           <QuickAction icon="megaphone" label="Send Notification" onPress={() => router.push("/admin/notifications/send")} />
           <QuickAction icon="paper-plane" label="Sent Notifications" onPress={() => router.push("/admin/notifications")} />
-          <QuickAction icon="notifications" label="Agent Alerts" onPress={() => router.push("/admin/agent-alerts")} />
+          <QuickAction icon="notifications" label="RM Member Alerts" onPress={() => router.push("/admin/agent-alerts")} />
           <QuickAction icon="add-circle" label="Add Employee" onPress={() => router.push("/admin/employee/add")} />
           <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />

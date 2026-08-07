@@ -108,14 +108,14 @@ export default function MarketingNetwork() {
         {/* HEADER */}
         <Text style={styles.title}>Network</Text>
         <Text style={styles.subtitle}>
-          Your agent hierarchy overview
+          Your RM Member hierarchy overview
         </Text>
 
         {/* OVERVIEW */}
         <View style={styles.overviewCard}>
-          <OverviewItem label="Direct Agents" value={countDirect(roots)} />
+          <OverviewItem label="Direct RM Members" value={countDirect(roots)} />
           <Divider />
-          <OverviewItem label="Total Agents" value={countTotal(roots)} />
+          <OverviewItem label="Total RM Members" value={countTotal(roots)} />
           <Divider />
           <OverviewItem label="Levels" value={`L${maxLevel(buildLevels(roots))}`} />
         </View>
@@ -140,7 +140,7 @@ export default function MarketingNetwork() {
           onPress={() => setSelected(null)}
         >
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Agent Details</Text>
+            <Text style={styles.modalTitle}>RM Member Details</Text>
             <InfoRow label="Name" value={selected?.name} />
             <InfoRow label="Phone" value={selected?.phone} />
             <InfoRow label="Level" value={`L${selected?.level}`} />
@@ -168,7 +168,7 @@ const RootSection = ({ root, index, onPress }) => {
       {/* ROOT HEADER */}
       <View style={styles.rootHeader}>
         <Text style={styles.rootTitle}>
-          Root Agent {index + 1}
+          Root RM Member {index + 1}
         </Text>
       </View>
 

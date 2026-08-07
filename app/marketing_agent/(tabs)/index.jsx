@@ -22,11 +22,12 @@ import {
 } from "../../../components/shared/dashboard/DashboardKit";
 import { useAuth } from "../../../context/AuthContext.jsx";
 import api from "../../../services/axios";
+import { roleLabel } from "../../../utils/roleLabels";
 
 const ACTIONS = [
-  { icon: "person-add-outline", tint: "#6366f1", title: "Register Agent", subtitle: "Grow network", route: "/marketing_agent/register-agent" },
-  { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Assigned agents", route: "/marketing_agent/(tabs)/network" },
-  { icon: "notifications-outline", tint: "#ef4444", title: "Agent Alerts", subtitle: "Follow-up list", route: "/marketing_agent/agent-alerts" },
+  { icon: "person-add-outline", tint: "#6366f1", title: "Register RM Member", subtitle: "Grow network", route: "/marketing_agent/register-agent" },
+  { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Assigned RM Members", route: "/marketing_agent/(tabs)/network" },
+  { icon: "notifications-outline", tint: "#ef4444", title: "RM Member Alerts", subtitle: "Follow-up list", route: "/marketing_agent/agent-alerts" },
   { icon: "scan-outline", tint: "#8b5cf6", title: "Check-In", subtitle: "Mark attendance", route: "/marketing_agent/face-verification" },
   { icon: "storefront-outline", tint: "#14b8a6", title: "Medicine Store", subtitle: "Buy medicines", route: "/medicine-store" },
   { icon: "cube-outline", tint: "#0891b2", title: "My Orders", subtitle: "Track orders", route: "/mymedicineorder" },
@@ -108,7 +109,7 @@ export default function MarketingAgentDashboard() {
 
   /* ================= DERIVED ================= */
 
-  const displayName = profile?.name || user?.name || "Agent";
+  const displayName = profile?.name || user?.name || "RM Member";
   const avatarUrl = profile?.faceImage?.url || user?.faceImage?.url || null;
 
   const summary = network?.summary || {};
@@ -136,7 +137,7 @@ export default function MarketingAgentDashboard() {
     if (needsFollowUp > 0) {
       return {
         icon: "call-outline",
-        text: `${needsFollowUp} agent${needsFollowUp === 1 ? "" : "s"} need a follow-up call`,
+        text: `${needsFollowUp} RM Member${needsFollowUp === 1 ? "" : "s"} need a follow-up call`,
         onPress: () => router.push("/marketing_agent/agent-alerts"),
       };
     }
@@ -158,7 +159,7 @@ export default function MarketingAgentDashboard() {
       >
         <DashboardHeader
           name={displayName}
-          role="MARKETING AGENT"
+          role={roleLabel("marketing_agent").toUpperCase()}
           avatarUrl={avatarUrl}
           onAvatarPress={() => router.push("/marketing_agent/(tabs)/profile")}
           alert={headerAlert}
@@ -170,7 +171,7 @@ export default function MarketingAgentDashboard() {
             tint="#0ea5e9"
             label="Network"
             value={network?.networkSize ?? 0}
-            meta="agents assigned"
+            meta="RM Members assigned"
             onPress={() => router.push("/marketing_agent/(tabs)/network")}
           />
           <StatCard
@@ -229,7 +230,7 @@ export default function MarketingAgentDashboard() {
           ) : followUps.length === 0 ? (
             <EmptyState
               icon="checkmark-circle-outline"
-              title="Every agent is ordering"
+              title="Every RM Member is ordering"
               actionLabel="Open alerts"
               onPress={() => router.push("/marketing_agent/agent-alerts")}
             />
@@ -263,7 +264,7 @@ export default function MarketingAgentDashboard() {
             <EmptyState
               icon="trophy-outline"
               title="No orders from your network yet"
-              actionLabel="Register an agent"
+              actionLabel="Register an RM Member"
               onPress={() => router.push("/marketing_agent/register-agent")}
             />
           ) : (

@@ -11,7 +11,7 @@ export default function OrdersStackLayout() {
     >
       <Stack.Screen
         name="create"
-        options={{ title: "New Order for Customer" }}
+        options={{ title: "New Order" }}
       />
       <Stack.Screen
         name="user-orders"

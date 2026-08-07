@@ -215,7 +215,7 @@ export default function AddTest() {
             <Field label="User Price (₹) *" value={form.userPrice}  onChange={(v) => set("userPrice", v)}  keyboardType="decimal-pad" placeholder="0.00" />
           </View>
           <View style={{ flex: 1 }}>
-            <Field label="Agent Price (₹)"  value={form.agentPrice} onChange={(v) => set("agentPrice", v)} keyboardType="decimal-pad" placeholder="0.00" />
+            <Field label="RM Member Price (₹)"  value={form.agentPrice} onChange={(v) => set("agentPrice", v)} keyboardType="decimal-pad" placeholder="0.00" />
           </View>
         </View>
         <Field label="GST %" value={form.gstPercentage} onChange={(v) => set("gstPercentage", v)} keyboardType="decimal-pad" placeholder="0" />

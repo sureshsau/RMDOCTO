@@ -108,13 +108,13 @@ export default function AgentNetwork() {
         {/* ===== HEADER ===== */}
         <Text style={styles.title}>My Network</Text>
         <Text style={styles.subtitle}>
-          Agents referred by you
+          RM Members referred by you
         </Text>
 
         {/* ===== TOP HIERARCHY ===== */}
         <View style={styles.topCard}>
-          <HierarchyNode label="Marketing Agent" agent={marketingAgent} />
-          <HierarchyNode label="Parent Agent" agent={parentAgent} />
+          <HierarchyNode label="Marketing Executive" agent={marketingAgent} />
+          <HierarchyNode label="Parent RM Member" agent={parentAgent} />
           <HierarchyNode label="You" agent={self} highlight />
         </View>
 
@@ -124,7 +124,7 @@ export default function AgentNetwork() {
 
           {Array.isArray(downlineTree) && downlineTree.length === 0 && (
             <Text style={styles.emptyText}>
-              No agents under you yet
+              No RM Members under you yet
             </Text>
           )}
 
@@ -156,7 +156,7 @@ export default function AgentNetwork() {
           onPress={() => setSelected(null)}
         >
           <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Agent Details</Text>
+            <Text style={styles.modalTitle}>RM Member Details</Text>
 
             <InfoRow label="Name" value={selected?.name} />
             <InfoRow label="Phone" value={selected?.phone} />

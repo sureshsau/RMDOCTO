@@ -29,6 +29,7 @@ export default function RegisterAgent() {
     agentName: "",
     phone: "",
     address: "",
+    landmark: "",
     city: "",
     state: "",
     pincode: "",
@@ -88,7 +89,7 @@ export default function RegisterAgent() {
         Toast.show({
           type: "error",
           text1: "Permission Denied",
-          text2: "Location access is required to register agent.",
+          text2: "Location access is required to register RM Member.",
         });
         setLocLoading(false);
         return;
@@ -155,6 +156,7 @@ export default function RegisterAgent() {
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
         address: form.address || null,
+        landmark: form.landmark || null,
         city: form.city || null,
         state: form.state || null,
         pincode: form.pincode || null,
@@ -167,8 +169,8 @@ export default function RegisterAgent() {
 
       Toast.show({
         type: "success",
-        text1: "Agent Registered",
-        text2: "Agent added to your network successfully.",
+        text1: "RM Member Registered",
+        text2: "RM Member added to your network successfully.",
       });
 
       setForm({
@@ -204,7 +206,7 @@ export default function RegisterAgent() {
         {/* HEADER */}
         <View style={styles.header}>
           <Text style={styles.title}>
-            Register New Agent
+            Register New RM Member
           </Text>
           <Text style={styles.subtitle}>
             Expand your marketing network
@@ -215,7 +217,7 @@ export default function RegisterAgent() {
         <Card title="Basic Information">
           <Input
             icon="person-outline"
-            label="Agent Name *"
+            label="RM Member Name *"
             value={form.agentName}
             onChange={(v) =>
               update("agentName", v)
@@ -253,6 +255,16 @@ export default function RegisterAgent() {
                 value={form.address}
                 onChange={(v) =>
                   update("address", v)
+                }
+              />
+
+              {/* GPS can't infer this — the rider needs it to find the shop */}
+              <Input
+                icon="flag-outline"
+                label="Landmark"
+                value={form.landmark}
+                onChange={(v) =>
+                  update("landmark", v)
                 }
               />
 
@@ -310,7 +322,7 @@ export default function RegisterAgent() {
                   style={{ marginRight: 8 }}
                 />
                 <Text style={styles.submitText}>
-                  Register Agent
+                  Register RM Member
                 </Text>
               </>
             )}

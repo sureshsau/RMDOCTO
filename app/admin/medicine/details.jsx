@@ -1,5 +1,6 @@
-import { useLocalSearchParams } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
+import { useCallback, useState } from "react";
 import {
   ActivityIndicator,
   Dimensions,
@@ -8,6 +9,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -51,13 +53,16 @@ export default function MedicineDetails() {
     });
   };
 
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      await fetchMedicine();
-      setLoading(false);
-    })();
-  }, [id]);
+  // Refetch on focus so edits made on the edit screen are visible on return
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        setLoading(true);
+        await fetchMedicine();
+        setLoading(false);
+      })();
+    }, [id])
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -144,6 +149,19 @@ export default function MedicineDetails() {
             )}
             {lowStock && <Badge text="LOW STOCK" warning />}
           </View>
+
+          <TouchableOpacity
+            style={styles.editBtn}
+            onPress={() =>
+              router.push({
+                pathname: "/admin/medicine/edit",
+                params: { id },
+              })
+            }
+          >
+            <Ionicons name="create-outline" size={18} color="#fff" />
+            <Text style={styles.editBtnText}>Edit Medicine</Text>
+          </TouchableOpacity>
         </View>
 
         {medicine.description && (
@@ -323,6 +341,19 @@ const styles = StyleSheet.create({
   brand: { fontSize: 14, color: "#64748b" },
 
   badges: { flexDirection: "row", gap: 8, marginTop: 12 },
+
+  editBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    backgroundColor: "#6b6dbf",
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 16,
+  },
+
+  editBtnText: { color: "#fff", fontWeight: "800", fontSize: 14 },
 
   badge: {
     backgroundColor: "#e5e7eb",

@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -24,12 +25,25 @@ const TEXT_M = "#475569";
 const TEXT_S = "#94a3b8";
 const BORDER = "#e2e8f0";
 
+/* buildDateRange on the server accepts today | week | month | year | custom,
+   and treats anything else as all-time — so "all" needs no special casing. */
 const RANGES = [
+  { key: "all", label: "All" },
   { key: "today", label: "Today" },
-  { key: "week", label: "Week" },
-  { key: "month", label: "Month" },
-  { key: "year", label: "Year" },
+  { key: "week", label: "Weekly" },
+  { key: "month", label: "Monthly" },
+  { key: "year", label: "Yearly" },
+  { key: "custom", label: "Custom" },
 ];
+
+/** The API parses these with `new Date(...)`, so send plain YYYY-MM-DD. */
+const toApiDate = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+
+const prettyDate = (d) =>
+  d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
 const LEVELS = {
   NO_ORDERS: { label: "NO ORDERS", bg: "#fee2e2", color: "#b91c1c", icon: "alert-circle" },
@@ -69,26 +83,44 @@ export default function AgentOrderAlerts() {
   const [thresholdOpen, setThresholdOpen] = useState(false);
   const [thresholdDraft, setThresholdDraft] = useState("5000");
 
+  /* ===== CUSTOM RANGE ===== */
+  const [customFrom, setCustomFrom] = useState(null);
+  const [customTo, setCustomTo] = useState(null);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState(new Date());
+  const [draftTo, setDraftTo] = useState(new Date());
+  const [picker, setPicker] = useState(null); // "from" | "to"
+
   const load = useCallback(
     async (isRefresh = false) => {
+      // The API rejects a custom range without both dates, so wait for them
+      if (range === "custom" && (!customFrom || !customTo)) return;
+
       try {
         if (isRefresh) setRefreshing(true);
         else setLoading(true);
         setError(null);
 
+        const params = { range, lowThreshold: threshold };
+
+        if (range === "custom") {
+          params.from = toApiDate(customFrom);
+          params.to = toApiDate(customTo);
+        }
+
         const res = await api.get("/medicine/order/stats/agent-alerts", {
-          params: { range, lowThreshold: threshold },
+          params,
         });
 
         setData(res.data);
       } catch (e) {
-        setError(e?.response?.data?.message || "Failed to load agent alerts");
+        setError(e?.response?.data?.message || "Failed to load RM Member alerts");
       } finally {
         setLoading(false);
         setRefreshing(false);
       }
     },
-    [range, threshold]
+    [range, threshold, customFrom, customTo]
   );
 
   useEffect(() => {
@@ -109,7 +141,7 @@ export default function AgentOrderAlerts() {
       });
     }
 
-    Alert.alert("Call agent", `Call ${agent.name} at ${agent.phone}?`, [
+    Alert.alert("Call RM Member", `Call ${agent.name} at ${agent.phone}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Call",
@@ -119,6 +151,44 @@ export default function AgentOrderAlerts() {
           ),
       },
     ]);
+  };
+
+  const pickRange = (key) => {
+    if (key === "custom") {
+      // Seed the pickers with the current selection, or this month so far
+      const now = new Date();
+      setDraftFrom(customFrom || new Date(now.getFullYear(), now.getMonth(), 1));
+      setDraftTo(customTo || now);
+      setCustomOpen(true);
+      return;
+    }
+    setRange(key);
+  };
+
+  const applyCustomRange = () => {
+    if (draftFrom > draftTo) {
+      return Toast.show({
+        type: "error",
+        text1: "Invalid range",
+        text2: "The start date must be on or before the end date",
+      });
+    }
+
+    setCustomFrom(draftFrom);
+    setCustomTo(draftTo);
+    setRange("custom");
+    setCustomOpen(false);
+  };
+
+  const onPickDate = (event, selected) => {
+    // Android fires with type "dismissed" and no date when cancelled
+    const which = picker;
+    setPicker(null);
+
+    if (!selected || event?.type === "dismissed") return;
+
+    if (which === "from") setDraftFrom(selected);
+    else if (which === "to") setDraftTo(selected);
   };
 
   const applyThreshold = () => {
@@ -140,7 +210,10 @@ export default function AgentOrderAlerts() {
   const listHeader = (
     <View style={styles.listHeader}>
       <Text style={styles.subtitle}>
-        {data?.scope === "all" ? "All agents" : "Agents you registered"}
+        {data?.scope === "all" ? "All RM Members" : "RM Members you registered"}
+        {range === "custom" && customFrom && customTo
+          ? ` · ${prettyDate(customFrom)} – ${prettyDate(customTo)}`
+          : ""}
       </Text>
 
       {/* ===== RANGE ===== */}
@@ -149,7 +222,7 @@ export default function AgentOrderAlerts() {
           <TouchableOpacity
             key={r.key}
             style={[styles.chip, range === r.key && styles.chipActive]}
-            onPress={() => setRange(r.key)}
+            onPress={() => pickRange(r.key)}
           >
             <Text style={[styles.chipTxt, range === r.key && styles.chipTxtActive]}>
               {r.label}
@@ -161,7 +234,7 @@ export default function AgentOrderAlerts() {
       {/* ===== SUMMARY ===== */}
       {summary && (
         <View style={styles.summaryRow}>
-          <Stat label="Agents" value={summary.totalAgents} />
+          <Stat label="RM Members" value={summary.totalAgents} />
           <Stat label="No orders" value={summary.noOrderAgents} tone="#b91c1c" />
           <Stat label="Low" value={summary.lowAgents} tone="#b45309" />
           <Stat label="Value" value={money(summary.totalOrderValue)} tone={TEAL} />
@@ -231,8 +304,8 @@ export default function AgentOrderAlerts() {
               <Ionicons name="people-outline" size={44} color={TEXT_S} />
               <Text style={styles.emptyTxt}>
                 {filter === "ALL"
-                  ? "No agents in your network yet"
-                  : "No agents match this filter"}
+                  ? "No RM Members in your network yet"
+                  : "No RM Members match this filter"}
               </Text>
             </View>
           )
@@ -240,13 +313,68 @@ export default function AgentOrderAlerts() {
         renderItem={({ item }) => <AgentCard agent={item} onCall={call} />}
       />
 
+      {/* ===== CUSTOM RANGE MODAL ===== */}
+      <Modal visible={customOpen} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Custom period</Text>
+            <Text style={styles.modalHint}>
+              Show what each RM Member ordered between two dates.
+            </Text>
+
+            <Text style={styles.dateLabel}>From</Text>
+            <TouchableOpacity
+              style={styles.dateBtn}
+              onPress={() => setPicker("from")}
+            >
+              <Ionicons name="calendar-outline" size={15} color={TEAL} />
+              <Text style={styles.dateTxt}>{prettyDate(draftFrom)}</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.dateLabel}>To</Text>
+            <TouchableOpacity
+              style={styles.dateBtn}
+              onPress={() => setPicker("to")}
+            >
+              <Ionicons name="calendar-outline" size={15} color={TEAL} />
+              <Text style={styles.dateTxt}>{prettyDate(draftTo)}</Text>
+            </TouchableOpacity>
+
+            {picker && (
+              <DateTimePicker
+                value={picker === "from" ? draftFrom : draftTo}
+                mode="date"
+                display="default"
+                maximumDate={new Date()}
+                onChange={onPickDate}
+              />
+            )}
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalCancel]}
+                onPress={() => {
+                  setPicker(null);
+                  setCustomOpen(false);
+                }}
+              >
+                <Text style={styles.modalCancelTxt}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalBtn} onPress={applyCustomRange}>
+                <Text style={styles.modalApplyTxt}>Apply</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {/* ===== THRESHOLD MODAL ===== */}
       <Modal visible={thresholdOpen} transparent animationType="fade">
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>Low-order threshold</Text>
             <Text style={styles.modalHint}>
-              Agents ordering below this amount in the selected period are flagged LOW.
+              RM Members ordering below this amount in the selected period are flagged LOW.
             </Text>
 
             <TextInput
@@ -359,9 +487,16 @@ const styles = StyleSheet.create({
   listHeader: { marginHorizontal: -16, marginBottom: 6 },
   subtitle: { fontSize: 12, color: TEXT_M, paddingHorizontal: 16, marginBottom: 10 },
 
-  chipRow: { flexDirection: "row", gap: 8, paddingHorizontal: 16, marginBottom: 12 },
+  /* Six ranges no longer fit on one line on a small phone */
+  chipRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 12,
+  },
   chip: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     paddingVertical: 7,
     borderRadius: 999,
     backgroundColor: "#e2e8f0",
@@ -499,6 +634,25 @@ const styles = StyleSheet.create({
     color: TEXT_D,
     marginTop: 14,
   },
+  dateLabel: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: TEXT_M,
+    marginTop: 14,
+    marginBottom: 6,
+  },
+  dateBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  dateTxt: { fontSize: 14, fontWeight: "700", color: TEXT_D },
+
   modalActions: { flexDirection: "row", gap: 10, marginTop: 16 },
   modalBtn: {
     flex: 1,

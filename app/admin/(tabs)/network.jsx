@@ -206,7 +206,7 @@ function NetworkPanel({ personId, mode }) {
         <View style={styles.panelEmpty}>
           <Ionicons name="git-network-outline" size={36} color={TEXT_SOFT} />
           <Text style={styles.panelEmptyText}>
-            {search ? "No match found" : "No downline agents yet"}
+            {search ? "No match found" : "No downline RM Members yet"}
           </Text>
         </View>
       ) : (
@@ -487,11 +487,11 @@ export default function AdminNetworkScreen() {
           ]} />
           <TouchableOpacity style={styles.toggleOption} onPress={() => switchMode("agent")} activeOpacity={0.8}>
             <Ionicons name="person-outline" size={13} color={mode === "agent" ? "#fff" : TEXT_MID} />
-            <Text style={[styles.toggleText, mode === "agent" && { color: "#fff" }]}>Agent</Text>
+            <Text style={[styles.toggleText, mode === "agent" && { color: "#fff" }]}>RM Member</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.toggleOption} onPress={() => switchMode("marketing")} activeOpacity={0.8}>
             <Ionicons name="briefcase-outline" size={13} color={mode === "marketing" ? "#fff" : TEXT_MID} />
-            <Text style={[styles.toggleText, mode === "marketing" && { color: "#fff" }]}>Marketing Agent</Text>
+            <Text style={[styles.toggleText, mode === "marketing" && { color: "#fff" }]}>Marketing Executive</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -539,7 +539,7 @@ export default function AdminNetworkScreen() {
             <View style={styles.center}>
               <Ionicons name="people-outline" size={46} color={TEXT_SOFT} />
               <Text style={styles.emptyTitle}>
-                {search ? "No results found" : mode === "agent" ? "No agents found" : "No marketing agents found"}
+                {search ? "No results found" : mode === "agent" ? "No RM Members found" : "No Marketing Executives found"}
               </Text>
             </View>
           }

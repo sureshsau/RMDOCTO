@@ -16,6 +16,7 @@ import { useMedicineCart } from "../../context/MedicineCartContext";
 import { useAuth } from "../../context/AuthContext";
 import UserInfo from "../../components/shared/medicine/checkout/UserInfo";
 import { useState, useEffect } from "react";
+import { hasAgentPricing } from "../../utils/roles";
 
 export default function CartScreen() {
   const {
@@ -30,7 +31,7 @@ export default function CartScreen() {
   } = useMedicineCart();
 
   const { user } = useAuth();
-  const isAgent = user?.roles?.some((r) => r.toLowerCase().includes("agent")) ?? false;
+  const isAgent = hasAgentPricing(user);
 
   const { subtotal, gstTotal, payableAmount } = useMemo(
     () => calculatePricing(isAgent),

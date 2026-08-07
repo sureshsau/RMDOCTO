@@ -109,6 +109,27 @@ export const MedicineProvider = ({ children }) => {
     }
   };
 
+  // ---------------- UPDATE MEDICINE ----------------
+  // editMedicineService merges whatever keys it is given, so send only the
+  // fields the edit form actually changed.
+  const updateMedicine = async (medicineId, payload) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const res = await api.put(`/medicines/${medicineId}`, payload);
+
+      return { success: true, data: res.data.data };
+    } catch (err) {
+      return {
+        success: false,
+        error: handleError(err, "Failed to update medicine"),
+      };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // ---------------- DELETE ----------------
   const deleteMedicine = async (medicineId) => {
     try {
@@ -136,6 +157,7 @@ export const MedicineProvider = ({ children }) => {
 
         // CRUD
         addMedicine,
+        updateMedicine,
         deleteMedicine,
         getMedicines,
         getMedicineById,

@@ -15,6 +15,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 import Toast from "react-native-toast-message";
 import api from "../../../services/axios";
+import { roleLabel } from "../../../utils/roleLabels";
 
 export default function AdminKycDetails() {
   const { userStr } = useLocalSearchParams();
@@ -100,7 +101,7 @@ export default function AdminKycDetails() {
             )}
             <View style={{ flex: 1, marginLeft: 16 }}>
               <Text style={styles.nameText}>{user.name}</Text>
-              <Text style={styles.roleText}>{user.roles?.[0]?.toUpperCase()}</Text>
+              <Text style={styles.roleText}>{roleLabel(user.roles?.[0], "User").toUpperCase()}</Text>
               <View style={[
                 styles.statusBadge, 
                 user.kycStatus === "verified" ? { backgroundColor: "#dcfce7" } 
@@ -157,7 +158,7 @@ export default function AdminKycDetails() {
               {user.kycDocuments.map((doc, idx) => (
                 <View key={idx} style={{ alignItems: "center", backgroundColor: "#f8fafc", padding: 16, borderRadius: 12 }}>
                   <Text style={{ fontSize: 14, fontWeight: "bold", color: "#64748b", marginBottom: 10 }}>
-                    {doc.documentType === "agent_picture" ? "Agent Photo" : doc.documentType === "id_document_front" ? "ID Document Front" : doc.documentType === "id_document_back" ? "ID Document Back" : `Document ${idx + 1}`}
+                    {doc.documentType === "agent_picture" ? "RM Member Photo" : doc.documentType === "id_document_front" ? "ID Document Front" : doc.documentType === "id_document_back" ? "ID Document Back" : `Document ${idx + 1}`}
                   </Text>
                   <Image 
                     source={{ uri: doc.url }} 

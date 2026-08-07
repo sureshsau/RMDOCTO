@@ -27,7 +27,7 @@ export default function MedicineLayout() {
       <Stack.Screen
         name="agent-alerts"
         options={{
-          title: "My Agent Alerts",
+          title: "My RM Member Alerts",
         }}
       />
 

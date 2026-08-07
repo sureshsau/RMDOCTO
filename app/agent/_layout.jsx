@@ -41,7 +41,7 @@ export default function AgentLayout() {
           <Stack.Screen
             name="register"
             options={{
-              title: "Register Agent",
+              title: "Register RM Member",
             }}
           />
 

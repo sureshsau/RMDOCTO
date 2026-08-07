@@ -27,6 +27,7 @@ export default function RegisterAgent() {
     agentName: "",
     phone: "",
     address: "",
+    landmark: "",
     city: "",
     state: "",
     pincode: "",
@@ -144,7 +145,7 @@ export default function RegisterAgent() {
         type: "error",
         text1: "Missing Required Fields",
         text2:
-          "Agent name, phone and location are required",
+          "RM Member name, phone and location are required",
       });
       return;
     }
@@ -158,6 +159,7 @@ export default function RegisterAgent() {
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
         address: form.address || null,
+        landmark: form.landmark || null,
         city: form.city || null,
         state: form.state || null,
         pincode: form.pincode || null,
@@ -167,8 +169,8 @@ export default function RegisterAgent() {
 
       Toast.show({
         type: "success",
-        text1: "Agent Registered",
-        text2: "Agent added successfully",
+        text1: "RM Member Registered",
+        text2: "RM Member added successfully",
       });
 
       setForm({
@@ -204,17 +206,17 @@ export default function RegisterAgent() {
         {/* HEADER */}
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>
-            Register Agent
+            Register RM Member
           </Text>
           <Text style={styles.pageSub}>
-            Add a new agent under you
+            Add a new RM Member under you
           </Text>
         </View>
 
         {/* BASIC */}
         <Section title="Basic Information">
           <Input
-            label="Agent Name *"
+            label="RM Member Name *"
             value={form.agentName}
             onChange={(v) =>
               update("agentName", v)
@@ -258,6 +260,14 @@ export default function RegisterAgent() {
             value={form.address}
             onChange={(v) =>
               update("address", v)
+            }
+          />
+          {/* GPS can't infer this — the rider needs it to find the shop */}
+          <Input
+            label="Landmark"
+            value={form.landmark}
+            onChange={(v) =>
+              update("landmark", v)
             }
           />
           <TwoCol>
@@ -308,14 +318,14 @@ export default function RegisterAgent() {
                   color="#fff"
                 />
                 <Text style={styles.submitText}>
-                  Register Agent
+                  Register RM Member
                 </Text>
               </>
             )}
           </TouchableOpacity>
 
           <Text style={styles.footerNote}>
-            Agent will remain inactive until approved
+            RM Member will remain inactive until approved
           </Text>
         </View>
 

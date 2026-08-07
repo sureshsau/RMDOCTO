@@ -100,7 +100,7 @@ export default function MedicineCard({ medicine, onDeleted, detailsPath = "/admi
 
         <View style={styles.agentBadge}>
           <Text style={styles.agentText}>
-            Agent ₹{specialPrice}
+            RM Member ₹{specialPrice}
           </Text>
         </View>
       </View>

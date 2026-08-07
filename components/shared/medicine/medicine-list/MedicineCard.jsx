@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useAuth } from "../../../../context/AuthContext";
 import { useMedicineCart } from "../../../../context/MedicineCartContext";
+import { hasAgentPricing } from "../../../../utils/roles";
 
 export default function MedicineCard({ medicine }) {
   const item = medicine;
@@ -19,10 +20,7 @@ export default function MedicineCard({ medicine }) {
     useMedicineCart();
   /* ================= ROLE LOGIC ================= */
 
-  const isAgent =
-    user?.roles?.some((r) =>
-      r.toLowerCase().includes("agent")
-    ) ?? false;
+  const isAgent = hasAgentPricing(user);
 
   const price = isAgent
     ? item.specialPrice ?? item.price ?? 0

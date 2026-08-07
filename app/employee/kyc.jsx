@@ -319,7 +319,7 @@ export default function EmployeeKycScreen() {
         />
 
 
-        {/* Section 1: Agent Picture */}
+        {/* Section 1: RM Member Picture */}
         <Text style={styles.sectionLabel}>3. Live Selfie</Text>
         <View style={styles.uploadSection}>
           {agentPicture ? (

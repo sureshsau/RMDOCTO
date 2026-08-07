@@ -59,7 +59,7 @@ export default function _layout() {
       <Stack.Screen
         name="agent-alerts"
         options={{
-          title: "Agent Alerts",
+          title: "RM Member Alerts",
         }}
       />
       <Stack.Screen

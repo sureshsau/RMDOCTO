@@ -18,6 +18,7 @@ import Toast from "react-native-toast-message";
 
 import { useNotifications } from "../../../context/NotificationContext";
 import api from "../../../services/axios";
+import { dashboardLabel } from "../../../utils/roleLabels";
 
 const PRIMARY = "#6b6dbf";
 
@@ -26,8 +27,8 @@ const ROLE_OPTIONS = [
   { key: "doctor", label: "Doctors", icon: "medkit-outline" },
   { key: "receptionist", label: "Receptionists", icon: "people-outline" },
   { key: "employee", label: "Employees", icon: "briefcase-outline" },
-  { key: "agent", label: "Agents", icon: "person-outline" },
-  { key: "marketing_agent", label: "Marketing Agents", icon: "megaphone-outline" },
+  { key: "agent", label: "RM Members", icon: "person-outline" },
+  { key: "marketing_agent", label: "Marketing Executives", icon: "megaphone-outline" },
   { key: "rmrider", label: "RM Riders", icon: "bicycle-outline" },
   { key: "user", label: "Patients / Users", icon: "person-circle-outline" },
   { key: "admin", label: "Admins", icon: "shield-outline" },
@@ -288,7 +289,7 @@ export default function SendNotification() {
               <View style={styles.infoBox}>
                 <Ionicons name="people" size={18} color={PRIMARY} />
                 <Text style={styles.infoText}>
-                  Every active user — doctors, receptionists, employees, agents,
+                  Every active user — doctors, receptionists, employees, RM Members,
                   riders and patients — will receive this.
                 </Text>
               </View>
@@ -362,7 +363,7 @@ export default function SendNotification() {
                           </Text>
                           <Text style={styles.userMeta}>
                             {u.phone}
-                            {u.dashboard ? ` · ${u.dashboard}` : ""}
+                            {u.dashboard ? ` · ${dashboardLabel(u.dashboard)}` : ""}
                           </Text>
                         </View>
                         <Ionicons

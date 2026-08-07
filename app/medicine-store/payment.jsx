@@ -8,6 +8,7 @@ import { useMedicineCart } from "../../context/MedicineCartContext";
 import { useRMCredit } from "../../context/RMCreditContext";
 import { useAuth } from "../../context/AuthContext";
 import api from "../../services/axios";
+import { hasAgentPricing } from "../../utils/roles";
 
 export default function PaymentScreen() {
   const {
@@ -25,7 +26,7 @@ export default function PaymentScreen() {
   const [paymentMode, setPaymentMode] = useState("COD");
   const [rmCoinBalance, setRmCoinBalance] = useState(0);
   const [coinLoading, setCoinLoading] = useState(true);
-  const isAgent = user?.roles?.some((r) => r.toLowerCase().includes("agent")) ?? false;
+  const isAgent = hasAgentPricing(user);
 
   const { subtotal, payableAmount } = useMemo(() => calculatePricing(isAgent), [items, isAgent]);
 

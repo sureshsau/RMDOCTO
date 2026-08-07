@@ -92,7 +92,7 @@ export default function RMCreditHistory() {
               pathname: "/admin/rmcredit/details",
               params: {
                 id: item.agent.id,
-                name: item.agent.name || "Unknown Agent",
+                name: item.agent.name || "Unknown RM Member",
                 phone: item.agent.phone || "",
               },
             });
@@ -101,7 +101,7 @@ export default function RMCreditHistory() {
       >
         <View style={styles.cardHeader}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.agentName}>{item.agent?.name || "Unknown Agent"}</Text>
+            <Text style={styles.agentName}>{item.agent?.name || "Unknown RM Member"}</Text>
             {item.agent?.phone ? (
               <Text style={styles.agentPhone}>{item.agent.phone}</Text>
             ) : null}

@@ -7,7 +7,14 @@ import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View }
 import Toast from "react-native-toast-message";
 import { getToken } from "../../../utils/secureStorage";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL;
+/**
+ * EXPO_PUBLIC_API_URL may or may not carry a trailing slash. Axios collapses
+ * that when it joins baseURL to a path, but these URLs are built by hand and
+ * go through FileSystem.downloadAsync, which sends them verbatim — and Express
+ * does not match a path with a doubled leading slash, so `//medicine/order/…`
+ * came back 404 while every axios call to the same server worked.
+ */
+const API_BASE = (process.env.EXPO_PUBLIC_API_URL || "").replace(/\/+$/, "");
 
 export default function InvoiceGenerator({ order }) {
   const [downloadLoading, setDownloadLoading] = useState(false);
@@ -17,10 +24,13 @@ export default function InvoiceGenerator({ order }) {
     return null;
   }
 
+  const invoiceUrl = `${API_BASE}/medicine/order/${
+    order._id || order.orderId
+  }/invoice`;
+
   /* ================= CORE: Fetch PDF from Backend ================= */
   const fetchInvoicePdf = async () => {
     const token = await getToken();
-    const invoiceUrl = `${API_BASE}/medicine/order/${order._id || order.orderId}/invoice`;
     const fileName = `Invoice_${order.orderId.slice(-6)}.pdf`;
     const fileUri = FileSystem.cacheDirectory + fileName;
 
@@ -42,7 +52,6 @@ export default function InvoiceGenerator({ order }) {
     try {
       setDownloadLoading(true);
       const token = await getToken();
-      const invoiceUrl = `${API_BASE}/medicine/order/${order._id || order.orderId}/invoice`;
 
       // Ensure Invoices folder exists in app's private document directory
       const invoiceDir = FileSystem.documentDirectory + "Invoices/";

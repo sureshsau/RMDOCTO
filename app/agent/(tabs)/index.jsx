@@ -20,11 +20,12 @@ import {
   shortDate,
 } from "../../../components/shared/dashboard/DashboardKit";
 import { useAuth } from "../../../context/AuthContext";
+import { roleLabel } from "../../../utils/roleLabels";
 import { useRMCredit } from "../../../context/RMCreditContext";
 import api from "../../../services/axios";
 
 const ACTIONS = [
-  { icon: "person-add-outline", tint: "#6366f1", title: "Register Agent", subtitle: "Grow downline", route: "/agent/register" },
+  { icon: "person-add-outline", tint: "#6366f1", title: "Register RM Member", subtitle: "Grow downline", route: "/agent/register" },
   { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Team tree", route: "/agent/(tabs)/network" },
   { icon: "trophy-outline", tint: "#f59e0b", title: "My Targets", subtitle: "Rewards", route: "/agent/targets" },
   { icon: "pricetags-outline", tint: "#ec4899", title: "Offers", subtitle: "Active promos", route: "/offers" },
@@ -100,7 +101,7 @@ export default function AgentDashboard() {
 
   /* ================= DERIVED ================= */
 
-  const displayName = profile?.name || user?.name || "Agent";
+  const displayName = profile?.name || user?.name || "RM Member";
   const avatarUrl = profile?.faceImage?.url || user?.faceImage?.url || null;
 
   const creditExpiring = (() => {
@@ -124,7 +125,7 @@ export default function AgentDashboard() {
       >
         <DashboardHeader
           name={displayName}
-          role="AGENT"
+          role={roleLabel("agent").toUpperCase()}
           avatarUrl={avatarUrl}
           onAvatarPress={() => router.push("/agent/(tabs)/profile")}
           alert={

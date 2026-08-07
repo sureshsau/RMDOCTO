@@ -23,6 +23,7 @@ import Toast from "react-native-toast-message";
 import { useRBAC } from "../../../context/RABACContext";
 import { useUser } from "../../../context/UserContext";
 import api from "../../../services/axios.js";
+import { ROLE_LABELS, roleLabel, dashboardLabel } from "../../../utils/roleLabels";
 
 /* =============== ACTIONS CONFIG =============== */
 // Edit these arrays to change available actions per role
@@ -104,8 +105,8 @@ const ASSIGNABLE_ROLES = [
   { key: "doctor", label: "Doctor", icon: "medkit-outline" },
   { key: "receptionist", label: "Receptionist", icon: "desktop-outline" },
   { key: "rmrider", label: "RM Rider", icon: "bicycle-outline" },
-  { key: "agent", label: "Agent", icon: "people-outline" },
-  { key: "marketing_agent", label: "Marketing Agent", icon: "megaphone-outline" },
+  { key: "agent", label: "RM Member", icon: "people-outline" },
+  { key: "marketing_agent", label: "Marketing Executive", icon: "megaphone-outline" },
   { key: "employee", label: "Employee", icon: "briefcase-outline" },
   { key: "subadmin", label: "Sub Admin", icon: "shield-outline" },
   { key: "user", label: "Customer", icon: "person-outline" },
@@ -120,7 +121,7 @@ export default function Employees() {
   const [currentKycIndex, setCurrentKycIndex] = useState(0);
 
   const [users, setUsers] = useState([]);
-  const [roles, setRoles] = useState(["All"]);
+  const [roles, setRoles] = useState([]); // role keys seeded in the DB
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [refreshing, setRefreshing] = useState(false);
@@ -327,7 +328,7 @@ export default function Employees() {
     const res = await fetchRoles();
     if (!res.success) return;
 
-    setRoles(["All", ...res.data.map((r) => r.key)]);
+    setRoles(res.data.map((r) => r.key));
   };
 
   useEffect(() => {
@@ -343,18 +344,38 @@ export default function Employees() {
 
   /* ================= FILTER ================= */
 
+  /**
+   * The roles collection only holds a few seeded documents, but users exist
+   * with roles that were never seeded — filtering off that list alone left
+   * those people unreachable. Show every known role, plus anything actually
+   * present on a user, so nothing can hide.
+   */
+  const roleFilters = useMemo(() => {
+    const keys = new Set([
+      ...Object.keys(ROLE_LABELS),
+      ...roles,
+      ...users.map((u) => u.roles?.[0]).filter(Boolean),
+    ]);
+    return ["All", ...keys];
+  }, [roles, users]);
+
   const filteredEmployees = useMemo(() => {
+    const q = search.toLowerCase();
+
     return users.filter((u) => {
       const role = u.roles?.[0] || "";
       const dashboard = u.dashboard || "";
 
+      // Match the display name too, so searching "RM Member" works and not
+      // just the underlying "agent" key
       const matchSearch =
-        u.name.toLowerCase().includes(search.toLowerCase()) ||
-        role.toLowerCase().includes(search.toLowerCase()) ||
-        dashboard.toLowerCase().includes(search.toLowerCase());
+        u.name.toLowerCase().includes(q) ||
+        role.toLowerCase().includes(q) ||
+        roleLabel(role, "").toLowerCase().includes(q) ||
+        dashboard.toLowerCase().includes(q) ||
+        dashboardLabel(dashboard, "").toLowerCase().includes(q);
 
-      const matchFilter =
-        filter === "All" || role === filter;
+      const matchFilter = filter === "All" || role === filter;
 
       return matchSearch && matchFilter;
     });
@@ -400,7 +421,8 @@ export default function Employees() {
         return Toast.show({
           type: "error",
           text1: "Could not add user",
-          text2: res.error,
+          text2: res.error || "The server rejected the request",
+          visibilityTime: 5000,
         });
       }
 
@@ -431,6 +453,19 @@ export default function Employees() {
       }
 
       await loadUsers();
+    } catch (err) {
+      // Without this the modal just sat there on any unexpected throw —
+      // including one from loadUsers, after the user had already been created
+      console.error("Add user failed:", err);
+      Toast.show({
+        type: "error",
+        text1: "Could not add user",
+        text2:
+          err?.response?.data?.message ||
+          err?.message ||
+          "Unexpected error — check the API server",
+        visibilityTime: 5000,
+      });
     } finally {
       setAddLoading(false);
     }
@@ -768,7 +803,7 @@ export default function Employees() {
                   }}
                 >
                   <Text style={styles.advancedTxt}>
-                    Need custom permissions? Use the full form →
+                    See what each role grants? Use the full form →
                   </Text>
                 </TouchableOpacity>
               </ScrollView>
@@ -806,7 +841,7 @@ export default function Employees() {
       {/* FILTER */}
       <View style={styles.filterRow}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {roles.map((type) => (
+          {roleFilters.map((type) => (
             <TouchableOpacity
               key={type}
               onPress={() => setFilter(type)}
@@ -821,7 +856,7 @@ export default function Employees() {
                   filter === type && styles.filterTextActive,
                 ]}
               >
-                {type}
+                {type === "All" ? "All" : roleLabel(type)}
               </Text>
             </TouchableOpacity>
           ))}
@@ -945,7 +980,7 @@ function Stat({ label, value }) {
 }
 
 function EmployeeCard({ user, onOpenActions }) {
-  const role = user.roles?.[0] || "Staff";
+  const role = roleLabel(user.roles?.[0], "Staff");
   const status = user.isActive ? "Active" : "Inactive";
 
   return (
@@ -1002,7 +1037,7 @@ function EmployeeCard({ user, onOpenActions }) {
             )}
           </View>
           <Text style={styles.meta}>
-            {role} • {user.dashboard}
+            {role} • {dashboardLabel(user.dashboard)}
           </Text>
           <Text style={styles.meta}>
             {user.phone}

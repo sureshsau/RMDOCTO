@@ -282,7 +282,7 @@ export default function MarketingAgentKycScreen() {
         </TouchableOpacity>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Marketing Agent KYC</Text>
+          <Text style={styles.title}>Marketing Executive KYC</Text>
           <Text style={styles.subtitle}>
             Please provide your details, a live picture of yourself and a valid ID document (Aadhar/Voter/PAN).
           </Text>
@@ -319,7 +319,7 @@ export default function MarketingAgentKycScreen() {
         />
 
 
-        {/* Section 1: Agent Picture */}
+        {/* Section 1: RM Member Picture */}
         <Text style={styles.sectionLabel}>3. Live Selfie</Text>
         <View style={styles.uploadSection}>
           {agentPicture ? (
