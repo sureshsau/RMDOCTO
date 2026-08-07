@@ -83,6 +83,12 @@ export default function _layout() {
         options={{ headerShown: false }}
       />
       
+      {/* RM MEMBER MEET */}
+      <Stack.Screen
+        name="meet"
+        options={{ headerShown: false }}
+      />
+
       {/* KYC */}
       <Stack.Screen
         name="kyc/[id]"

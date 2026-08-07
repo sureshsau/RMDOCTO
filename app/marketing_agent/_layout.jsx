@@ -31,6 +31,14 @@ export default function MedicineLayout() {
         }}
       />
 
+      {/* RM MEMBER MEET */}
+      <Stack.Screen
+        name="meet"
+        options={{
+          headerShown: false,
+        }}
+      />
+
       {/* MEDICINE LIST */}
       <Stack.Screen
         name="medicine-list"

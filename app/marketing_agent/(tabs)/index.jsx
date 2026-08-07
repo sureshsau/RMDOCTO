@@ -25,6 +25,7 @@ import api from "../../../services/axios";
 import { roleLabel } from "../../../utils/roleLabels";
 
 const ACTIONS = [
+  { icon: "walk-outline", tint: "#14b8a6", title: "Meet Plan", subtitle: "Visit RM Members", route: "/marketing_agent/meet" },
   { icon: "person-add-outline", tint: "#6366f1", title: "Register RM Member", subtitle: "Grow network", route: "/marketing_agent/register-agent" },
   { icon: "git-network-outline", tint: "#0ea5e9", title: "My Network", subtitle: "Assigned RM Members", route: "/marketing_agent/(tabs)/network" },
   { icon: "notifications-outline", tint: "#ef4444", title: "RM Member Alerts", subtitle: "Follow-up list", route: "/marketing_agent/agent-alerts" },
@@ -47,6 +48,7 @@ export default function MarketingAgentDashboard() {
   const [network, setNetwork] = useState(null);
   const [alerts, setAlerts] = useState(null);
   const [attendance, setAttendance] = useState(null);
+  const [meet, setMeet] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -56,7 +58,7 @@ export default function MarketingAgentDashboard() {
     const { from, to } = monthRange();
 
     // Independent panels — one failing endpoint must not blank the dashboard
-    const [me, net, alert, att] = await Promise.allSettled([
+    const [me, net, alert, att, meets] = await Promise.allSettled([
       api.get("/user/me"),
       api.get("/medicine/order/stats/marketing-agent/network", {
         params: { range: "month" },
@@ -65,6 +67,7 @@ export default function MarketingAgentDashboard() {
         params: { range: "month" },
       }),
       api.get("/attendance/log/me", { params: { from, to, page: 1, limit: 31 } }),
+      api.get("/visits/summary", { params: { range: "month" } }),
     ]);
 
     if (!alive.current) return;
@@ -89,6 +92,8 @@ export default function MarketingAgentDashboard() {
     if (att.status === "fulfilled") {
       setAttendance(parseAttendance(att.value.data));
     }
+
+    if (meets.status === "fulfilled") setMeet(meets.value.data?.data || null);
   }, []);
 
   useFocusEffect(
@@ -132,6 +137,13 @@ export default function MarketingAgentDashboard() {
         icon: "scan-outline",
         text: "You haven't checked in today",
         onPress: () => router.push("/marketing_agent/face-verification"),
+      };
+    }
+    if (meet?.pending > 0) {
+      return {
+        icon: "walk-outline",
+        text: `${meet.pending} RM Member${meet.pending === 1 ? "" : "s"} still to meet this month`,
+        onPress: () => router.push("/marketing_agent/meet"),
       };
     }
     if (needsFollowUp > 0) {
@@ -208,6 +220,31 @@ export default function MarketingAgentDashboard() {
                 {
                   label: "Present",
                   value: attendance?.presentDays ?? 0,
+                  tone: PRIMARY_DARK,
+                },
+              ]}
+            />
+          )}
+        </Panel>
+
+        {/* ================= MEET PLAN ================= */}
+
+        <Panel
+          title="Meet Plan"
+          linkLabel="Open"
+          onLink={() => router.push("/marketing_agent/meet")}
+        >
+          {loading ? (
+            <Loader />
+          ) : (
+            <MetricRow
+              items={[
+                { label: "To meet", value: meet?.pending ?? 0, tone: "#b45309" },
+                { label: "Met", value: meet?.completed ?? 0, tone: "#15803d" },
+                { label: "Never met", value: meet?.neverVisited ?? 0, tone: "#b91c1c" },
+                {
+                  label: "Covered",
+                  value: `${meet?.completionRate ?? 0}%`,
                   tone: PRIMARY_DARK,
                 },
               ]}

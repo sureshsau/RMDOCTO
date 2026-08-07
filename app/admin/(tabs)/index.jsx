@@ -183,6 +183,12 @@ export default function AdminDashboard() {
           <View style={styles.statsGrid}>
 
             <StatCard
+              icon="walk-outline"
+              label="RM Member Meet"
+              onPress={() => router.push("/admin/meet")}
+            />
+
+            <StatCard
               icon="card-outline"
               label="RM Credit"
               onPress={() => router.push("/admin/rmcredit")}
@@ -262,6 +268,7 @@ export default function AdminDashboard() {
           <QuickAction icon="megaphone" label="Send Notification" onPress={() => router.push("/admin/notifications/send")} />
           <QuickAction icon="paper-plane" label="Sent Notifications" onPress={() => router.push("/admin/notifications")} />
           <QuickAction icon="notifications" label="RM Member Alerts" onPress={() => router.push("/admin/agent-alerts")} />
+          <QuickAction icon="walk" label="RM Member Meet Plan" onPress={() => router.push("/admin/meet")} />
           <QuickAction icon="add-circle" label="Add Employee" onPress={() => router.push("/admin/employee/add")} />
           <QuickAction icon="person-add" label="Add Patient" onPress={() => router.push("/admin/addpatient")} />
           <QuickAction icon="time" label="Create Payroll" onPress={() => router.push("/admin/roles")} />

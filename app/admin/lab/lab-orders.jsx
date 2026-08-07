@@ -43,6 +43,11 @@ const PAYMENT_CFG = {
 
 const STATUS_FILTERS = ["ALL", "INITIATED", "CONFIRMED", "SAMPLE_COLLECTED", "REPORT_PENDING", "REPORT_READY", "COMPLETED", "CANCELLED"];
 
+/* Shared pill geometry — eight statuses cannot fit a segmented control, so the
+   row stays horizontally scrollable but every pill is sized identically. */
+const PILL_H = 34;
+const PILL_MIN_W = 92;
+
 const fmtMoney = (v) => `₹${(v ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 0 })}`;
 const fmtDate  = (d) => new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
 
@@ -86,63 +91,82 @@ export default function LabOrders() {
   const pickStatus = (s) => { setStatus(s); load(1, s); };
   const loadMore   = () => { if (more || orders.length >= total) return; load(page + 1); };
 
-  return (
-    <SafeAreaView style={styles.safe} edges={["bottom"]}>
-      {/* Status Filters */}
-      <FlatList
-        data={STATUS_FILTERS}
+  const isActive = (item) => status === item || (item === "ALL" && !status);
+
+  /* Filters ride inside the list so a scroll moves the whole page, and the
+     pills share one width/height so the row reads evenly instead of ragged.
+     An element, not a function, so the row is not remounted every render. */
+  const listHeader = (
+    <View>
+      <ScrollView
         horizontal
-        keyExtractor={(i) => i}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.pills}
-        renderItem={({ item }) => (
+      >
+        {STATUS_FILTERS.map((item) => (
           <TouchableOpacity
-            style={[styles.pill, (status === item || (item === "ALL" && !status)) && styles.pillActive]}
+            key={item}
+            style={[styles.pill, isActive(item) && styles.pillActive]}
             onPress={() => pickStatus(item === "ALL" ? "" : item)}
           >
-            <Text style={[(status === item || (item === "ALL" && !status)) ? styles.pillTxtA : styles.pillTxt]}>
+            <Text
+              style={isActive(item) ? styles.pillTxtA : styles.pillTxt}
+              numberOfLines={1}
+            >
               {STATUS_CFG[item]?.label ?? item}
             </Text>
           </TouchableOpacity>
-        )}
-      />
+        ))}
+      </ScrollView>
 
-      {loading && !refreshing ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color={PURPLE} />
-          <Text style={styles.centerTxt}>Loading orders…</Text>
-        </View>
-      ) : error ? (
-        <View style={styles.center}>
-          <Ionicons name="cloud-offline-outline" size={46} color={TEXT_S} />
-          <Text style={styles.errTxt}>{error}</Text>
-          <TouchableOpacity style={styles.retryBtn} onPress={() => load(1)}>
-            <Text style={styles.retryTxt}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <FlatList
-          data={orders}
-          keyExtractor={(i) => i.orderId}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-          ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => load(1, status, true)} colors={[PURPLE]} />
-          }
-          onEndReached={loadMore}
-          onEndReachedThreshold={0.3}
-          ListFooterComponent={more ? <ActivityIndicator color={PURPLE} style={{ marginVertical: 12 }} /> : null}
-          ListHeaderComponent={<Text style={styles.totalTxt}>{total} order{total !== 1 ? "s" : ""}</Text>}
-          ListEmptyComponent={
+      {!loading && !error ? (
+        <Text style={styles.totalTxt}>
+          {total} order{total !== 1 ? "s" : ""}
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <SafeAreaView style={styles.safe} edges={["bottom"]}>
+      <FlatList
+        /* While loading or errored the rows are swapped for a state in the
+           empty slot, so the filter row stays on screen and usable */
+        data={loading || error ? [] : orders}
+        keyExtractor={(i) => i.orderId}
+        contentContainerStyle={styles.listPad}
+        showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={() => load(1, status, true)} colors={[PURPLE]} />
+        }
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
+        ListFooterComponent={more ? <ActivityIndicator color={PURPLE} style={{ marginVertical: 12 }} /> : null}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
+          loading && !refreshing ? (
+            <View style={styles.center}>
+              <ActivityIndicator size="large" color={PURPLE} />
+              <Text style={styles.centerTxt}>Loading orders…</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.center}>
+              <Ionicons name="cloud-offline-outline" size={46} color={TEXT_S} />
+              <Text style={styles.errTxt}>{error}</Text>
+              <TouchableOpacity style={styles.retryBtn} onPress={() => load(1)}>
+                <Text style={styles.retryTxt}>Retry</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
             <View style={styles.center}>
               <Ionicons name="receipt-outline" size={46} color={TEXT_S} />
               <Text style={styles.emptyTitle}>No Orders</Text>
             </View>
-          }
-          renderItem={({ item }) => <OrderCard order={item} />}
-        />
-      )}
+          )
+        }
+        renderItem={({ item }) => <OrderCard order={item} />}
+      />
     </SafeAreaView>
   );
 }
@@ -208,18 +232,28 @@ function OrderCard({ order }) {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: BG },
 
-  pills: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8, gap: 8 },
+  /* The cards carry their own inset so the filter row can scroll edge to edge */
+  listPad: { paddingBottom: 40 },
+
+  /* Every pill is the same height and at least as wide as PILL_MIN_W, so
+     "Initiated" does not shrink next to "Report Pending" */
+  pills: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12, gap: 8 },
   pill: {
-    flexShrink: 0, paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: CARD,
+    flexShrink: 0, minWidth: PILL_MIN_W, height: PILL_H,
+    alignItems: "center", justifyContent: "center", paddingHorizontal: 14,
+    borderRadius: PILL_H / 2, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: CARD,
   },
   pillActive: { backgroundColor: PURPLE, borderColor: PURPLE },
   pillTxt:  { fontSize: 12, fontWeight: "600", color: TEXT_M },
-  pillTxtA: { fontSize: 12, fontWeight: "600", color: "#fff" },
+  pillTxtA: { fontSize: 12, fontWeight: "700", color: "#fff" },
 
-  totalTxt: { fontSize: 12, color: TEXT_M, fontWeight: "600", marginBottom: 10 },
+  totalTxt: {
+    fontSize: 12, color: TEXT_M, fontWeight: "600",
+    paddingHorizontal: 16, paddingBottom: 10,
+  },
 
   card: {
+    marginHorizontal: 16,
     backgroundColor: CARD, borderRadius: 16, padding: 14, elevation: 2,
     shadowColor: "#000", shadowOpacity: 0.05, shadowOffset: { width: 0, height: 2 }, shadowRadius: 6,
   },

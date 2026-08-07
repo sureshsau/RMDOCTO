@@ -11,6 +11,8 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { uploadShopImage } from "../../components/shared/meet/meetApi.js";
+import ShopPhotoField from "../../components/shared/meet/ShopPhotoField.jsx";
 import api from "../../services/axios.js";
 
 /* ================= BRAND ================= */
@@ -22,20 +24,32 @@ const INPUT_BG = "#f8fafc";
 
 const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
 
+/* How often this shop should appear on the meet plan */
+const FREQUENCIES = [
+  { key: "DAILY", label: "Daily" },
+  { key: "WEEKLY", label: "Weekly" },
+  { key: "MONTHLY", label: "Monthly" },
+];
+
+const EMPTY_FORM = {
+  agentName: "",
+  phone: "",
+  shopName: "",
+  address: "",
+  landmark: "",
+  city: "",
+  state: "",
+  pincode: "",
+  latitude: "",
+  longitude: "",
+  visitFrequency: "MONTHLY",
+};
+
 /* ================= MAIN ================= */
 
 export default function RegisterAgent() {
-  const [form, setForm] = useState({
-    agentName: "",
-    phone: "",
-    address: "",
-    landmark: "",
-    city: "",
-    state: "",
-    pincode: "",
-    latitude: "",
-    longitude: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
+  const [shopPhoto, setShopPhoto] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [locLoading, setLocLoading] = useState(true);
@@ -138,11 +152,14 @@ export default function RegisterAgent() {
 
   /* ================= VALIDATION ================= */
 
-  const isFormValid =
-    form.agentName &&
-    form.phone &&
-    form.latitude &&
-    form.longitude;
+  const missingFields = [
+    !form.agentName && "RM Member name",
+    !form.phone && "phone number",
+    !(form.latitude && form.longitude) && "location",
+    !shopPhoto && "shop photo",
+  ].filter(Boolean);
+
+  const isFormValid = missingFields.length === 0;
 
   /* ================= SUBMIT ================= */
 
@@ -153,6 +170,8 @@ export default function RegisterAgent() {
       const payload = {
         agentName: form.agentName.trim(),
         phone: form.phone.trim(),
+        shopName: form.shopName.trim() || null,
+        visitFrequency: form.visitFrequency,
         latitude: Number(form.latitude),
         longitude: Number(form.longitude),
         address: form.address || null,
@@ -162,27 +181,36 @@ export default function RegisterAgent() {
         pincode: form.pincode || null,
       };
 
-      await api.post(
+      const res = await api.post(
         "/marketing-agent/register/agent",
         payload
       );
 
+      /* The photo needs the new profile's id, so it goes up as a second call.
+         A failed upload must not read as a failed registration — the RM
+         Member exists either way and the photo can be added from Track. */
+      const agentProfileId = res?.data?.data?.agentProfileId;
+
+      let photoUploaded = true;
+
+      if (agentProfileId && shopPhoto) {
+        try {
+          await uploadShopImage(agentProfileId, { uri: shopPhoto });
+        } catch {
+          photoUploaded = false;
+        }
+      }
+
       Toast.show({
-        type: "success",
+        type: photoUploaded ? "success" : "info",
         text1: "RM Member Registered",
-        text2: "RM Member added to your network successfully.",
+        text2: photoUploaded
+          ? "RM Member added to your network successfully."
+          : "Registered, but the shop photo failed to upload. Add it from Track.",
       });
 
-      setForm({
-        agentName: "",
-        phone: "",
-        address: "",
-        city: "",
-        state: "",
-        pincode: "",
-        latitude: "",
-        longitude: "",
-      });
+      setForm(EMPTY_FORM);
+      setShopPhoto(null);
 
       fetchLocation();
     } catch (err) {
@@ -233,6 +261,40 @@ export default function RegisterAgent() {
               update("phone", v)
             }
           />
+        </Card>
+
+        {/* SHOP */}
+        <Card title="Shop Details">
+          <Input
+            icon="storefront-outline"
+            label="Shop Name"
+            value={form.shopName}
+            onChange={(v) => update("shopName", v)}
+          />
+
+          <Text style={styles.label}>Meet Frequency</Text>
+          <View style={styles.freqRow}>
+            {FREQUENCIES.map((f) => {
+              const active = form.visitFrequency === f.key;
+              return (
+                <TouchableOpacity
+                  key={f.key}
+                  style={[styles.freqChip, active && styles.freqChipActive]}
+                  onPress={() => update("visitFrequency", f.key)}
+                >
+                  <Text
+                    style={[styles.freqTxt, active && styles.freqTxtActive]}
+                  >
+                    {f.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <View style={{ height: 16 }} />
+
+          <ShopPhotoField uri={shopPhoto} onChange={setShopPhoto} required />
         </Card>
 
         {/* LOCATION */}
@@ -327,6 +389,15 @@ export default function RegisterAgent() {
               </>
             )}
           </TouchableOpacity>
+
+          {/* A greyed-out button with no reason attached is a dead end */}
+          {!isFormValid && !loading ? (
+            <Text style={styles.submitHint}>
+              {missingFields.length
+                ? `Still needed: ${missingFields.join(", ")}`
+                : ""}
+            </Text>
+          ) : null}
         </View>
 
         <View style={{ height: 40 }} />
@@ -451,6 +522,36 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
+  freqRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+
+  freqChip: {
+    flex: 1,
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: INPUT_BG,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
+
+  freqChipActive: {
+    backgroundColor: PRIMARY,
+    borderColor: PRIMARY,
+  },
+
+  freqTxt: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#475569",
+  },
+
+  freqTxtActive: {
+    color: "#ffffff",
+  },
+
   locLoader: {
     alignItems: "center",
     paddingVertical: 20,
@@ -479,5 +580,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "900",
     fontSize: 16,
+  },
+
+  submitHint: {
+    marginTop: 10,
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#b45309",
   },
 });
